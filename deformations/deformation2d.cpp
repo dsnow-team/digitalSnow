@@ -13,6 +13,8 @@ namespace po = boost::program_options;
 #include <DGtal/helpers/StdDefs.h>
 #include "DGtal/io/readers/PNMReader.h"
 
+using namespace Z2i;
+
 //evolvers
 #include "WeickertKuhneEvolver.h"
 
@@ -26,9 +28,7 @@ int main(int argc, char** argv)
 {
   
   DGtal::trace.info() << "2d interface evolution using DGtal ";
-  DGtal::trace.emphase() << "(version "<< DGTAL_VERSION << ")"<< std::endl;
-  
-  using namespace Z2i; 
+  DGtal::trace.emphase() << "(version "<< DGTAL_VERSION << ")"<< std::endl; 
 
   // parse command line ----------------------------------------------
   po::options_description general_opt("Allowed options are");
@@ -39,8 +39,10 @@ int main(int argc, char** argv)
     ("timeStep,t",  po::value<double>()->default_value(1.0), "Time step for the evolution" )
     ("displayStep,d",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
-    ("balloonForce,f",  po::value<double>()->default_value(0.0), "Balloon force" )
-    ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" );
+    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
+    ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
+    ("outputFormat,f",   po::value<string>()->default_value("raster"), 
+"Output files format: either <raster> (image, default) or <vector> (domain representation)" );
 
   
   po::variables_map vm;
@@ -50,41 +52,51 @@ int main(int argc, char** argv)
     {
       trace.info()<< "Evolution of a 2d interface" << std::endl
       << "Basic usage: "<<std::endl
-      << argv[0] << " [other options] -t <time step>" << std::endl
+      << argv[0] << " [other options] -t <time step> -n <number of steps>" << std::endl
       << general_opt << "\n";
       return 0;
     }
   
   //Parse options
   //domain size
-  int dsize = 64; 
+  int dsize; 
   if (!(vm.count("domainSize"))) trace.info() << "Domain size default value: 64" << std::endl; 
-  else dsize = vm["domainSize"].as<int>(); 
+  dsize = vm["domainSize"].as<int>(); 
 
   //time step
   double tstep; 
   if (!(vm.count("timeStep"))) trace.info() << "time step default value: 1.0" << std::endl; 
-  else tstep = vm["timeStep"].as<double>(); 
+  tstep = vm["timeStep"].as<double>(); 
     
   //iterations
-  int step = 1; 
+  int step; 
   if (!(vm.count("displayStep"))) trace.info() << "number of steps between two drawings: 1 by default" << std::endl; 
-  else step = vm["displayStep"].as<int>(); 
-  int max = 1; 
+  step = vm["displayStep"].as<int>(); 
+  int max; 
   if (!(vm.count("stepsNumber"))) trace.info() << "maximal number of steps: 1 by default" << std::endl; 
-  else max = vm["stepsNumber"].as<int>(); 
+  max = vm["stepsNumber"].as<int>(); 
 
   //balloon force
-  double k = 0; 
+  double k; 
   if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-  else k = vm["balloonForce"].as<double>(); 
+  k = vm["balloonForce"].as<double>(); 
 
   //files
   std::string outputFiles; 
   if (!(vm.count("outputFiles"))) 
     trace.info() << "output files beginning with : interface" << std::endl;
-  else 
-    outputFiles = vm["outputFiles"].as<std::string>();
+  outputFiles = vm["outputFiles"].as<std::string>();
+
+  //files format
+  std::string format; 
+  if (!(vm.count("outputFormat"))) 
+    trace.info() << "output files format is 'vector' " << std::endl;
+  format = vm["outputFormat"].as<std::string>();
+  if ((format != "vector")&&(format != "raster")) 
+    {
+    trace.info() << "format is expected to be either vector, or raster " << std::endl;
+    return 0; 
+    }
 
   //image and implicit function
   Point p(0,0);
@@ -109,7 +121,7 @@ int main(int argc, char** argv)
  
   std::stringstream ss; 
   ss << outputFiles << "0001"; 
-  drawContour(impliciteFunction,ss.str()); 
+  drawContour(impliciteFunction, ss.str(), format); 
   
   //data functions
   ImageContainerBySTLVector<Domain,double> a(p,q); 
@@ -130,10 +142,10 @@ int main(int argc, char** argv)
     {
       std::stringstream s; 
       s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-      drawContour(impliciteFunction,s.str()); 
+      drawContour(impliciteFunction, s.str(), format); 
     }
   }
   
-  return 0;
+  return 1;
 }
 

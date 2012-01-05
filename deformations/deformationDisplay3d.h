@@ -60,6 +60,8 @@ bool writeImage(const TImage& img, string filename, string format)
     typedef GradientColorMap<typename LabelImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
     VolWriter<LabelImage,ColorMap>::exportVol( s.str(), labelImage, 0, 255 );
 
+    return true; 
+
  } else return false; 
   
 }

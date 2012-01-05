@@ -95,6 +95,11 @@ int main(int argc, char** argv)
   if (!(vm.count("outputFormat"))) 
     trace.info() << "output files format is png (3d to 2d) " << std::endl;
   format = vm["outputFormat"].as<std::string>();
+  if ((format != "vector")&&(format != "raster")) 
+    {
+    trace.info() << "format is expected to be either png or vol " << std::endl;
+    return 0; 
+    }
 
 
   //image and implicit function
