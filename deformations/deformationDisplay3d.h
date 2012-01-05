@@ -2,36 +2,66 @@
 // static 
 #include "DGtal/io/boards/Board3DTo2D.h"
 
+#include "DGtal/io/Color.h"
+#include "DGtal/io/colormaps/GradientColorMap.h"
+#include "DGtal/io/writers/VolWriter.h"
+
 template< typename TImage >
-bool displayImage(const TImage& img, string filename)
+bool writeImage(const TImage& img, string filename, string format)
 {
 
-  Board3DTo2D viewer;
+  if (format.compare("png")==0)
+  {
+    Board3DTo2D viewer;
+    
+    Domain d(img.lowerBound(), img.upperBound()); 
+    Domain::ConstIterator cIt = d.begin(); 
+    Domain::ConstIterator cItEnd = d.end(); 
+    for ( ; cIt != cItEnd; ++cIt)
+    { 
+      if (img(*cIt) <= 0) 
+	      viewer << *cIt; 
+    }
+
+    viewer << CameraPosition(-10.0, -10.0, -10.0)
+	   << CameraDirection(1.000000, 1.000000, 1.000000); 
+    // << CameraUpVector(0.000000, 1.000000, 0.000000)
+    // << CameraZNearFar(4.578200, 22.578199);
+
+    int size = img.extent().at(0); 
+    std::stringstream s; 
+  #ifdef WITH_CAIRO
+    s << filename << ".png";
+    viewer.saveCairo(s.str().c_str(),Board3DTo2D::CairoPNG,3*size/2,3*size/2 ); 
+    return true; 
+  #else
+    return false; 
+  #endif
+
+  } else if (format.compare("vol")==0)
+  {
+
+    //create a label image from the implicite function
+    typedef ImageContainerBySTLVector<Domain,int> LabelImage; 
+    LabelImage labelImage( img.lowerBound(), img.upperBound() ); 
+    Domain d(labelImage.lowerBound(), labelImage.upperBound()); 
+    Domain::ConstIterator cIt = d.begin(); 
+    Domain::ConstIterator cItEnd = d.end(); 
+    for ( ; cIt != cItEnd; ++cIt)
+    { 
+      if (img(*cIt) <= 0) 
+	       labelImage.setValue(*cIt,255);
+      else  
+	       labelImage.setValue(*cIt,0);
+    }
+    //write it into a vol file
+    std::stringstream s; 
+    s << filename << ".vol";
+    typedef GradientColorMap<typename LabelImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
+    VolWriter<LabelImage,ColorMap>::exportVol( s.str(), labelImage, 0, 255 );
+
+ } else return false; 
   
-  Z3i::Domain d(img.lowerBound(), img.upperBound()); 
-  Z3i::Domain::ConstIterator cIt = d.begin(); 
-  Z3i::Domain::ConstIterator cItEnd = d.end(); 
-  for ( ; cIt != cItEnd; ++cIt)
-  { 
-    if (img(*cIt) <= 0) 
-	viewer << *cIt; 
-  }
-
-  viewer << CameraPosition(-10.0, -10.0, -10.0)
-	 << CameraDirection(1.000000, 1.000000, 1.000000); 
-  // << CameraUpVector(0.000000, 1.000000, 0.000000)
-  // << CameraZNearFar(4.578200, 22.578199);
-
-  int size = img.extent().at(0); 
-  std::stringstream s; 
-#ifdef WITH_CAIRO
-  s << filename << ".png";
-  viewer.saveCairo(s.str().c_str(),Board3DTo2D::CairoPNG,3*size/2,3*size/2 ); 
-  return true; 
-#else
-  return false; 
-#endif
-
 }
 
 

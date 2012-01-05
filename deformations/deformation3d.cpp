@@ -41,8 +41,10 @@ int main(int argc, char** argv)
     ("timeStep,t",  po::value<double>()->default_value(1.0), "Time step for the evolution" )
     ("displayStep,d",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
-    ("balloonForce,f",  po::value<double>()->default_value(0.0), "Balloon force" )
-    ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename (3d to 2d)" )
+    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
+    ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
+    ("outputFormat,f",   po::value<string>()->default_value("png"), 
+"Output files format: either <png> (3d to 2d, default) or <vol> (3d)" )
     ("withVisu", "Enables interactive 3d visualization before and after evolution" );
 
   
@@ -60,34 +62,40 @@ int main(int argc, char** argv)
   
   //Parse options
   //domain size
-  int dsize = 32; 
+  int dsize; 
   if (!(vm.count("domainSize"))) trace.info() << "Domain size default value: 32" << std::endl; 
-  else dsize = vm["domainSize"].as<int>(); 
+  dsize = vm["domainSize"].as<int>(); 
 
   //time step
   double tstep; 
   if (!(vm.count("timeStep"))) trace.info() << "time step default value: 1.0" << std::endl; 
-  else tstep = vm["timeStep"].as<double>(); 
+  tstep = vm["timeStep"].as<double>(); 
     
   //iterations
-  int step = 1; 
+  int step; 
   if (!(vm.count("displayStep"))) trace.info() << "number of steps between two drawings: 1 by default" << std::endl; 
-  else step = vm["displayStep"].as<int>(); 
-  int max = 1; 
+  step = vm["displayStep"].as<int>(); 
+  int max; 
   if (!(vm.count("stepsNumber"))) trace.info() << "maximal number of steps: 1 by default" << std::endl; 
-  else max = vm["stepsNumber"].as<int>(); 
+  max = vm["stepsNumber"].as<int>(); 
 
   //balloon force
-  double k = 0; 
+  double k; 
   if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-  else k = vm["balloonForce"].as<double>(); 
+  k = vm["balloonForce"].as<double>(); 
 
   //files
   std::string outputFiles; 
   if (!(vm.count("outputFiles"))) 
     trace.info() << "output files beginning with : interface" << std::endl;
-  else 
-    outputFiles = vm["outputFiles"].as<std::string>();
+  outputFiles = vm["outputFiles"].as<std::string>();
+
+  //files format
+  std::string format; 
+  if (!(vm.count("outputFormat"))) 
+    trace.info() << "output files format is png (3d to 2d) " << std::endl;
+  format = vm["outputFormat"].as<std::string>();
+
 
   //image and implicit function
   Point p(0,0,0);
@@ -112,10 +120,12 @@ int main(int argc, char** argv)
 
     }
 
+
+
   //3d to 2d display
   std::stringstream ss; 
   ss << outputFiles << "0001"; 
-  displayImage( impliciteFunction, ss.str() );
+  writeImage( impliciteFunction, ss.str(), format );
 
   //interactive display before the evolution
   if (vm.count("withVisu")) displayImage( argc, argv, impliciteFunction ); 
@@ -147,7 +157,7 @@ int main(int argc, char** argv)
        //3d to 2d display
        std::stringstream s; 
        s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-       displayImage( impliciteFunction, s.str() );
+       writeImage( impliciteFunction, s.str(), format );
 
     }
     DGtal::trace.endBlock();   
