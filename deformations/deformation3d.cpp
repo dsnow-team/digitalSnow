@@ -13,6 +13,7 @@ namespace po = boost::program_options;
 #include <DGtal/helpers/StdDefs.h>
 #include "DGtal/io/readers/VolReader.h"
 
+using namespace Z3i; 
 
 //evolver
 #include "WeickertKuhneEvolver.h"
@@ -29,7 +30,6 @@ int main(int argc, char** argv)
   DGtal::trace.info() << "3d interface evolution using DGtal ";
   DGtal::trace.emphase() << "(version "<< DGTAL_VERSION << ")"<< std::endl;
   
-  using namespace Z3i; 
 
 
   // parse command line ----------------------------------------------

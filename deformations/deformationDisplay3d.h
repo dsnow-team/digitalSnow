@@ -3,7 +3,7 @@
 #include "DGtal/io/boards/Board3DTo2D.h"
 
 template< typename TImage >
-void displayImage(const TImage& img, string filename)
+bool displayImage(const TImage& img, string filename)
 {
 
   Board3DTo2D viewer;
@@ -27,6 +27,9 @@ void displayImage(const TImage& img, string filename)
 #ifdef WITH_CAIRO
   s << filename << ".png";
   viewer.saveCairo(s.str().c_str(),Board3DTo2D::CairoPNG,3*size/2,3*size/2 ); 
+  return true; 
+#else
+  return false; 
 #endif
 
 }
@@ -37,26 +40,39 @@ void displayImage(const TImage& img, string filename)
 #include "DGtal/io/viewers/Viewer3D.h"
 #include "DGtal/io/CDrawableWithDisplay3D.h"
 
+#include "DGtal/images/imagesSetsUtils/SimpleThresholdForegroundPredicate.h"
+
+#include "DGtal/topology/KhalimskySpaceND.h"
+#include "DGtal/topology/helpers/Surfaces.h"
+
 template< typename TImage >
 bool displayImage(int argc, char** argv, const TImage& img)
 {
 
-  bool flag = true;    
-  #ifdef WITH_VISU3D_QGLVIEWER
+  //KhalimskySpace
+  Domain d = img.domain(); 
+  KSpace K;
+  K.init(d.lowerBound(), d.upperBound(), true);
+  //adjacency  
+  SurfelAdjacency<3> SAdj( true );
+  std::vector<std::vector<SCell> > vectConnectedSCell;
+  //predicate
+  SimpleThresholdForegroundPredicate<TImage> predicate(img,0);
+  //tracking 
+  Surfaces<KSpace>::extractAllConnectedSCell(vectConnectedSCell,K, SAdj, predicate, true);
+  
 
+  #ifdef WITH_VISU3D_QGLVIEWER
   QApplication application(argc,argv);
   Viewer3D viewer;
   viewer.show();
 
-  
-  Z3i::Domain d(img.lowerBound(), img.upperBound()); 
-  Z3i::Domain::ConstIterator cIt = d.begin(); 
-  Z3i::Domain::ConstIterator cItEnd = d.end(); 
-  for ( ; cIt != cItEnd; ++cIt)
-  { 
-    if (img(*cIt) <= 0) 
-	viewer << *cIt; 
+  for(unsigned int i=0; i< vectConnectedSCell.size();i++){
+    for(unsigned int j=0; j< vectConnectedSCell.at(i).size();j++){
+      viewer << vectConnectedSCell.at(i).at(j);
+    }    
   }
+
   viewer << Viewer3D::updateDisplay;
 
   return application.exec();
