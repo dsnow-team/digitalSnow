@@ -59,9 +59,11 @@ namespace DGtal
    * Description of template class 'WeickertKuhneEvolver' <p>
    * \brief Aim: Evolves an implicit contour. 
    *
-   * @code 
-
-   * @endcode
+   * ﻿@note J. Weickert and G. Kühne,
+   Fast Methods for Implicit Active Contour Models, 
+    in Geometric Level Set Methods in Imaging, Vision, and Graphics, 
+  Springer New York,
+  43-57, 2003.
    *
    * @tparam TImage, the type of image 
    */
