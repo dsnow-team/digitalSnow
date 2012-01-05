@@ -1,0 +1,143 @@
+/**
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
+/**
+ * @file ExplicitEvolver.ih
+ * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
+ * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
+ *
+ * @date 2012/01/05
+ *
+ * @brief Implementation of inline methods defined in ExplicitEvolver.h
+ *
+ * This file is part of the DGtal library.
+ */
+
+
+//////////////////////////////////////////////////////////////////////////////
+#include <cstdlib>
+
+#include "DGtal/images/DifferentialOperators.h"
+//////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// ----------------------- Standard services ------------------------------
+
+
+template <typename TImage>
+inline
+DGtal::ExplicitEvolver<TImage>
+::ExplicitEvolver( const Image& aAImage, const Image& aBImage, const Image& aGImage, 
+			const double& aK, 
+			const double& aGridStep)
+: myA( aAImage ), myB( aBImage ), myG( aGImage ), 
+myK( aK ), myH( aGridStep )
+{
+  ASSERT( myA.extent() == myB.extent() ); 
+  ASSERT( myA.extent() == myG.extent() ); 
+  ASSERT( myH >= 0 ); 
+}
+
+
+template <typename TImage>
+inline
+DGtal::ExplicitEvolver<TImage>::~ExplicitEvolver()
+{
+}
+
+
+template <typename TImage>
+inline
+void
+DGtal::ExplicitEvolver<TImage>::update(Image& aF, const double& aT)
+{
+  ASSERT( aF.extent() == myB.extent() ); 
+
+    Domain d = aF.domain();  
+
+  //balloon term
+  trace.info() << "balloon term..." << std::endl; 
+   GodunovGradient<Image> gradient(aF, (myK >= 0), myH);
+   GradientModulus<GodunovGradient<Image> > m(gradient);
+
+  {
+    typename Domain::ConstIterator it = d.begin(); 
+    typename Domain::ConstIterator itEnd = d.end();
+    for ( ; it != itEnd; ++it)
+      aF.setValue(*it, (aF(*it) + ( aT*myK*myG(*it)*m(*it) ) ) ); 
+  }
+
+  //diffusion term
+  trace.info() << "diffusion term..." << std::endl;
+
+  //gradient modulus 
+  CentralDifference<Image> cdiff(aF, myH); 
+  Gradient<Image> cg(aF);
+  GradientModulus<Gradient<Image> > cm(cg); 
+
+  //divergence
+  WeightedDifference2<Image> diff2(aF, myB, myH); 
+  Divergence<WeightedDifference2<Image> > div(diff2); 
+
+  {
+    typename Domain::ConstIterator it = d.begin(); 
+    typename Domain::ConstIterator itEnd = d.end();
+    for ( ; it != itEnd; ++it)
+      aF.setValue(*it, (aF(*it) + ( aT*myA(*it)*cm(*it)*div(*it) ) ) ); 
+  }
+}
+
+
+template <typename TImage>
+inline
+void
+DGtal::ExplicitEvolver<TImage>::selfDisplay ( std::ostream & out ) const
+{
+  out << "[ExplicitEvolver]\n";
+  out << "\n";
+}
+
+template <typename TImage>
+inline
+bool
+DGtal::ExplicitEvolver<TImage>::isValid() const
+{
+    return true;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Implementation of inline functions                                        //
+
+template <typename TImage>
+inline
+std::ostream&
+DGtal::operator<< ( std::ostream & out, 
+		  const ExplicitEvolver<TImage> & object )
+{
+  object.selfDisplay( out );
+  return out;
+}
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+
