@@ -43,7 +43,7 @@ bool drawContour(const TImage& img, std::string filename, std::string format)
   } else if (format.compare("raster")==0)
   {
 
-    //create a label image from the implicite function
+    //create a label image from the implicit function
     typedef ImageContainerBySTLVector<Domain,int> LabelImage; 
     LabelImage labelImage( img.lowerBound(), img.upperBound() ); 
     Domain d(labelImage.lowerBound(), labelImage.upperBound()); 

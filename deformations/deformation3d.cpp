@@ -106,9 +106,9 @@ int main(int argc, char** argv)
   Point p(0,0,0);
   Point q(dsize,dsize,dsize); 
   Point c(dsize/2,dsize/2,dsize/2); 
-  ImageContainerBySTLVector<Domain,double> impliciteFunction(p,q); 
-  //initWithBall( impliciteFunction, c, (dsize*3/5)/2);
-  initWithFlower( impliciteFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 ); 
+  ImageContainerBySTLVector<Domain,double> implicitFunction(p,q); 
+  //initWithBall( implicitFunction, c, (dsize*3/5)/2);
+  initWithFlower( implicitFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 ); 
 
   if (!(vm.count("inputImage"))) 
     trace.info() << "starting interface initialized with a flower shape" << std::endl;
@@ -120,8 +120,8 @@ int main(int argc, char** argv)
       BinaryImage img = VolReader<BinaryImage>::importVol( imageFileName);
       Domain d = img.domain(); 
       p = d.lowerBound(); q = d.upperBound(); 
-      impliciteFunction = ImageContainerBySTLVector<Domain,double>(p,q); 
-      initWithDT( img, impliciteFunction );
+      implicitFunction = ImageContainerBySTLVector<Domain,double>(p,q); 
+      initWithDT( img, implicitFunction );
 
     }
 
@@ -130,10 +130,10 @@ int main(int argc, char** argv)
   //3d to 2d display
   std::stringstream ss; 
   ss << outputFiles << "0001"; 
-  writeImage( impliciteFunction, ss.str(), format );
+  writeImage( implicitFunction, ss.str(), format );
 
   //interactive display before the evolution
-  if (vm.count("withVisu")) displayImage( argc, argv, impliciteFunction ); 
+  if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
 
 
   //data functions
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
     DGtal::trace.beginBlock( s0.str() );
 
     //update
-    e.update(impliciteFunction,tstep); 
+    e.update(implicitFunction,tstep); 
 
     if ((i%step)==0) 
     {
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
        //3d to 2d display
        std::stringstream s; 
        s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-       writeImage( impliciteFunction, s.str(), format );
+       writeImage( implicitFunction, s.str(), format );
 
     }
     DGtal::trace.endBlock();   
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
   }
 
   //interactive display after the evolution
-  if (vm.count("withVisu")) displayImage( argc, argv, impliciteFunction ); 
+  if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
   
   return 0;
 }

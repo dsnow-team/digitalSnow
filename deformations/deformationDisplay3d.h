@@ -41,7 +41,7 @@ bool writeImage(const TImage& img, string filename, string format)
   } else if (format.compare("vol")==0)
   {
 
-    //create a label image from the implicite function
+    //create a label image from the implicit function
     typedef ImageContainerBySTLVector<Domain,int> LabelImage; 
     LabelImage labelImage( img.lowerBound(), img.upperBound() ); 
     Domain d(labelImage.lowerBound(), labelImage.upperBound()); 

@@ -102,9 +102,9 @@ int main(int argc, char** argv)
   Point p(0,0);
   Point q(dsize,dsize); 
   Point c(dsize/2,dsize/2); 
-  ImageContainerBySTLVector<Domain,double> impliciteFunction(p,q); 
-  //initWithBall( impliciteFunction, c, (dsize*3/5)/2 ); 
-  initWithFlower( impliciteFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
+  ImageContainerBySTLVector<Domain,double> implicitFunction(p,q); 
+  //initWithBall( implicitFunction, c, (dsize*3/5)/2 ); 
+  initWithFlower( implicitFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
   if (!(vm.count("inputImage"))) 
     trace.info() << "starting interface initialized with a flower shape" << std::endl;
   else
@@ -115,13 +115,13 @@ int main(int argc, char** argv)
       BinaryImage img = PNMReader<BinaryImage>::importPGMImage( imageFileName ); 
       Domain d = img.domain(); 
       p = d.lowerBound(); q = d.upperBound(); 
-      impliciteFunction = ImageContainerBySTLVector<Domain,double>(p,q); 
-      initWithDT( img, impliciteFunction );
+      implicitFunction = ImageContainerBySTLVector<Domain,double>(p,q); 
+      initWithDT( img, implicitFunction );
     }
  
   std::stringstream ss; 
   ss << outputFiles << "0001"; 
-  drawContour(impliciteFunction, ss.str(), format); 
+  drawContour(implicitFunction, ss.str(), format); 
   
   //data functions
   ImageContainerBySTLVector<Domain,double> a(p,q); 
@@ -137,12 +137,12 @@ int main(int argc, char** argv)
   for (unsigned int i = 1; i <= max; ++i) 
   {
     DGtal::trace.info() << "iteration #" << i << std::endl;   
-    e.update(impliciteFunction,tstep); 
+    e.update(implicitFunction,tstep); 
     if ((i%step)==0) 
     {
       std::stringstream s; 
       s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-      drawContour(impliciteFunction, s.str(), format); 
+      drawContour(implicitFunction, s.str(), format); 
     }
   }
   
