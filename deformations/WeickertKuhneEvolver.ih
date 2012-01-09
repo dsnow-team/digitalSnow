@@ -89,26 +89,13 @@ DGtal::WeickertKuhneEvolver<TImage>::update(Image& aF, const double& aT)
 
   //diffusion term
   trace.info() << "diffusion term..." << std::endl; 
-    
-  // //AOS scheme
-  // for (Dimension k = 0; k < dimension; ++k)
-  //   { //for each dimension
-  //     diffusion(aF,aT,k); 
-  //   }
-  // {  //normalization
-  //   Domain d = aF.domain();  
-  //   typename Domain::ConstIterator it = d.begin(); 
-  //   typename Domain::ConstIterator itEnd = d.end();
-  //   for ( ; it != itEnd; ++it)
-  //     aF.setValue(*it, (aF(*it) / (double) dimension) ); 
-  // }
 
   //AOS scheme
-  std::vector<Image> l; 
+  std::vector<Image> images; 
   for (Dimension k = 0; k < dimension; ++k)
     { //for each dimension
-      l.push_back( Image( aF.lowerBound(), aF.upperBound() ) ); 
-      diffusion(aF, l[k], aT, k); 
+      images.push_back( Image( aF.lowerBound(), aF.upperBound() ) ); 
+      diffusion(aF, images[k], aT, k); 
     }
   {  //normalization
     Domain d = aF.domain();  
@@ -118,7 +105,7 @@ DGtal::WeickertKuhneEvolver<TImage>::update(Image& aF, const double& aT)
       {
 	Value v = 0; 
 	for (Dimension k = 0; k < dimension; ++k)
-	  v += (l[k](*it) / (double) dimension); 
+	  v += (images[k](*it) / (double) dimension); 
 	aF.setValue(*it, v ); 
       }
   }
