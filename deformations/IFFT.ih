@@ -1,0 +1,105 @@
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+
+template <typename TImage>
+inline
+DGtal::IFFT<TImage>
+::IFFT( const Image& anImage)
+: myImage( anImage )
+{
+}
+
+
+template <typename TImage>
+inline
+DGtal::IFFT<TImage>::~IFFT()
+{
+}
+
+
+template <typename TImage>
+template< typename TOutputImage >
+inline
+void
+DGtal::IFFT<TImage>::compute(TOutputImage& anImage)
+{
+  typedef typename TOutputImage::Value OutputValue; 
+  ASSERT( myImage.extent() == anImage.extent() );
+
+  //image size
+  Vector v = myImage.extent();  
+  int t[dimension];
+  int n = 1; 
+  for (unsigned int i= 0; i < dimension; ++i) 
+    {
+      t[i] = v.at(i);
+      n *= t[i];  
+    }
+
+//using fftw library
+  //input and output arrays
+   fftw_complex* spatial_repr;
+   fftw_complex* frequency_repr;
+   spatial_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
+   frequency_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
+
+  //fill the arrays
+  Domain d = myImage.domain();  
+  typename Domain::ConstIterator it = d.begin(); 
+  typename Domain::ConstIterator itEnd = d.end(); 
+   for(unsigned int i=0; it != itEnd; ++it, ++i)
+   {
+      Value c = myImage(*it); 
+      frequency_repr[i][0] = c[0]; //real part
+      frequency_repr[i][1] = c[1]; //imaginary part
+   }
+
+  //plan
+   fftw_plan plan;
+  plan = fftw_plan_dft( dimension, t, frequency_repr, spatial_repr, FFTW_BACKWARD, FFTW_ESTIMATE ); 
+
+  //computation
+   fftw_execute(plan);
+
+  //copy 
+  it = d.begin();
+  for(unsigned int i=0; (i < n); ++it, ++i)
+  {
+    //real part divided by n
+    double s = spatial_repr[i][0]/n; 
+    anImage.setValue( *it, static_cast<OutputValue>(s) ); 
+  }
+
+  //end
+   fftw_destroy_plan(plan);
+   fftw_free(spatial_repr);
+   fftw_free(frequency_repr);
+}
+
+
+template <typename TImage>
+inline
+void
+DGtal::IFFT<TImage>::selfDisplay ( std::ostream & out ) const
+{
+  out << "[IFFT] on " << myImage;
+  out << std::endl;
+}
+
+template <typename TImage>
+inline
+bool
+DGtal::IFFT<TImage>::isValid() const
+{
+    return true;
+}
+
+
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+

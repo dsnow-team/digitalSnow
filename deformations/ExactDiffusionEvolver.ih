@@ -1,0 +1,138 @@
+/**
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
+/**
+ * @file ExactDiffusionEvolver.ih
+ * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
+ * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
+ *
+ * @date 2012/01/09
+ *
+ * @brief Implementation of inline methods defined in ExactDiffusionEvolver.h
+ *
+ * This file is part of the DGtal library.
+ */
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// ----------------------- Standard services ------------------------------
+
+
+template <typename TImage>
+inline
+DGtal::ExactDiffusionEvolver<TImage>
+::ExactDiffusionEvolver()
+{ 
+}
+
+
+template <typename TImage>
+inline
+DGtal::ExactDiffusionEvolver<TImage>::~ExactDiffusionEvolver()
+{
+}
+
+
+template <typename TImage>
+inline
+void
+DGtal::ExactDiffusionEvolver<TImage>::update(Image& aF, const double& aT)
+{
+
+  //frequential representation computation
+  typedef FFT<Image> FFT; 
+  FFT fft(aF);
+  typename FFT::ComplexImage frequentialRepresentation(aF.lowerBound(),aF.upperBound());  
+  fft.compute(frequentialRepresentation); 
+
+  //diffusion operation in the fourier space
+  Domain d = frequentialRepresentation.domain(); 
+  Vector v = frequentialRepresentation.extent(); 
+ 
+  typename Domain::ConstIterator it = d.begin(); 
+  typename Domain::ConstIterator itEnd = d.end(); 
+   for( ; it != itEnd; ++it)
+   {
+      //value
+      Point p = *it; 
+      typename FFT::Complex value(frequentialRepresentation(p)); 
+      //coefficient to multiply with
+      Point p2 = p; 
+      double norm2 = 0; 
+      for (unsigned int k = 0; k < Point::dimension; ++k)
+        { 
+          //centering (to be in [-N/2,N/2[^d)
+          if (p2.at(k)>=(v.at(k)/2)) p2.at(k) -= v.at(k); 
+          norm2 += p2.at(k)*p2.at(k); 
+        }
+      double c = std::exp( -4*M_PI*M_PI*aT*norm2 ); 
+      //new value
+      typename FFT::Complex newValue( c*value[0], c*value[1] );
+ 
+      frequentialRepresentation.setValue( p, newValue );
+   }
+
+  //come back in the spatial space
+  typedef IFFT<typename FFT::ComplexImage> IFFT; 
+  IFFT ifft(frequentialRepresentation);
+  ifft.compute(aF);
+
+}
+
+
+template <typename TImage>
+inline
+void
+DGtal::ExactDiffusionEvolver<TImage>::selfDisplay ( std::ostream & out ) const
+{
+  out << "[ExactDiffusionEvolver]\n";
+  out << "\n";
+}
+
+template <typename TImage>
+inline
+bool
+DGtal::ExactDiffusionEvolver<TImage>::isValid() const
+{
+    return true;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Implementation of inline functions                                        //
+
+template <typename TImage>
+inline
+std::ostream&
+DGtal::operator<< ( std::ostream & out, 
+		  const ExactDiffusionEvolver<TImage> & object )
+{
+  object.selfDisplay( out );
+  return out;
+}
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+
