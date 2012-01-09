@@ -202,11 +202,12 @@ namespace DGtal
      * Transform function @a aU at time t0 into a next one
      * at time t0 + @a aTimeStep, but according to axis @a aDim.  
      *
-     * @param aF any implicite function
-     * @param aT any time step
-     * @param aDim any axis
+     * @param aF input implicite function
+     * @param aOutputF output implicite function
+     * @param aT any time step (should be >= 0)
+     * @param aDim any axis (between 0 and dimension)
      */
-    void diffusion(Image& aF, const double& aT, const Dimension& aDim); 
+    void diffusion(Image& aF, Image& aOutputF, const double& aT, const Dimension& aDim); 
 
     
     /**

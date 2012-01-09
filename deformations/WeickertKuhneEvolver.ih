@@ -47,8 +47,8 @@ DGtal::WeickertKuhneEvolver<TImage>
 ::WeickertKuhneEvolver( const Image& aAImage, const Image& aBImage, const Image& aGImage, 
 			const double& aK, 
 			const double& aGridStep)
-: myA( aAImage ), myB( aBImage ), myG( aGImage ), 
-myK( aK ), myH( aGridStep )
+  : myA( aAImage ), myB( aBImage ), myG( aGImage ), 
+    myK( aK ), myH( aGridStep )
 {
   ASSERT( myA.extent() == myB.extent() ); 
   ASSERT( myA.extent() == myG.extent() ); 
@@ -69,37 +69,60 @@ void
 DGtal::WeickertKuhneEvolver<TImage>::update(Image& aF, const double& aT)
 {
   ASSERT( aF.extent() == myB.extent() ); 
+  ASSERT( aT >= 0 ); 
 
   //balloon term
-  trace.info() << "balloon term..." << std::endl; 
-   GodunovGradient<Image> gradient(aF, (myK >= 0), myH);
-   GradientModulus<GodunovGradient<Image> > m(gradient);
-  // Gradient<CentralDifference<Image> > gradient(aF, myH); 
-  // GradientModulus<Gradient<CentralDifference<Image> > > m(gradient);
+  if (myK != 0)
+    {
+      trace.info() << "balloon term..." << std::endl; 
+      GodunovGradient<Image> gradient(aF, (myK >= 0), myH);
+      GradientModulus<GodunovGradient<Image> > m(gradient);
 
-  {
-    Domain d = aF.domain();  
-    typename Domain::ConstIterator it = d.begin(); 
-    typename Domain::ConstIterator itEnd = d.end();
-    for ( ; it != itEnd; ++it)
-      aF.setValue(*it, (aF(*it) + ( aT*myK*myG(*it)*m(*it) ) ) ); 
-  }
+      {
+	Domain d = aF.domain();  
+	typename Domain::ConstIterator it = d.begin(); 
+	typename Domain::ConstIterator itEnd = d.end();
+	for ( ; it != itEnd; ++it)
+	  aF.setValue(*it, (aF(*it) + ( aT*myK*myG(*it)*m(*it) ) ) ); 
+      }
+    }
 
   //diffusion term
   trace.info() << "diffusion term..." << std::endl; 
     
+  // //AOS scheme
+  // for (Dimension k = 0; k < dimension; ++k)
+  //   { //for each dimension
+  //     diffusion(aF,aT,k); 
+  //   }
+  // {  //normalization
+  //   Domain d = aF.domain();  
+  //   typename Domain::ConstIterator it = d.begin(); 
+  //   typename Domain::ConstIterator itEnd = d.end();
+  //   for ( ; it != itEnd; ++it)
+  //     aF.setValue(*it, (aF(*it) / (double) dimension) ); 
+  // }
+
   //AOS scheme
+  std::vector<Image> l; 
   for (Dimension k = 0; k < dimension; ++k)
     { //for each dimension
-      diffusion(aF,aT,k); 
+      l.push_back( Image( aF.lowerBound(), aF.upperBound() ) ); 
+      diffusion(aF, l[k], aT, k); 
     }
   {  //normalization
     Domain d = aF.domain();  
     typename Domain::ConstIterator it = d.begin(); 
     typename Domain::ConstIterator itEnd = d.end();
     for ( ; it != itEnd; ++it)
-      aF.setValue(*it, (aF(*it) / (double) dimension) ); 
+      {
+	Value v = 0; 
+	for (Dimension k = 0; k < dimension; ++k)
+	  v += (l[k](*it) / (double) dimension); 
+	aF.setValue(*it, v ); 
+      }
   }
+
 }
 
 
@@ -107,8 +130,11 @@ template <typename TImage>
 inline
 void
 DGtal::WeickertKuhneEvolver<TImage>
-::diffusion(Image& aF, const double& aT, const Dimension& aDim)
+::diffusion(Image& aF, Image& aOutputF, const double& aT, const Dimension& aDim)
 {
+
+  ASSERT( aT >= 0 ); 
+  ASSERT( (aDim>=0) && (aDim<dimension) ); 
 
   double k = 2*aT/(myH*myH); 
 
@@ -119,13 +145,11 @@ DGtal::WeickertKuhneEvolver<TImage>
   Values data;
 
   //ranges
-  ASSERT( (aDim>=0) && (aDim<dimension) ); 
   std::vector<Dimension> vDims(dimension); 
   for (Dimension k = 0; k < aDim; ++k)
     vDims.at(k) = ( k + (dimension - aDim) ); 
   for (Dimension k = aDim; k < dimension; ++k)
     vDims.at(k) = (k - aDim);
-  //std::copy(vDims.begin(), vDims.end(), std::ostream_iterator<Dimension>(std::cerr, ", ") ); 
   Domain d = aF.domain();  
   typename Domain::ConstSubRange range = d.subRange(vDims);
   
@@ -148,16 +172,16 @@ DGtal::WeickertKuhneEvolver<TImage>
   data.push_back(aF(*it)); 
   
   for (++it, ++nextIt ; nextIt != ite; ++prevIt, ++it, ++nextIt )
-  {
-    alpha.push_back( 1 + k * myA(*it) * mod(*it) 
-		     * ( velocity( myB(*it), mod(*it), myB(*nextIt), mod(*nextIt) )  
-			 + velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) );  
-    beta.push_back( -k * myA(*it) * mod(*it) * 
-                ( velocity( myB(*it), mod(*it), myB(*nextIt), mod(*nextIt) ) ) ); 
-    gamma.push_back( -k * myA(*it) * mod(*it) * 
-                ( velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) ); 
-    data.push_back(aF(*it)); 
-  }
+    {
+      alpha.push_back( 1 + k * myA(*it) * mod(*it) 
+		       * ( velocity( myB(*it), mod(*it), myB(*nextIt), mod(*nextIt) )  
+			   + velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) );  
+      beta.push_back( -k * myA(*it) * mod(*it) * 
+		      ( velocity( myB(*it), mod(*it), myB(*nextIt), mod(*nextIt) ) ) ); 
+      gamma.push_back( -k * myA(*it) * mod(*it) * 
+		       ( velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) ); 
+      data.push_back(aF(*it)); 
+    }
   alpha.push_back( 1 + k * myA(*it) * mod(*it) * 2  
 		   * ( velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) );  
   gamma.push_back( -k * myA(*it) * mod(*it) 
@@ -168,12 +192,12 @@ DGtal::WeickertKuhneEvolver<TImage>
   //trace.info() << "Thomas algorithm..." << std::endl; 
   thomasAlgorithm(data, alpha, beta, gamma, data); 
 
-  //put returned data into aF
-  ASSERT(data.size() == aF.size());
+  //put returned data into aOutputF
+  ASSERT(data.size() == aOutputF.size());
   typename Values::iterator i = data.begin(); 
   it = itb; 
   for ( ; it != ite; ++it, ++i)
-    aF.setValue(*it, *i); 
+    aOutputF.setValue(*it, *i); 
 
 }
 
@@ -182,7 +206,7 @@ template <typename TImage>
 inline
 void
 DGtal::WeickertKuhneEvolver<TImage>::thomasAlgorithm(Values& aU, 
-      Values& aAlpha, Values& aBeta, Values& aGamma, const Values& aD)
+						     Values& aAlpha, Values& aBeta, Values& aGamma, const Values& aD)
 {
 
   unsigned int n = aD.size(); 
@@ -198,27 +222,27 @@ DGtal::WeickertKuhneEvolver<TImage>::thomasAlgorithm(Values& aU,
   //l is the lower diagonal of L
   m.push_back( aAlpha.at(0) );
   for (unsigned int i = 0; i < n-1; ++i)
-  {
-    l.push_back( aGamma.at(i) / m.at(i) ); 
-    m.push_back( aAlpha.at(i+1) - l.at(i)*aBeta.at(i) ); 
-  }
+    {
+      l.push_back( aGamma.at(i) / m.at(i) ); 
+      m.push_back( aAlpha.at(i+1) - l.at(i)*aBeta.at(i) ); 
+    }
   ASSERT(m.size()==n); 
   ASSERT(l.size()==(n-1)); 
   //forward substitution
   //compute y such that Ly=d
   y.push_back( aD.at(0) );
   for (unsigned int i = 1; i < n; ++i)
-  {
-    y.push_back( aD.at(i) - l.at(i-1)*y.at(i-1) ); 
-  }
+    {
+      y.push_back( aD.at(i) - l.at(i-1)*y.at(i-1) ); 
+    }
   ASSERT(y.size()==n); 
   //backward substitution
   //compute u such that Ru=y
   aU.at(n-1) = y.at(n-1)/m.at(n-1); 
   for (int i = n-2; i >= 0; --i)
-  {
-    aU.at(i) = ( y.at(i) - aBeta.at(i)*aU.at(i+1) ) / m.at(i);
-  }
+    {
+      aU.at(i) = ( y.at(i) - aBeta.at(i)*aU.at(i+1) ) / m.at(i);
+    }
   ASSERT(aU.size()==n); 
 }
 
@@ -251,7 +275,7 @@ inline
 bool
 DGtal::WeickertKuhneEvolver<TImage>::isValid() const
 {
-    return true;
+  return true;
 }
 
 
@@ -263,7 +287,7 @@ template <typename TImage>
 inline
 std::ostream&
 DGtal::operator<< ( std::ostream & out, 
-		  const WeickertKuhneEvolver<TImage> & object )
+		    const WeickertKuhneEvolver<TImage> & object )
 {
   object.selfDisplay( out );
   return out;
