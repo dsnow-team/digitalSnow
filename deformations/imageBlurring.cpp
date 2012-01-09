@@ -102,7 +102,6 @@ int main(int argc, char** argv)
   {
     ExactDiffusionEvolver<GrayImage> e; 
     e.update(img,tstep);
-    write(img, outputFilename); 
 
   } else if (algo.compare("weickert")==0)
   {
@@ -125,10 +124,10 @@ int main(int argc, char** argv)
 
     // pb of types unsigned char / double
     std::copy(img2.begin(), img2.end(), img.begin());
-    write(img, outputFilename, 0, 128); 
 
   } else trace.error() << "unknown algo. Try 'exact' or 'weickert' " << std::endl;
 
+  write(img, outputFilename); 
 
 
 	return 1;
