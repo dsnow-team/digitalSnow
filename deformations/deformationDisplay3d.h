@@ -7,7 +7,7 @@
 #include "DGtal/io/writers/VolWriter.h"
 
 template< typename TImage >
-bool writeImage(const TImage& img, string filename, string format)
+bool writeImage(const TImage& img, string filename, string format, const double& threshold = 0)
 {
 
   if (format.compare("png")==0)
@@ -19,14 +19,14 @@ bool writeImage(const TImage& img, string filename, string format)
     Domain::ConstIterator cItEnd = d.end(); 
     for ( ; cIt != cItEnd; ++cIt)
     { 
-      if (img(*cIt) <= 0) 
+      if (img(*cIt) <= threshold) 
 	      viewer << *cIt; 
     }
 
-    viewer << CameraPosition(-10.0, -10.0, -10.0)
-	   << CameraDirection(1.000000, 1.000000, 1.000000); 
-    // << CameraUpVector(0.000000, 1.000000, 0.000000)
-    // << CameraZNearFar(4.578200, 22.578199);
+    viewer << CameraPosition(231.588, 58.3985, 66.551)
+	   << CameraDirection(-0.994596, -0.0458738, -0.0931356) 
+     << CameraUpVector(-0.0930803, -0.0033444, 0.995653)
+     << CameraZNearFar(61.7287, 304.426);
 
     int size = img.extent().at(0); 
     std::stringstream s; 
@@ -49,7 +49,7 @@ bool writeImage(const TImage& img, string filename, string format)
     Domain::ConstIterator cItEnd = d.end(); 
     for ( ; cIt != cItEnd; ++cIt)
     { 
-      if (img(*cIt) <= 0) 
+      if (img(*cIt) <= threshold) 
 	       labelImage.setValue(*cIt,255);
       else  
 	       labelImage.setValue(*cIt,0);
@@ -78,7 +78,7 @@ bool writeImage(const TImage& img, string filename, string format)
 #include "DGtal/topology/helpers/Surfaces.h"
 
 template< typename TImage >
-bool displayImage(int argc, char** argv, const TImage& img)
+bool displayImage(int argc, char** argv, const TImage& img, const double& threshold = 0)
 {
 
   //KhalimskySpace
@@ -89,7 +89,7 @@ bool displayImage(int argc, char** argv, const TImage& img)
   SurfelAdjacency<3> SAdj( true );
   std::vector<std::vector<SCell> > vectConnectedSCell;
   //predicate
-  SimpleThresholdForegroundPredicate<TImage> predicate(img,0);
+  SimpleThresholdForegroundPredicate<TImage> predicate(img,threshold);
   //tracking 
   Surfaces<KSpace>::extractAllConnectedSCell(vectConnectedSCell,K, SAdj, predicate, true);
   

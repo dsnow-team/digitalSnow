@@ -83,8 +83,6 @@ void initWithDT(const TImage& inputImage, ImageContainerBySTLVector<typename TIm
   typename DT::OutputImage rDtImage = dt.compute ( rInputImage );
 
   //deduce the signed distance function 
-  //std::fill(outputImage.begin(),outputImage.end(), 1.0 );  
-  //std::copy(inputImage.begin(), inputImage.end(), outputImage.begin() ); 
   typename TImage::Domain::ConstIterator cIt = d.begin(); 
   typename TImage::Domain::ConstIterator cItEnd = d.end(); 
   for ( ; cIt != cItEnd; ++cIt)
@@ -113,3 +111,14 @@ void initWithDT(const TImage& inputImage, ImageContainerBySTLVector<typename TIm
     outputImage.setValue(p, (double) dist);  
   }
 }
+
+class Profile {
+private:  
+  double myEpsilon; 
+public: 
+  Profile (const double& anEpsilon) : myEpsilon( anEpsilon ) {}
+  double operator()( const double& v )
+  {
+   return 0.5 - 0.5*std::tanh(-v/(2*myEpsilon)); 
+  }
+}; 

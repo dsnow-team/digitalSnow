@@ -30,17 +30,6 @@ using namespace Z2i;
 #include "deformationDisplay2d.h"
 
 
-class Profile {
-private:  
-  double myEpsilon; 
-public: 
-  Profile (const double& anEpsilon) : myEpsilon( anEpsilon ) {}
-  double operator()( const double& v )
-  {
-   return 0.5 - 0.5*std::tanh(-v/(2*myEpsilon)); 
-  }
-}; 
-
 ///////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
@@ -191,7 +180,7 @@ int main(int argc, char** argv)
     epsilon = vm["epsilon"].as<double>(); 
     if (epsilon <= 0) 
       {
-        trace.error() << "epsilon should be greater than 1.0" << std::endl;
+        trace.error() << "epsilon should be greater than 0" << std::endl;
         return 0; 
       } 
 
@@ -217,7 +206,7 @@ int main(int argc, char** argv)
     {
 
       DGtal::trace.info() << "iteration #" << i << std::endl; 
-      e.update( implicitFunction, (tstep*i) ); 
+      e.update( implicitFunction, (tstep*step) ); 
 
       std::stringstream s; 
       s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 

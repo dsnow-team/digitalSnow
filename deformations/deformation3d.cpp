@@ -15,8 +15,14 @@ namespace po = boost::program_options;
 
 using namespace Z3i; 
 
-//evolver
+//evolvers
+//level set
 #include "WeickertKuhneEvolver.h"
+
+//phase field
+#include "ExactDiffusionEvolver.h"
+#include "ExactReactionEvolver.h"
+#include "LieSplittingEvolver.h"
 
 /////////////////////////// useful functions
 #include "deformationFunctions.h"
@@ -41,7 +47,10 @@ int main(int argc, char** argv)
     ("timeStep,t",  po::value<double>()->default_value(1.0), "Time step for the evolution" )
     ("displayStep,d",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
-    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
+    ("algo,a",  po::value<string>()->default_value("levelSet"), 
+"can be: \n <levelSet>  \n or <phaseField> " )
+    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force (only for level sets)" )
+    ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("png"), 
 "Output files format: either <png> (3d to 2d, default) or <vol> (3d)" )
@@ -79,10 +88,6 @@ int main(int argc, char** argv)
   if (!(vm.count("stepsNumber"))) trace.info() << "maximal number of steps: 1 by default" << std::endl; 
   max = vm["stepsNumber"].as<int>(); 
 
-  //balloon force
-  double k; 
-  if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-  k = vm["balloonForce"].as<double>(); 
 
   //files
   std::string outputFiles; 
@@ -95,7 +100,7 @@ int main(int argc, char** argv)
   if (!(vm.count("outputFormat"))) 
     trace.info() << "output files format is png (3d to 2d) " << std::endl;
   format = vm["outputFormat"].as<std::string>();
-  if ((format != "vector")&&(format != "raster")) 
+  if ((format != "png")&&(format != "vol")) 
     {
     trace.info() << "format is expected to be either png or vol " << std::endl;
     return 0; 
@@ -125,8 +130,6 @@ int main(int argc, char** argv)
 
     }
 
-
-
   //3d to 2d display
   std::stringstream ss; 
   ss << outputFiles << "0001"; 
@@ -135,42 +138,97 @@ int main(int argc, char** argv)
   //interactive display before the evolution
   if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
 
+  //algo
+  std::string algo; 
+  if (!(vm.count("algo"))) trace.info() << "default algorithm: levelSet" << std::endl; 
+  algo = vm["algo"].as<string>(); 
 
-  //data functions
-  ImageContainerBySTLVector<Domain,double> a(p,q); 
-  std::fill(a.begin(),a.end(), 1.0 );  
-  ImageContainerBySTLVector<Domain,double> b(p,q); 
-  std::fill(b.begin(),b.end(), 1.0 );  
-  ImageContainerBySTLVector<Domain,double> g(p,q); 
-  std::fill(g.begin(),g.end(), 1.0 );  
-
-  //interface evolver
-  WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,k,1); 
-
-  for (unsigned int i = 1; i <= max; ++i) 
+  if (algo.compare("levelSet")==0)
   {
-    std::stringstream s0; 
-    s0 << "iteration # " << i; 
-    DGtal::trace.beginBlock( s0.str() );
 
-    //update
-    e.update(implicitFunction,tstep); 
+    //balloon force
+    double k; 
+    if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
+    k = vm["balloonForce"].as<double>(); 
 
-    if ((i%step)==0) 
+    //data functions
+    ImageContainerBySTLVector<Domain,double> a(p,q); 
+    std::fill(a.begin(),a.end(), 1.0 );  
+    ImageContainerBySTLVector<Domain,double> b(p,q); 
+    std::fill(b.begin(),b.end(), 1.0 );  
+    ImageContainerBySTLVector<Domain,double> g(p,q); 
+    std::fill(g.begin(),g.end(), 1.0 );  
+
+    //interface evolver
+    WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,k,1); 
+
+    for (unsigned int i = 1; i <= max; ++i) 
     {
+      std::stringstream s0; 
+      s0 << "iteration # " << i; 
+      DGtal::trace.beginBlock( s0.str() );
 
-       //3d to 2d display
-       std::stringstream s; 
-       s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-       writeImage( implicitFunction, s.str(), format );
+      //update
+      e.update(implicitFunction,tstep); 
 
+      if ((i%step)==0) 
+      {
+
+         //3d to 2d display
+         std::stringstream s; 
+         s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+         writeImage( implicitFunction, s.str(), format );
+
+      }
+      DGtal::trace.endBlock();   
     }
-    DGtal::trace.endBlock();   
 
-  }
+    //interactive display after the evolution
+    if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
 
-  //interactive display after the evolution
-  if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
+  } else if (algo.compare("phaseField")==0)
+  {
+
+    double epsilon = 3.0; 
+    if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
+    epsilon = vm["epsilon"].as<double>(); 
+    if (epsilon <= 0) 
+      {
+        trace.error() << "epsilon should be greater than 0" << std::endl;
+        return 0; 
+      } 
+
+    //computing the profile from the signed distance
+    Profile p(epsilon); 
+    std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
+
+    typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
+    typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+    Diffusion diffusion; 
+    Reaction reaction( epsilon );
+    LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
+
+    for (unsigned int i = step; i <= max; i += step) 
+    {
+      std::stringstream s0; 
+      s0 << "iteration # " << i; 
+      DGtal::trace.beginBlock( s0.str() );
+
+      e.update( implicitFunction, (tstep*step) ); 
+
+      //3d to 2d display
+      std::stringstream s; 
+      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+      writeImage( implicitFunction, s.str(), format, 0.5 );
+
+      DGtal::trace.endBlock();   
+    }
+
+    //interactive display after the evolution
+    if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction, 0.5 ); 
+
+  } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
+
   
   return 0;
 }
