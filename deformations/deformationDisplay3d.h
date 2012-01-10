@@ -1,3 +1,5 @@
+#include <fstream>
+
 //display 3D
 // static 
 #include "DGtal/io/boards/Board3DTo2D.h"
@@ -23,10 +25,69 @@ bool writeImage(const TImage& img, string filename, string format, const double&
 	      viewer << *cIt; 
     }
 
-    viewer << CameraPosition(231.588, 58.3985, 66.551)
-	   << CameraDirection(-0.994596, -0.0458738, -0.0931356) 
-     << CameraUpVector(-0.0930803, -0.0033444, 0.995653)
-     << CameraZNearFar(61.7287, 304.426);
+  //reading camera configuration for the 3d to 2d projection
+  std::ifstream file(".camera", ios::in); 
+  if(file) 
+  {       
+
+    std::vector<std::vector<double> > p; //position/direciton
+    double znear, zfar; 
+
+    std::string line;
+    getline(file, line); //skip the first line
+    //for the three following lines
+    unsigned int nbLines = 1; 
+    while( std::getline(file, line) && (nbLines <= 3) ) 
+    {
+      p.push_back( std::vector<double>(3) ); 
+
+      std::istringstream isline( line );
+      std::string word;
+      std::getline( isline, word, ' ' ); //skip the first word
+      unsigned int k = 0; 
+      while ( std::getline( isline, word, ' ' ) && (k <= 3) )
+      {
+          std::istringstream isword( word.substr (0,word.size()-1) );
+          isword >> p[nbLines-1][k];
+          ++k; 
+      }
+      ++nbLines; 
+    }
+    //for the last line
+    if ( std::getline(file, line) ) 
+    { 
+      std::istringstream isline( line );
+      std::string word;
+      std::getline( isline, word, ' ' ); //skip the first word
+      std::getline( isline, word, ' ' );
+      std::istringstream is1( word );
+      is1 >> znear;
+      std::getline( isline, word, ' ' ); //skip the third word
+      std::getline( isline, word, ' ' ); //skip the fourth word
+      std::getline( isline, word, ' ' );
+      std::istringstream is2( word );
+      is1 >> zfar;
+    }
+    file.close();
+
+    //setting camera configuration
+    viewer << CameraPosition(p[0][0], p[0][1], p[0][2])
+	   << CameraDirection(p[1][0], p[1][1], p[1][2]) 
+     << CameraUpVector(p[2][0], p[2][1], p[2][2])
+     << CameraZNearFar(znear, zfar);
+
+  }
+  else  
+  {
+    trace.emphase() << "Failed to read '.camera'. Default camera configuration" << std::endl;
+
+    //default config
+    typename TImage::Vector v = img.extent(); 
+    viewer << CameraPosition(v.at(0)/2, v.at(1)/2, 2*v.at(2))
+	   << CameraDirection(0, 0, -1) 
+     << CameraUpVector(0, 1, 0)
+     << CameraZNearFar(v.at(2)/2, 3*v.at(2));
+  }
 
     int size = img.extent().at(0); 
     std::stringstream s; 
