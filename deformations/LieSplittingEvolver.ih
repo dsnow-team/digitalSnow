@@ -1,0 +1,106 @@
+/**
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
+/**
+ * @file LieSplittingEvolver.ih
+ * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
+ * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
+ *
+ * @date 2012/01/09
+ *
+ * @brief Implementation of inline methods defined in LieSplittingEvolver.h
+ *
+ * This file is part of the DGtal library.
+ */
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// ----------------------- Standard services ------------------------------
+
+
+template <typename TEvolver1, typename TEvolver2>
+inline
+DGtal::LieSplittingEvolver<TEvolver1, TEvolver2>
+::LieSplittingEvolver(const Evolver1& anEvolver1, const Evolver2& anEvolver2)
+: myEvolver1(anEvolver1), myEvolver2(anEvolver2)
+{ 
+}
+
+
+template <typename TEvolver1, typename TEvolver2>
+inline
+DGtal::LieSplittingEvolver<TEvolver1, TEvolver2>::~LieSplittingEvolver()
+{
+}
+
+
+template <typename TEvolver1, typename TEvolver2>
+inline
+void
+DGtal::LieSplittingEvolver<TEvolver1, TEvolver2>::update(Image& aF, const double& aT)
+{
+  ASSERT(aT >= 0); 
+
+  double t2 = aT/2.0; 
+  myEvolver1.update(aF,t2); 
+  myEvolver2.update(aF,t2); 
+
+}
+
+
+template <typename TEvolver1, typename TEvolver2>
+inline
+void
+DGtal::LieSplittingEvolver<TEvolver1, TEvolver2>::selfDisplay ( std::ostream & out ) const
+{
+  out << "[LieSplittingEvolver]\n";
+  out << "\n";
+}
+
+template <typename TEvolver1, typename TEvolver2>
+inline
+bool
+DGtal::LieSplittingEvolver<TEvolver1, TEvolver2>::isValid() const
+{
+    return (myEvolver1.isValid() && myEvolver2.isValid());
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Implementation of inline functions                                        //
+
+template <typename TEvolver1, typename TEvolver2>
+inline
+std::ostream&
+DGtal::operator<< ( std::ostream & out, 
+		  const LieSplittingEvolver<TEvolver1, TEvolver2> & object )
+{
+  object.selfDisplay( out );
+  return out;
+}
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+

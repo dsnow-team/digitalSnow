@@ -39,6 +39,8 @@ int main(int argc, char** argv)
     ("timeStep,t",  po::value<double>()->default_value(1.0), "Time step for the evolution" )
     ("displayStep,d",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
+    ("algo,a",  po::value<string>()->default_value("levelSet"), 
+"can be: \n 'levelSet'  \n or 'phaseField' " )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("raster"), 
