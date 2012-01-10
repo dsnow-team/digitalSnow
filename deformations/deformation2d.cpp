@@ -37,7 +37,7 @@ public:
   Profile (const double& anEpsilon) : myEpsilon( anEpsilon ) {}
   double operator()( const double& v )
   {
-   return 0.5 - 0.5*std::tanh(-2*v/myEpsilon); 
+   return 0.5 - 0.5*std::tanh(-v/(2*myEpsilon)); 
   }
 }; 
 
@@ -58,8 +58,9 @@ int main(int argc, char** argv)
     ("displayStep,d",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
-"can be: \n 'levelSet'  \n or 'phaseField' " )
-    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
+"can be: \n <levelSet>  \n or <phaseField> " )
+    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force (only for level sets)" )
+    ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("withFunction",   po::value<string>(), "Output pgm file basename, where the starting implicit function is stored" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("raster"), 
@@ -96,11 +97,6 @@ int main(int argc, char** argv)
   int max; 
   if (!(vm.count("stepsNumber"))) trace.info() << "maximal number of steps: 1 by default" << std::endl; 
   max = vm["stepsNumber"].as<int>(); 
-
-  //balloon force
-  double k; 
-  if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-  k = vm["balloonForce"].as<double>(); 
 
   //files
   std::string outputFiles; 
@@ -150,8 +146,13 @@ int main(int argc, char** argv)
   if (algo.compare("levelSet")==0)
   {
 
-     if (vm.count("withFunction")) 
-        drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
+    //balloon force
+    double k; 
+    if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
+    k = vm["balloonForce"].as<double>(); 
+
+    if (vm.count("withFunction")) 
+      drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
 
     std::stringstream ss; 
     ss << outputFiles << "0001"; 
@@ -185,7 +186,14 @@ int main(int argc, char** argv)
   } else if (algo.compare("phaseField")==0)
   {
 
-    double epsilon = 5.0; //set epsilon as input parameter
+    double epsilon = 3.0; 
+    if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
+    epsilon = vm["epsilon"].as<double>(); 
+    if (epsilon <= 0) 
+      {
+        trace.error() << "epsilon should be greater than 1.0" << std::endl;
+        return 0; 
+      } 
 
     //computing the profile from the signed distance
     Profile p(epsilon); 
