@@ -16,12 +16,30 @@ namespace po = boost::program_options;
 using namespace Z2i;
 
 //evolvers
+//level set
 #include "WeickertKuhneEvolver.h"
+
+//phase field
+#include "ExactDiffusionEvolver.h"
+#include "ExactReactionEvolver.h"
+#include "LieSplittingEvolver.h"
 
 
 /////////////////////////// useful functions
 #include "deformationFunctions.h"
 #include "deformationDisplay2d.h"
+
+
+class Profile {
+private:  
+  double myEpsilon; 
+public: 
+  Profile (const double& anEpsilon) : myEpsilon( anEpsilon ) {}
+  double operator()( const double& v )
+  {
+   return 0.5 - 0.5*std::tanh(-2*v/myEpsilon); 
+  }
+}; 
 
 ///////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
@@ -42,6 +60,7 @@ int main(int argc, char** argv)
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
 "can be: \n 'levelSet'  \n or 'phaseField' " )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
+    ("withFunction",   po::value<string>(), "Output pgm file basename, where the starting implicit function is stored" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("raster"), 
 "Output files format: either <raster> (image, default) or <vector> (domain representation)" );
@@ -121,32 +140,85 @@ int main(int argc, char** argv)
       initWithDT( img, implicitFunction );
     }
  
-  std::stringstream ss; 
-  ss << outputFiles << "0001"; 
-  drawContour(implicitFunction, ss.str(), format); 
+
   
-  //data functions
-  ImageContainerBySTLVector<Domain,double> a(p,q); 
-  std::fill(a.begin(),a.end(), 1.0 );  
-  ImageContainerBySTLVector<Domain,double> b(p,q); 
-  std::fill(b.begin(),b.end(), 1.0 );  
-  ImageContainerBySTLVector<Domain,double> g(p,q); 
-  std::fill(g.begin(),g.end(), 1.0 );  
+  //algo
+  std::string algo; 
+  if (!(vm.count("algo"))) trace.info() << "default algorithm: levelSet" << std::endl; 
+  algo = vm["algo"].as<string>(); 
 
-  //evolution
-  WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,k,1); 
-
-  for (unsigned int i = 1; i <= max; ++i) 
+  if (algo.compare("levelSet")==0)
   {
-    DGtal::trace.info() << "iteration #" << i << std::endl;   
-    e.update(implicitFunction,tstep); 
-    if ((i%step)==0) 
+
+     if (vm.count("withFunction")) 
+        drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
+
+    std::stringstream ss; 
+    ss << outputFiles << "0001"; 
+    drawContour(implicitFunction, ss.str(), format); 
+
+    //data functions
+    ImageContainerBySTLVector<Domain,double> a(p,q); 
+    std::fill(a.begin(),a.end(), 1.0 );  
+    ImageContainerBySTLVector<Domain,double> b(p,q); 
+    std::fill(b.begin(),b.end(), 1.0 );  
+    ImageContainerBySTLVector<Domain,double> g(p,q); 
+    std::fill(g.begin(),g.end(), 1.0 );  
+
+    //evolution
+    WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,k,1); 
+    for (unsigned int i = 1; i <= max; ++i) 
     {
+
+      DGtal::trace.info() << "iteration #" << i << std::endl;   
+      e.update( implicitFunction, tstep); 
+
+      if ((i%step)==0) 
+      {
+        std::stringstream s; 
+        s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+        drawContour(implicitFunction, s.str(), format); 
+      }
+
+    }
+
+  } else if (algo.compare("phaseField")==0)
+  {
+
+    double epsilon = 5.0; //set epsilon as input parameter
+
+    //computing the profile from the signed distance
+    Profile p(epsilon); 
+    std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
+
+     if (vm.count("withFunction")) 
+        drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
+
+    std::stringstream ss; 
+    ss << outputFiles << "0001"; 
+    drawContour(implicitFunction, ss.str(), format, 0.5); 
+
+
+    typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
+    typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+    Diffusion diffusion; 
+    Reaction reaction( epsilon );
+    LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
+
+    for (unsigned int i = step; i <= max; i += step) 
+    {
+
+      DGtal::trace.info() << "iteration #" << i << std::endl; 
+      e.update( implicitFunction, (tstep*i) ); 
+
       std::stringstream s; 
       s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-      drawContour(implicitFunction, s.str(), format); 
+      drawContour(implicitFunction, s.str(), format, 0.5); 
+
     }
-  }
+
+  } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
+
   
   return 1;
 }

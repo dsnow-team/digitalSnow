@@ -41,7 +41,7 @@
 template <typename TEvolver1, typename TEvolver2>
 inline
 DGtal::LieSplittingEvolver<TEvolver1, TEvolver2>
-::LieSplittingEvolver(const Evolver1& anEvolver1, const Evolver2& anEvolver2)
+::LieSplittingEvolver(Evolver1& anEvolver1, Evolver2& anEvolver2)
 : myEvolver1(anEvolver1), myEvolver2(anEvolver2)
 { 
 }

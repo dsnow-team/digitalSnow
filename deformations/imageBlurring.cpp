@@ -139,7 +139,7 @@ int main(int argc, char** argv)
     // pb of types unsigned char / double
     std::copy(img2.begin(), img2.end(), img.begin());
 
-  } else trace.error() << "unknown algo. Try 'exact' or 'weickert' " << std::endl;
+  } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
 
   write(img, outputFilename); 
 

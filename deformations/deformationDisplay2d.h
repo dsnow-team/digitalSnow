@@ -6,7 +6,7 @@
 #include "DGtal/io/writers/PNMWriter.h"
 
 template< typename TImage >
-bool drawContour(const TImage& img, std::string filename, std::string format)
+bool drawContour(const TImage& img, std::string filename, std::string format, const double& threshold = 0)
 {
 
   if (format.compare("vector")==0)
@@ -22,7 +22,7 @@ bool drawContour(const TImage& img, std::string filename, std::string format)
   b << img.lowerBound() << img.upperBound();
   for ( ; cIt != cItEnd; ++cIt)
   { 
-    if (img(*cIt) <= 0) 
+    if (img(*cIt) <= threshold) 
       b << CustomStyle( (*cIt).className(), new CustomFillColor(blue) );
     else
       b << CustomStyle( (*cIt).className(), new CustomFillColor(green) );
@@ -51,7 +51,7 @@ bool drawContour(const TImage& img, std::string filename, std::string format)
     Domain::ConstIterator cItEnd = d.end(); 
     for ( ; cIt != cItEnd; ++cIt)
     { 
-      if (img(*cIt) <= 0) 
+      if (img(*cIt) <= threshold) 
 	       labelImage.setValue(*cIt,255);
       else  
 	       labelImage.setValue(*cIt,0);
@@ -66,5 +66,15 @@ bool drawContour(const TImage& img, std::string filename, std::string format)
  } else return false; 
 }
 
-
+template< typename TImage >
+void drawFunction( const TImage& img, std::string basename) 
+{
+    typedef GradientColorMap<typename TImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
+    typename TImage::Value min = *min_element( img.begin(),img.end() ); 
+    typename TImage::Value max = *max_element( img.begin(),img.end() );
+    //std::cerr << min << " " << max << std::endl;  
+    std::stringstream s; 
+    s << basename << ".pgm"; 
+    PNMWriter<TImage,ColorMap>::exportPGM( s.str(), img, min, max, true );
+} 
 

@@ -80,6 +80,9 @@ namespace DGtal
     typedef TEvolver1 Evolver1;
     typedef TEvolver2 Evolver2;
 
+    typedef typename Evolver1::Image Image; 
+    BOOST_STATIC_ASSERT ((boost::is_same< Image, typename Evolver2::Image >::value)); 
+
     // ----------------------- Standard services ------------------------------
   public:
 
@@ -88,7 +91,7 @@ namespace DGtal
      * @param anEvolver1 first evolver
      * @param anEvolver2 second evolver
      */
-    LieSplittingEvolver(const Evolver1& anEvolver1, const Evolver2& anEvolver2);
+    LieSplittingEvolver(Evolver1& anEvolver1, Evolver2& anEvolver2);
 
     /**
      * Destructor. Does nothing.
@@ -125,13 +128,13 @@ namespace DGtal
   private:
 
     /**
-     * Constant reference on the first evolver
+     * reference on the first evolver
      */
-    const Evolver1& myEvolver1; 
+    Evolver1& myEvolver1; 
     /**
-     * Constant reference on the second evolver
+     * reference on the second evolver
      */
-    const Evolver2& myEvolver2; 
+    Evolver2& myEvolver2; 
     // ------------------------- Hidden services ------------------------------
   protected:
 
