@@ -47,8 +47,9 @@ int main(int argc, char** argv)
     ("help,h", "display this message")
     ("inputImage,i",  po::value<string>(), "gray level image (.pgm)" )
     ("algo,a",  po::value<string>()->default_value("exact"), 
-"can be: \n 'exact' (sigma between 0.001 and 0.1) \n or 'weickert' (sigma between 0.3 and 3)" )
-    ("sigma,s",  po::value<double>()->default_value(0.01), "controls the amount of blurring " )
+"can be: \n 'exact'  \n or 'weickert' " )
+    ("sigma,s",  po::value<double>()->default_value(0.01), 
+"controls the amount of blurring \n (between 0 and 100) " )
     ("outputFile,o",   po::value<string>()->default_value("output"), "Output file basename" );
 
   po::variables_map vm;
@@ -95,16 +96,17 @@ int main(int argc, char** argv)
 
   //Diffusion
   trace.info() << "sigma: " << sigma << std::endl; 
-  double tstep = (sigma*sigma)/2.0; 
-  trace.info() << "time step: " << tstep << std::endl;
 
   if (algo.compare("exact")==0)
   {
     ExactDiffusionEvolver<GrayImage> e; 
-    e.update(img,tstep);
+    e.update(img,sigma);
 
   } else if (algo.compare("weickert")==0)
   {
+
+    double tstep = (sigma*sigma)/2.0; 
+    trace.info() << "time step: " << tstep << std::endl;
 
     //data functions
     ImageContainerBySTLVector<Domain,double> a(img.lowerBound(),img.upperBound()); 
@@ -120,8 +122,20 @@ int main(int argc, char** argv)
  
     //evolver
     WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,0,1);
-    e.update(img2,tstep);
-
+    double tstepMax = 5.0;
+    double q = std::floor( tstep / tstepMax );
+    double r = tstep - q*tstepMax;  
+    int k = (int) q; 
+    for (unsigned int i = 0; i < k ; ++i ) 
+      {
+        trace.info() << "iteration #" << (i+1) << std::endl;
+        e.update(img2, tstepMax);
+      }
+    if (r != 0) 
+      {
+        trace.info() << "iteration #" << (k+1) << std::endl;
+        e.update(img2, r);
+      }
     // pb of types unsigned char / double
     std::copy(img2.begin(), img2.end(), img.begin());
 
