@@ -48,8 +48,8 @@ int main(int argc, char** argv)
     ("inputImage,i",  po::value<string>(), "gray level image (.pgm)" )
     ("algo,a",  po::value<string>()->default_value("exact"), 
 "can be: \n 'exact'  \n or 'weickert' " )
-    ("sigma,s",  po::value<double>()->default_value(0.01), 
-"controls the amount of blurring \n (between 0 and 100) " )
+    ("sigma,s",  po::value<double>()->default_value(2), 
+"controls the amount of blurring \n (between 0 and 50) " )
     ("outputFile,o",   po::value<string>()->default_value("output"), "Output file basename" );
 
   po::variables_map vm;
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     {
       trace.info()<< "Image-blurring" << std::endl
       << "Basic usage: "<<std::endl
-      << argv[0] << " -a exact -s 0.02 " << std::endl
+      << argv[0] << " -a exact -s 2 " << std::endl
       << general_opt << "\n";
       return 0;
     }
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 
   //sigma
   double sigma; 
-  if (!(vm.count("sigma"))) trace.info() << "sigma default value: 0.01" << std::endl; 
+  if (!(vm.count("sigma"))) trace.info() << "sigma default value: 2" << std::endl; 
   sigma = vm["sigma"].as<double>(); 
 
   //output file

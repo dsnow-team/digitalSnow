@@ -22,7 +22,7 @@ namespace DGtal{
     //ASSERT
     BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
     BOOST_STATIC_ASSERT((boost::is_same< typename TImage::Value, 
-       PointVector<2,double> >::value));
+			 std::complex<double> >::value));
 
     // ----------------------- Types ------------------------------
   public:
@@ -35,11 +35,6 @@ namespace DGtal{
 
     typedef typename Image::Dimension Dimension;
     static const typename Image::Dimension dimension = Image::dimension;
-    
-//    typedef int Scalar; 
-//    typedef ImageContainerBySTLVector<  Domain, Scalar > ScalarImage;
-
-    
 
 
     // ----------------------- Standard services ------------------------------

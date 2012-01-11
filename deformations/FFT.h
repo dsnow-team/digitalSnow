@@ -3,6 +3,8 @@
 
 #include <fftw3.h>
 
+#include <complex>
+
 #include <DGtal/images/CImageContainer.h>
 
 namespace DGtal{
@@ -32,7 +34,7 @@ namespace DGtal{
     typedef typename Image::Dimension Dimension;
     static const typename Image::Dimension dimension = Image::dimension;
     
-    typedef PointVector<2, double> Complex; 
+    typedef std::complex<double> Complex; 
     typedef ImageContainerBySTLVector<  Domain, Complex > ComplexImage;
 
     

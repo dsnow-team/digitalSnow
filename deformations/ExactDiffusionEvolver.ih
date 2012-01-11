@@ -88,7 +88,7 @@ DGtal::ExactDiffusionEvolver<TImage>::update(Image& aF, const double& aT)
       double c = std::exp( -4*M_PI*M_PI*aT*norm2 );
 
       //new value
-      typename FFT::Complex newValue( c*value[0], c*value[1] );
+      typename FFT::Complex newValue( c*real(value), c*imag(value) );
  
       frequentialRepresentation.setValue( p, newValue );
    }

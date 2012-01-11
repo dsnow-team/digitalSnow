@@ -8,7 +8,7 @@ template <typename TImage>
 inline
 DGtal::IFFT<TImage>
 ::IFFT( const Image& anImage)
-: myImage( anImage )
+  : myImage( anImage )
 {
 }
 
@@ -39,44 +39,44 @@ DGtal::IFFT<TImage>::compute(TOutputImage& anImage)
       n *= t[i];  
     }
 
-//using fftw library
+  //using fftw library
   //input and output arrays
-   fftw_complex* spatial_repr;
-   fftw_complex* frequency_repr;
-   spatial_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
-   frequency_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
+  fftw_complex* spatial_repr;
+  fftw_complex* frequency_repr;
+  spatial_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
+  frequency_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
 
   //fill the arrays
   Domain d = myImage.domain();  
   typename Domain::ConstIterator it = d.begin(); 
   typename Domain::ConstIterator itEnd = d.end(); 
-   for(unsigned int i=0; it != itEnd; ++it, ++i)
-   {
+  for(unsigned int i=0; it != itEnd; ++it, ++i)
+    {
       Value c = myImage(*it); 
-      frequency_repr[i][0] = c[0]; //real part
-      frequency_repr[i][1] = c[1]; //imaginary part
-   }
+      frequency_repr[i][0] = real(c); //real part
+      frequency_repr[i][1] = imag(c); //imaginary part
+    }
 
   //plan
-   fftw_plan plan;
+  fftw_plan plan;
   plan = fftw_plan_dft( dimension, t, frequency_repr, spatial_repr, FFTW_BACKWARD, FFTW_ESTIMATE ); 
 
   //computation
-   fftw_execute(plan);
+  fftw_execute(plan);
 
   //copy 
   it = d.begin();
   for(unsigned int i=0; (i < n); ++it, ++i)
-  {
-    //real part divided by n
-    double s = spatial_repr[i][0]/n; 
-    anImage.setValue( *it, static_cast<OutputValue>(s) ); 
-  }
+    {
+      //real part divided by n
+      double s = spatial_repr[i][0]/n; 
+      anImage.setValue( *it, static_cast<OutputValue>(s) ); 
+    }
 
   //end
-   fftw_destroy_plan(plan);
-   fftw_free(spatial_repr);
-   fftw_free(frequency_repr);
+  fftw_destroy_plan(plan);
+  fftw_free(spatial_repr);
+  fftw_free(frequency_repr);
 }
 
 
@@ -94,7 +94,7 @@ inline
 bool
 DGtal::IFFT<TImage>::isValid() const
 {
-    return true;
+  return true;
 }
 
 
