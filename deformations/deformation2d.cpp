@@ -160,7 +160,10 @@ int main(int argc, char** argv)
     for (unsigned int i = 1; i <= max; ++i) 
     {
 
-      DGtal::trace.info() << "iteration #" << i << std::endl;   
+      std::stringstream s0; 
+      s0 << "iteration # " << i; 
+      DGtal::trace.beginBlock( s0.str() );
+
       e.update( implicitFunction, tstep); 
 
       if ((i%step)==0) 
@@ -170,6 +173,7 @@ int main(int argc, char** argv)
         drawContour(implicitFunction, s.str(), format); 
       }
 
+      DGtal::trace.endBlock(); 
     }
 
   } else if (algo.compare("phaseField")==0)
@@ -205,13 +209,17 @@ int main(int argc, char** argv)
     for (unsigned int i = step; i <= max; i += step) 
     {
 
-      DGtal::trace.info() << "iteration #" << i << std::endl; 
+      std::stringstream s0; 
+      s0 << "iteration # " << i; 
+      DGtal::trace.beginBlock( s0.str() );
+
       e.update( implicitFunction, (tstep*step) ); 
 
       std::stringstream s; 
       s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
       drawContour(implicitFunction, s.str(), format, 0.5); 
 
+      DGtal::trace.endBlock(); 
     }
 
   } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
