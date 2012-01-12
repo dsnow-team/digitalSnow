@@ -95,9 +95,7 @@ DGtal::WeickertKuhneEvolver<TImage>::update(Image& aF, const double& aT)
   for (Dimension k = 0; k < dimension; ++k)
     { //for each dimension
       images.push_back( Image( aF.lowerBound(), aF.upperBound() ) ); 
-      trace.beginBlock("diffusion"); 
       diffusion(aF, images[k], aT, k);
-      trace.endBlock(); 
     }
   {  //normalization
     Domain d = aF.domain();  

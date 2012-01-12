@@ -29,6 +29,33 @@ using namespace Z2i;
 #include "deformationFunctions.h"
 #include "deformationDisplay2d.h"
 
+template< typename TEvolver, typename TImage >
+void evolution (TEvolver& e, TImage& img, 
+		const int& n, const double& tstep, 
+		const double& R0, const double& threshold = 0.0) 
+{
+
+  int i = 0; 
+  int area = setSize( img, threshold ); 
+  while ( area > 0 && (i < n) ) 
+    {
+      ++i; 
+      std::stringstream s0; 
+      s0 << "iteration # " << i; 
+      DGtal::trace.beginBlock( s0.str() );
+
+      e.update( img, tstep); 
+
+      DGtal::trace.endBlock(); 
+
+      area = setSize( img, threshold ); 
+      std::cout << "# time   expected area   computed area" << std::endl; 
+      double t = i*tstep; 
+      double Rt = std::sqrt(R0*R0 - (2*t)); 
+      std::cout << t << " " << (M_PI*Rt*Rt) << " " << area << std::endl; 
+    }
+
+}
 
 ///////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
@@ -45,7 +72,7 @@ int main(int argc, char** argv)
     ("timeStep,t",  po::value<double>()->default_value(1.0), "Time step for the evolution" )
     ("iterationsNumber,n",  po::value<int>()->default_value(10), "Maximal number of iterations" )
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
-"can be: \n <levelSet>  \n or <phaseField> " )
+     "can be: \n <levelSet>  \n or <phaseField> " )
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("withFunction",   po::value<string>(), "Output pgm file basename, where the starting implicit function is stored" );
 
@@ -56,9 +83,9 @@ int main(int argc, char** argv)
   if(vm.count("help")||argc<=1)
     {
       trace.info()<< "MCM test on disks" << std::endl
-      << "Basic usage: "<<std::endl
-      << argv[0] << " [other options] -s 128" << std::endl
-      << general_opt << "\n";
+		  << "Basic usage: "<<std::endl
+		  << argv[0] << " [other options] -s 128" << std::endl
+		  << general_opt << "\n";
       return 0;
     }
   
@@ -87,9 +114,6 @@ int main(int argc, char** argv)
   trace.info() << "# starting interface initialized with a disk of radius "; 
   trace.info() << R0 << std::endl;
  
-  std::cout << "# expected time   computed time" << std::endl; 
-  std::cout << (0.5*R0*R0) << " "; 
-  unsigned int i = 0; //number of iterations
 
   //algo
   std::string algo; 
@@ -97,74 +121,50 @@ int main(int argc, char** argv)
   algo = vm["algo"].as<string>(); 
 
   if (algo.compare("levelSet")==0)
-  {
-
-
-    if (vm.count("withFunction")) 
-      drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
-
-
-    //data functions
-    ImageContainerBySTLVector<Domain,double> f(p,q); 
-    std::fill(f.begin(),f.end(), 1.0 );  
-
-    //evolution
-    WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(f,f,f,0,1); 
-    while ( setSize( implicitFunction ) > 0 && (i < n) ) 
     {
-      ++i; 
-      std::stringstream s0; 
-      s0 << "iteration # " << i; 
-      DGtal::trace.beginBlock( s0.str() );
 
-      e.update( implicitFunction, tstep); 
 
-      DGtal::trace.endBlock(); 
+      if (vm.count("withFunction")) 
+	drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
 
-    }
 
-  } else if (algo.compare("phaseField")==0)
-  {
+      //data functions
+      ImageContainerBySTLVector<Domain,double> f(p,q); 
+      std::fill(f.begin(),f.end(), 1.0 );  
 
-    double epsilon = 3.0; 
-    if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
-    epsilon = vm["epsilon"].as<double>(); 
-    if (epsilon <= 0) 
-      {
-        trace.error() << "epsilon should be greater than 0" << std::endl;
-        return 0; 
-      } 
+      //evolution
+      WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(f,f,f,0,1); 
+      evolution(e, implicitFunction, n, tstep, R0); 
 
-    //computing the profile from the signed distance
-    Profile p(epsilon); 
-    std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
+    } else if (algo.compare("phaseField")==0)
+    {
 
-     if (vm.count("withFunction")) 
+      double epsilon = 3.0; 
+      if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
+      epsilon = vm["epsilon"].as<double>(); 
+      if (epsilon <= 0) 
+	{
+	  trace.error() << "epsilon should be greater than 0" << std::endl;
+	  return 0; 
+	} 
+
+      //computing the profile from the signed distance
+      Profile p(epsilon); 
+      std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
+
+      if (vm.count("withFunction")) 
         drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
 
 
-    typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
-    typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
-    Diffusion diffusion; 
-    Reaction reaction( epsilon );
-    LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
- 
-    while ( setSize( implicitFunction, 0.5 ) > 0 && (i < n) ) 
-    {
-      ++i; 
-      std::stringstream s0; 
-      s0 << "iteration # " << i; 
-      DGtal::trace.beginBlock( s0.str() );
+      typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
+      typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+      Diffusion diffusion; 
+      Reaction reaction( epsilon );
+      LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
+      evolution(e, implicitFunction, n, tstep, R0, 0.5); 
 
-      e.update( implicitFunction, tstep ); 
+    } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
 
-      DGtal::trace.endBlock(); 
-
-    }
-
-  } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
-
-  std::cout << (i*tstep) << std::endl; 
 
   return 1;
 }

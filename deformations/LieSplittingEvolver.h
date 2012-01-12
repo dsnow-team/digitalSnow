@@ -58,9 +58,9 @@ namespace DGtal
    * \brief Aim: Computes the combination of two evolution terms 
    * following a Lie splitting scheme.  
    * Actually, to transform a function f at time t0 into a next one
-   * at time t0 + timeStep, f is first evolved at time t0 + timeStep/2
-   * according to the first term and then evolved at time t0 + timeStep
-   * according to the second term. 
+   * at time t0 + delta, f is first evolved during a time step equal to 
+   * delta according to the first term and then evolved during the same
+   * time step according to the second term. 
    *
    * @tparam TEvolver1, first type of evolver 
    * @tparam TEvolver2, second type of evolver 
@@ -69,10 +69,10 @@ namespace DGtal
   class LieSplittingEvolver
   {
 
-    //concept to do
+    //concepts to write
     //ASSERT
-    //BOOST_CONCEPT_ASSERT(( CEvolver<TEvolver1> )); 
-    //BOOST_CONCEPT_ASSERT(( CEvolver<TEvolver2> )); 
+    //BOOST_CONCEPT_ASSERT(( CImplicitEvolver<TEvolver1> )); 
+    //BOOST_CONCEPT_ASSERT(( CImplicitEvolver<TEvolver2> )); 
 
     // ----------------------- Types ------------------------------
   public:

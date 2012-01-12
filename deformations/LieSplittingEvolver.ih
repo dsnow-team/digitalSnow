@@ -61,9 +61,8 @@ DGtal::LieSplittingEvolver<TEvolver1, TEvolver2>::update(Image& aF, const double
 {
   ASSERT(aT >= 0); 
 
-  double t2 = aT/2.0; 
-  myEvolver1.update(aF,t2); 
-  myEvolver2.update(aF,t2); 
+  myEvolver1.update(aF,aT); 
+  myEvolver2.update(aF,aT); 
 
 }
 
