@@ -74,7 +74,7 @@ DGtal::WeickertKuhneEvolver<TImage>::update(Image& aF, const double& aT)
   //balloon term
   if (myK != 0)
     {
-      trace.info() << "balloon term..." << std::endl; 
+      //trace.info() << "balloon term..." << std::endl; 
       GodunovGradient<Image> gradient(aF, (myK >= 0), myH);
       GradientModulus<GodunovGradient<Image> > m(gradient);
 
@@ -88,14 +88,16 @@ DGtal::WeickertKuhneEvolver<TImage>::update(Image& aF, const double& aT)
     }
 
   //diffusion term
-  trace.info() << "diffusion term..." << std::endl; 
+  //trace.info() << "diffusion term..." << std::endl; 
 
   //AOS scheme
   std::vector<Image> images; 
   for (Dimension k = 0; k < dimension; ++k)
     { //for each dimension
       images.push_back( Image( aF.lowerBound(), aF.upperBound() ) ); 
-      diffusion(aF, images[k], aT, k); 
+      trace.beginBlock("diffusion"); 
+      diffusion(aF, images[k], aT, k);
+      trace.endBlock(); 
     }
   {  //normalization
     Domain d = aF.domain();  
@@ -126,10 +128,19 @@ DGtal::WeickertKuhneEvolver<TImage>
   double k = 2*aT/(myH*myH); 
 
   //values vector
-  Values alpha;
-  Values beta;
-  Values gamma;
-  Values data;
+  Values alpha, beta, gamma, data;
+  //size
+  Vector e = aF.extent(); 
+  unsigned int size = 0; 
+  for (Dimension k = 0; k < aDim; ++k)
+    size *= e.at(k); 
+  //reserve
+  alpha.reserve(size); 
+  beta.reserve(size); 
+  gamma.reserve(size); 
+  data.reserve(size); 
+
+  trace.beginBlock("fill values vectors"); 
 
   //ranges
   std::vector<Dimension> vDims(dimension); 
@@ -174,13 +185,17 @@ DGtal::WeickertKuhneEvolver<TImage>
   gamma.push_back( -k * myA(*it) * mod(*it) 
 		   * ( velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) ); 
   data.push_back(aF(*it)); 
+
+  trace.endBlock(); 
+
   
   //Linear system resolution by Thomas algorithm
-  //trace.info() << "Thomas algorithm..." << std::endl; 
+  trace.beginBlock("thomas"); 
   thomasAlgorithm(data, alpha, beta, gamma, data); 
+  trace.endBlock(); 
 
   //put returned data into aOutputF
-  ASSERT(data.size() == aOutputF.size());
+  ASSERT(size == aOutputF.size());
   typename Values::iterator i = data.begin(); 
   it = itb; 
   for ( ; it != ite; ++it, ++i)
