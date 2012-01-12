@@ -3,6 +3,28 @@
 
 /////////////////////////// useful functions
 template< typename TImage >
+int setSize(TImage& img, const double& threshold = 0)
+{
+ 
+  int c = 0; //counter
+
+  typename TImage::Domain d = img.domain(); 
+  typename TImage::Domain::ConstIterator cIt = d.begin(); 
+  typename TImage::Domain::ConstIterator cItEnd = d.end(); 
+  for ( ; cIt != cItEnd; ++cIt)
+  { //for each domain point
+
+    typedef typename TImage::Point Point; 
+    Point p( *cIt ); //point p
+
+    if (img(p) <= threshold) ++c; 
+  }
+
+  return c; 
+}
+
+
+template< typename TImage >
 void initWithBall(TImage& img, const typename TImage::Point& c, const double& r)
 {
  

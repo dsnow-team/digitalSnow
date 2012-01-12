@@ -21,16 +21,18 @@ include_directories(${Boost_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES(/usr/include/)
 LINK_DIRECTORIES(/usr/lib/)
 
+##########################################
+ADD_EXECUTABLE(3dVolViewer 3dVolViewer)
+TARGET_LINK_LIBRARIES(3dVolViewer ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
+
+ADD_EXECUTABLE(testDisk testDisk)
+TARGET_LINK_LIBRARIES(testDisk ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
+
 ADD_EXECUTABLE(deformation2d deformation2d)
 TARGET_LINK_LIBRARIES(deformation2d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
 
 ADD_EXECUTABLE(deformation3d deformation3d)
 TARGET_LINK_LIBRARIES(deformation3d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
-
-ADD_EXECUTABLE(3dVolViewer 3dVolViewer)
-TARGET_LINK_LIBRARIES(3dVolViewer ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
-
-
 
 ADD_EXECUTABLE(imageBlurring imageBlurring)
 TARGET_LINK_LIBRARIES(imageBlurring ${DGTAL_LIBRARIES} fftw3)
