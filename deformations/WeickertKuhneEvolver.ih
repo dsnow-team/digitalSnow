@@ -131,16 +131,15 @@ DGtal::WeickertKuhneEvolver<TImage>
   Values alpha, beta, gamma, data;
   //size
   Vector e = aF.extent(); 
-  unsigned int size = 0; 
-  for (Dimension k = 0; k < aDim; ++k)
-    size *= e.at(k); 
+  int size = 1; 
+  for (Dimension k = 0; k < dimension; ++k)
+      size *= e.at(k);
+
   //reserve
   alpha.reserve(size); 
   beta.reserve(size); 
   gamma.reserve(size); 
   data.reserve(size); 
-
-  trace.beginBlock("fill values vectors"); 
 
   //ranges
   std::vector<Dimension> vDims(dimension); 
@@ -160,39 +159,46 @@ DGtal::WeickertKuhneEvolver<TImage>
   ASSERT(nextIt != ite);   
 
   //operator
-  GradientModulus<Gradient<CentralDifference<Image> > > mod(aF,myH); 
+  typedef GradientModulus<Gradient<CentralDifference<Image> > > Modulus; 
+  Modulus mod(aF,myH); 
+  typename Modulus::OutputValue mPrev, m, mNext; 
+  m = mod(*it); mNext = mod(*nextIt); 
 
   //fill values vectors
-  alpha.push_back( 1 + k * myA(*it) * mod(*it) * 2 
-		   * velocity( myB(*it), mod(*it), myB(*nextIt), mod(*nextIt) ) );  
-  beta.push_back( -k * myA(*it) * mod(*it) 
-		  * velocity( myB(*it), mod(*it), myB(*nextIt), mod(*nextIt) ) );  
+  alpha.push_back( 1 + k * myA(*it) * m * 2 
+		   * velocity( myB(*it), m, myB(*nextIt), mNext ) );  
+  beta.push_back( -k * myA(*it) * m 
+		  * velocity( myB(*it), m, myB(*nextIt), mNext ) );  
   data.push_back(aF(*it)); 
   
   for (++it, ++nextIt ; nextIt != ite; ++prevIt, ++it, ++nextIt )
     {
-      alpha.push_back( 1 + k * myA(*it) * mod(*it) 
-		       * ( velocity( myB(*it), mod(*it), myB(*nextIt), mod(*nextIt) )  
-			   + velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) );  
-      beta.push_back( -k * myA(*it) * mod(*it) * 
-		      ( velocity( myB(*it), mod(*it), myB(*nextIt), mod(*nextIt) ) ) ); 
-      gamma.push_back( -k * myA(*it) * mod(*it) * 
-		       ( velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) ); 
+      mPrev = m; 
+      m = mNext; 
+      mNext = mod(*nextIt); 
+
+      alpha.push_back( 1 + k * myA(*it) * m 
+		       * ( velocity( myB(*it), m, myB(*nextIt), mNext )  
+			   + velocity( myB(*it), m, myB(*prevIt), mPrev ) ) );  
+      beta.push_back( -k * myA(*it) * m * 
+		      ( velocity( myB(*it), m, myB(*nextIt), mNext ) ) ); 
+      gamma.push_back( -k * myA(*it) * m * 
+		       ( velocity( myB(*it), m, myB(*prevIt), mPrev ) ) ); 
       data.push_back(aF(*it)); 
     }
-  alpha.push_back( 1 + k * myA(*it) * mod(*it) * 2  
-		   * ( velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) );  
-  gamma.push_back( -k * myA(*it) * mod(*it) 
-		   * ( velocity( myB(*it), mod(*it), myB(*prevIt), mod(*prevIt) ) ) ); 
-  data.push_back(aF(*it)); 
 
-  trace.endBlock(); 
+  mPrev = m; 
+  m = mNext; 
+
+  alpha.push_back( 1 + k * myA(*it) * m * 2  
+		   * ( velocity( myB(*it), m, myB(*prevIt), mPrev ) ) );  
+  gamma.push_back( -k * myA(*it) * m 
+		   * ( velocity( myB(*it), m, myB(*prevIt), mPrev ) ) ); 
+  data.push_back(aF(*it)); 
 
   
   //Linear system resolution by Thomas algorithm
-  trace.beginBlock("thomas"); 
   thomasAlgorithm(data, alpha, beta, gamma, data); 
-  trace.endBlock(); 
 
   //put returned data into aOutputF
   ASSERT(size == aOutputF.size());
