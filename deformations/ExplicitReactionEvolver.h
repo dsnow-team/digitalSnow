@@ -45,6 +45,7 @@
 #include "DGtal/base/Common.h"
 #include "DGtal/images/CImage.h"
 
+#include "DGtal/images/DifferentialOperators.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -89,9 +90,10 @@ namespace DGtal
     /**
      * Constructor.
      * @param aF extern scalar field
+     * @param aG any signed value standing for the balloon force (default 0)
      * @param anEps width of the interface in the phase field equation
      */
-    ExplicitReactionEvolver(const ExternImage& aF, const double& anEps);
+    ExplicitReactionEvolver(const double& anEps, const ExternImage& aF, const double& aG = 0.0 );
 
     /**
      * Destructor. Does nothing.
@@ -128,14 +130,20 @@ namespace DGtal
   private:
 
     /**
+     * Width of the interface
+     */
+    double myEpsilon;
+
+    /**
      * Const aliasing pointer on the extern scalar field
      */
     const ExternImage* myExternField; 
 
     /**
-     * Width of the interface
+     * Balloon force
      */
-    double myEpsilon;
+    double myG; 
+
 
     // ------------------------- Hidden services ------------------------------
   protected:

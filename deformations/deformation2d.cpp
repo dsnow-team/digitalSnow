@@ -49,7 +49,7 @@ int main(int argc, char** argv)
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
 "can be: \n <levelSet>  \n or <phaseField> " )
-    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force (only for level sets)" )
+    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("withFunction",   po::value<string>(), "Output pgm file basename, where the starting implicit function is stored" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
@@ -125,6 +125,10 @@ int main(int argc, char** argv)
       initWithDT( img, implicitFunction );
     }
  
+  //balloon force
+  double k; 
+  if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
+  k = vm["balloonForce"].as<double>(); 
 
   
   //algo
@@ -134,11 +138,6 @@ int main(int argc, char** argv)
 
   if (algo.compare("levelSet")==0)
   {
-
-    //balloon force
-    double k; 
-    if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-    k = vm["balloonForce"].as<double>(); 
 
     if (vm.count("withFunction")) 
       drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
@@ -200,13 +199,13 @@ int main(int argc, char** argv)
     drawContour(implicitFunction, ss.str(), format, 0.5); 
 
     ImageContainerBySTLVector<Domain,double> a( implicitFunction.domain() ); 
-    std::fill(a.begin(),a.end(), -1 );  
+    std::fill(a.begin(),a.end(), 1 );  
 
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
     typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
       ImageContainerBySTLVector<Domain,double> > Reaction; 
     Diffusion diffusion; 
-    Reaction reaction( a, epsilon );
+    Reaction reaction( epsilon, a, k );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
     for (unsigned int i = step; i <= max; i += step) 

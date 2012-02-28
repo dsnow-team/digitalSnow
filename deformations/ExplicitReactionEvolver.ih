@@ -41,8 +41,8 @@
 template <typename TImage, typename TFunctor>
 inline
 DGtal::ExplicitReactionEvolver<TImage, TFunctor>
-::ExplicitReactionEvolver(const ExternImage& aF, const double& anEps)
-  : myExternField( &aF ), myEpsilon( anEps )
+::ExplicitReactionEvolver(const double& anEps, const ExternImage& aF, const double& aG)
+  : myEpsilon( anEps ), myExternField( &aF ), myG( aG )
 { 
 }
 
@@ -61,17 +61,24 @@ DGtal::ExplicitReactionEvolver<TImage, TFunctor>::update(Image& aF, const double
 {
   ASSERT(aT >= 0); 
 
-	Domain d = aF.domain();  
-	typename Domain::ConstIterator it = d.begin(); 
-	typename Domain::ConstIterator itEnd = d.end();
-	for ( ; it != itEnd; ++it)
-  {
-    double v = static_cast<double>( aF(*it) );
-    double f = static_cast<double>( myExternField->operator()(*it) );
-    double tmp = derivative (v) - myEpsilon * f * std::sqrt( 2*function(v) ); 
-    Value newValue = v - ( aT / (myEpsilon * myEpsilon ) ) * tmp;  
-    aF.setValue( *it, static_cast<Value>(newValue) ); 
-  }
+  Domain d = aF.domain();  
+  typename Domain::ConstIterator it = d.begin(); 
+  typename Domain::ConstIterator itEnd = d.end();
+  for ( ; it != itEnd; ++it)
+    {
+      //old value
+      double v = static_cast<double>( aF(*it) );
+      //extern force
+      double f = static_cast<double>( myExternField->operator()(*it) );
+      //gradient modulus
+      GodunovGradient<Image> gradient( aF, (myG >= 0) );
+      GradientModulus<GodunovGradient<Image> > m( gradient );
+      //new value
+      double tmp = derivative (v) 
+	- myEpsilon * ( myG + f*m(*it) ) * std::sqrt( 2*function(v) ); 
+      Value newValue = v - ( aT / (myEpsilon * myEpsilon ) ) * tmp;  
+      aF.setValue( *it, static_cast<Value>(newValue) ); 
+    }
 
 }
 
@@ -90,7 +97,7 @@ inline
 bool
 DGtal::ExplicitReactionEvolver<TImage, TFunctor>::isValid() const
 {
-    return true;
+  return true;
 }
 
 template <typename TImage, typename TFunctor>
@@ -98,7 +105,7 @@ inline
 double
 DGtal::ExplicitReactionEvolver<TImage, TFunctor>::function(const double& aV) const
 {
-    return 0.5*(aV*aV)*(1-aV)*(1-aV);
+  return 0.5*(aV*aV)*(1-aV)*(1-aV);
 }
 
 template <typename TImage, typename TFunctor>
@@ -106,7 +113,7 @@ inline
 double
 DGtal::ExplicitReactionEvolver<TImage, TFunctor>::derivative(const double& aV) const
 {
-    return aV*(1-aV)*(1-2*aV);
+  return aV*(1-aV)*(1-2*aV);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -116,7 +123,7 @@ template <typename TImage, typename TFunctor>
 inline
 std::ostream&
 DGtal::operator<< ( std::ostream & out, 
-		  const ExplicitReactionEvolver<TImage, TFunctor> & object )
+		    const ExplicitReactionEvolver<TImage, TFunctor> & object )
 {
   object.selfDisplay( out );
   return out;
