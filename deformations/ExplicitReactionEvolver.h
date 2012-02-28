@@ -59,9 +59,10 @@ namespace DGtal
    * explicit time discretisation scheme 
    * for a double-well function W(s) = 0.5*s^2*(1-s)^2. 
    *
-   * @tparam TImage, the type of image 
+   * @tparam TImage the type of image used as the implicit function
+   * @tparam TFunctor the type of functor used as an extern field
    */
-  template <typename TImage>
+  template <typename TImage, typename TFunctor>
   class ExplicitReactionEvolver
   {
 
@@ -72,6 +73,7 @@ namespace DGtal
   public:
 
     typedef TImage Image;
+    typedef TFunctor ExternImage; 
     typedef typename Image::Value Value; 
     typedef typename Image::Point Point;
     typedef typename Image::Vector Vector;  
@@ -86,9 +88,10 @@ namespace DGtal
 
     /**
      * Constructor.
-     * @param anEpsilon width of the interface in the phase field equation
+     * @param aF extern scalar field
+     * @param anEps width of the interface in the phase field equation
      */
-    ExplicitReactionEvolver(const double& anEpsilon);
+    ExplicitReactionEvolver(const ExternImage& aF, const double& anEps);
 
     /**
      * Destructor. Does nothing.
@@ -124,7 +127,16 @@ namespace DGtal
     // ------------------------- Private Datas --------------------------------
   private:
 
-    double myEpsilon; 
+    /**
+     * Const aliasing pointer on the extern scalar field
+     */
+    const ExternImage* myExternField; 
+
+    /**
+     * Width of the interface
+     */
+    double myEpsilon;
+
     // ------------------------- Hidden services ------------------------------
   protected:
 
@@ -147,9 +159,16 @@ namespace DGtal
   private:
 
     /**
+     * Double well function W.
+     * @param aV any value
+     * @return the value returned by W from @a aValue
+     */
+    double function ( const double & aV ) const;
+
+    /**
      * Derivative function W' of the double well function W.
      * @param aV any value
-     * @return the returned value of W' from @a aValue
+     * @return the value returned by W' from @a aValue
      */
     double derivative ( const double & aV ) const;
 
@@ -165,9 +184,9 @@ namespace DGtal
    * @param object the object of class 'ExplicitReactionEvolver' to write.
    * @return the output stream after the writing.
    */
-   template <typename TImage>
+  template <typename TImage, typename TFunctor>
   std::ostream&
-  operator<< ( std::ostream & out, const ExplicitReactionEvolver<TImage> & object );
+  operator<< ( std::ostream & out, const ExplicitReactionEvolver<TImage,TFunctor> & object );
 
 
 } // namespace DGtal

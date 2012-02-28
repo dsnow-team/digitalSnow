@@ -203,10 +203,14 @@ int main(int argc, char** argv)
     Profile p(epsilon); 
     std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
 
+    ImageContainerBySTLVector<Domain,double> a( Domain( implicitFunction.domain() ) ); 
+    //std::fill(a.begin(),a.end(), 1.0 );  
+
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
-    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
+      ImageContainerBySTLVector<Domain,double> > Reaction; 
     Diffusion diffusion; 
-    Reaction reaction( epsilon );
+    Reaction reaction( a, epsilon );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
     for (unsigned int i = step; i <= max; i += step) 

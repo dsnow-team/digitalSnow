@@ -38,26 +38,26 @@
 // ----------------------- Standard services ------------------------------
 
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
-DGtal::ExplicitReactionEvolver<TImage>
-::ExplicitReactionEvolver(const double& anEpsilon)
-: myEpsilon(anEpsilon)
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>
+::ExplicitReactionEvolver(const ExternImage& aF, const double& anEps)
+  : myExternField( &aF ), myEpsilon( anEps )
 { 
 }
 
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
-DGtal::ExplicitReactionEvolver<TImage>::~ExplicitReactionEvolver()
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::~ExplicitReactionEvolver()
 {
 }
 
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 void
-DGtal::ExplicitReactionEvolver<TImage>::update(Image& aF, const double& aT)
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::update(Image& aF, const double& aT)
 {
   ASSERT(aT >= 0); 
 
@@ -67,34 +67,44 @@ DGtal::ExplicitReactionEvolver<TImage>::update(Image& aF, const double& aT)
 	for ( ; it != itEnd; ++it)
   {
     double v = static_cast<double>( aF(*it) );
-    Value newValue = v - ( aT / (myEpsilon * myEpsilon ) ) * derivative ( v );  
+    double f = static_cast<double>( myExternField->operator()(*it) );
+    double tmp = derivative (v) - myEpsilon * f * std::sqrt( 2*function(v) ); 
+    Value newValue = v - ( aT / (myEpsilon * myEpsilon ) ) * tmp;  
     aF.setValue( *it, static_cast<Value>(newValue) ); 
   }
 
 }
 
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 void
-DGtal::ExplicitReactionEvolver<TImage>::selfDisplay ( std::ostream & out ) const
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::selfDisplay ( std::ostream & out ) const
 {
   out << "[ExplicitReactionEvolver]\n";
   out << "\n";
 }
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 bool
-DGtal::ExplicitReactionEvolver<TImage>::isValid() const
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::isValid() const
 {
     return true;
 }
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 double
-DGtal::ExplicitReactionEvolver<TImage>::derivative(const double& aV) const
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::function(const double& aV) const
+{
+    return 0.5*(aV*aV)*(1-aV)*(1-aV);
+}
+
+template <typename TImage, typename TFunctor>
+inline
+double
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::derivative(const double& aV) const
 {
     return aV*(1-aV)*(1-2*aV);
 }
@@ -102,11 +112,11 @@ DGtal::ExplicitReactionEvolver<TImage>::derivative(const double& aV) const
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation of inline functions                                        //
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 std::ostream&
 DGtal::operator<< ( std::ostream & out, 
-		  const ExplicitReactionEvolver<TImage> & object )
+		  const ExplicitReactionEvolver<TImage, TFunctor> & object )
 {
   object.selfDisplay( out );
   return out;

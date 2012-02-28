@@ -199,11 +199,14 @@ int main(int argc, char** argv)
     ss << outputFiles << "0001"; 
     drawContour(implicitFunction, ss.str(), format, 0.5); 
 
+    ImageContainerBySTLVector<Domain,double> a( implicitFunction.domain() ); 
+    std::fill(a.begin(),a.end(), -1 );  
 
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
-    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
+      ImageContainerBySTLVector<Domain,double> > Reaction; 
     Diffusion diffusion; 
-    Reaction reaction( epsilon );
+    Reaction reaction( a, epsilon );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
     for (unsigned int i = step; i <= max; i += step) 
