@@ -92,7 +92,7 @@ int main(int argc, char** argv)
   /////////////////////////////////////////////////////////////////////////////////////////
   //reading image
   typedef ImageContainerBySTLVector<Domain,unsigned char> GrayImage; 
-  GrayImage img = PNMReader<GrayImage>::importPGMImage( inputFilename ); 
+  GrayImage img = PNMReader<GrayImage>::importPGM( inputFilename ); 
 
   //Diffusion
   trace.info() << "sigma: " << sigma << std::endl; 
@@ -109,15 +109,15 @@ int main(int argc, char** argv)
     trace.info() << "time step: " << tstep << std::endl;
 
     //data functions
-    ImageContainerBySTLVector<Domain,double> a(img.lowerBound(),img.upperBound()); 
+    ImageContainerBySTLVector<Domain,double> a(img.domain()); 
     std::fill(a.begin(),a.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> b(img.lowerBound(),img.upperBound()); 
+    ImageContainerBySTLVector<Domain,double> b(img.domain()); 
     std::fill(b.begin(),b.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> g(img.lowerBound(),img.upperBound()); 
+    ImageContainerBySTLVector<Domain,double> g(img.domain()); 
     std::fill(g.begin(),g.end(), 1.0 );  
 
     // pb of types unsigned char / double
-    ImageContainerBySTLVector<Domain,double> img2(img.lowerBound(),img.upperBound());
+    ImageContainerBySTLVector<Domain,double> img2(img.domain());
     std::copy(img.begin(), img.end(), img2.begin());
  
     //evolver

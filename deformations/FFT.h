@@ -5,7 +5,7 @@
 
 #include <complex>
 
-#include <DGtal/images/CImageContainer.h>
+#include <DGtal/images/CImage.h>
 
 namespace DGtal{
 
@@ -20,7 +20,7 @@ namespace DGtal{
   {
 
     //ASSERT
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:

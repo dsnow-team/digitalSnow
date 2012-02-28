@@ -62,7 +62,7 @@ DGtal::ExactDiffusionEvolver<TImage>::update(Image& aF, const double& aT)
   //frequential representation computation
   typedef FFT<Image> FFT; 
   FFT fft(aF);
-  typename FFT::ComplexImage frequentialRepresentation(aF.lowerBound(),aF.upperBound());  
+  typename FFT::ComplexImage frequentialRepresentation(aF.domain());  
   fft.compute(frequentialRepresentation); 
 
   //diffusion operation in the fourier space

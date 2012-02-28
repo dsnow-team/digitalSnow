@@ -5,7 +5,7 @@
 
 #include <boost/static_assert.hpp>
 #include <boost/type_traits.hpp>
-#include <DGtal/images/CImageContainer.h>
+#include <DGtal/images/CImage.h>
 
 namespace DGtal{
 
@@ -20,7 +20,7 @@ namespace DGtal{
   {
 
     //ASSERT
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CImage<TImage> )); 
     BOOST_STATIC_ASSERT((boost::is_same< typename TImage::Value, 
 			 std::complex<double> >::value));
 

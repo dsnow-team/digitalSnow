@@ -111,7 +111,7 @@ int main(int argc, char** argv)
   Point p(0,0,0);
   Point q(dsize,dsize,dsize); 
   Point c(dsize/2,dsize/2,dsize/2); 
-  ImageContainerBySTLVector<Domain,double> implicitFunction(p,q); 
+  ImageContainerBySTLVector<Domain,double> implicitFunction( Domain(p,q) ); 
   //initWithBall( implicitFunction, c, (dsize*3/5)/2);
   initWithFlower( implicitFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 ); 
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
       BinaryImage img = VolReader<BinaryImage>::importVol( imageFileName);
       Domain d = img.domain(); 
       p = d.lowerBound(); q = d.upperBound(); 
-      implicitFunction = ImageContainerBySTLVector<Domain,double>(p,q); 
+      implicitFunction = ImageContainerBySTLVector<Domain,double>( Domain(p,q) ); 
       initWithDT( img, implicitFunction );
 
     }
@@ -152,11 +152,11 @@ int main(int argc, char** argv)
     k = vm["balloonForce"].as<double>(); 
 
     //data functions
-    ImageContainerBySTLVector<Domain,double> a(p,q); 
+    ImageContainerBySTLVector<Domain,double> a( Domain(p,q) ); 
     std::fill(a.begin(),a.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> b(p,q); 
+    ImageContainerBySTLVector<Domain,double> b( Domain(p,q) ); 
     std::fill(b.begin(),b.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> g(p,q); 
+    ImageContainerBySTLVector<Domain,double> g( Domain(p,q) ); 
     std::fill(g.begin(),g.end(), 1.0 );  
 
     //interface evolver

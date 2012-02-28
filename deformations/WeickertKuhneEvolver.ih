@@ -94,7 +94,7 @@ DGtal::WeickertKuhneEvolver<TImage>::update(Image& aF, const double& aT)
   std::vector<Image> images; 
   for (Dimension k = 0; k < dimension; ++k)
     { //for each dimension
-      images.push_back( Image( aF.lowerBound(), aF.upperBound() ) ); 
+      images.push_back( Image( aF.domain() ) ); 
       diffusion(aF, images[k], aT, k);
     }
   {  //normalization

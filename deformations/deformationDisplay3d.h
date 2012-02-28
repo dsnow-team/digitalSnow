@@ -16,7 +16,7 @@ bool writeImage(const TImage& img, string filename, string format, const double&
   {
     Board3DTo2D viewer;
     
-    Domain d(img.lowerBound(), img.upperBound()); 
+    Domain d = img.domain(); 
     Domain::ConstIterator cIt = d.begin(); 
     Domain::ConstIterator cItEnd = d.end(); 
     for ( ; cIt != cItEnd; ++cIt)
@@ -104,8 +104,8 @@ bool writeImage(const TImage& img, string filename, string format, const double&
 
     //create a label image from the implicit function
     typedef ImageContainerBySTLVector<Domain,int> LabelImage; 
-    LabelImage labelImage( img.lowerBound(), img.upperBound() ); 
-    Domain d(labelImage.lowerBound(), labelImage.upperBound()); 
+    LabelImage labelImage( img.domain() ); 
+    Domain d(labelImage.domain()); 
     Domain::ConstIterator cIt = d.begin(); 
     Domain::ConstIterator cItEnd = d.end(); 
     for ( ; cIt != cItEnd; ++cIt)

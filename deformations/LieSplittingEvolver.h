@@ -43,7 +43,7 @@
 #include <iostream>
 
 #include "DGtal/base/Common.h"
-#include "DGtal/images/CImageContainer.h"
+#include "DGtal/images/CImage.h"
 
 
 //////////////////////////////////////////////////////////////////////////////

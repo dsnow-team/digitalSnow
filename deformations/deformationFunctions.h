@@ -80,7 +80,7 @@ void initWithFlower(TImage& img, const typename TImage::Point& c, double r, doub
   }
 }
 
-#include "DGtal/geometry/nd/volumetric/DistanceTransformation.h"
+#include "DGtal/geometry/volumes/distance/DistanceTransformation.h"
 
 template< typename TValue >
 TValue aFunction(const TValue& v)
@@ -95,7 +95,7 @@ void initWithDT(const TImage& inputImage, ImageContainerBySTLVector<typename TIm
 
   //inv
   typename TImage::Domain d = inputImage.domain(); 
-  TImage rInputImage(d.lowerBound(), d.upperBound()); 
+  TImage rInputImage(d); 
   std::transform(inputImage.begin(), inputImage.end(),
                  rInputImage.begin(), aFunction<typename TImage::Value> ); 
   //DT 

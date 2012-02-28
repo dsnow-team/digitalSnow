@@ -108,7 +108,7 @@ int main(int argc, char** argv)
   Point p(0,0);
   Point q(dsize,dsize); 
   Point c(dsize/2,dsize/2); 
-  ImageContainerBySTLVector<Domain,double> implicitFunction(p,q); 
+  ImageContainerBySTLVector<Domain,double> implicitFunction( Domain(p,q) ); 
   //initWithBall( implicitFunction, c, (dsize*3/5)/2 ); 
   initWithFlower( implicitFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
   if (!(vm.count("inputImage"))) 
@@ -118,10 +118,9 @@ int main(int argc, char** argv)
       string imageFileName = vm["inputImage"].as<std::string>();
       trace.emphase() << imageFileName <<std::endl; 
       typedef ImageContainerBySTLVector<Domain,unsigned char> BinaryImage; 
-      BinaryImage img = PNMReader<BinaryImage>::importPGMImage( imageFileName ); 
+      BinaryImage img = PNMReader<BinaryImage>::importPGM( imageFileName ); 
       Domain d = img.domain(); 
-      p = d.lowerBound(); q = d.upperBound(); 
-      implicitFunction = ImageContainerBySTLVector<Domain,double>(p,q); 
+      implicitFunction = ImageContainerBySTLVector<Domain,double>( d ); 
       initWithDT( img, implicitFunction );
     }
  
@@ -148,11 +147,11 @@ int main(int argc, char** argv)
     drawContour(implicitFunction, ss.str(), format); 
 
     //data functions
-    ImageContainerBySTLVector<Domain,double> a(p,q); 
+    ImageContainerBySTLVector<Domain,double> a( Domain(p,q) ); 
     std::fill(a.begin(),a.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> b(p,q); 
+    ImageContainerBySTLVector<Domain,double> b( Domain(p,q) ); 
     std::fill(b.begin(),b.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> g(p,q); 
+    ImageContainerBySTLVector<Domain,double> g( Domain(p,q) ); 
     std::fill(g.begin(),g.end(), 1.0 );  
 
     //evolution

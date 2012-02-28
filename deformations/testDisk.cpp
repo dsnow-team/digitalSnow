@@ -108,7 +108,7 @@ int main(int argc, char** argv)
   Point p(0,0);
   Point q(dsize,dsize); 
   Point c(dsize/2,dsize/2); 
-  ImageContainerBySTLVector<Domain,double> implicitFunction(p,q);
+  ImageContainerBySTLVector<Domain,double> implicitFunction(Domain(p,q));
   double R0 = (dsize*3/5)/2; 
   initWithBall( implicitFunction, c, R0 ); 
   trace.info() << "# starting interface initialized with a disk of radius "; 
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
 
 
       //data functions
-      ImageContainerBySTLVector<Domain,double> f(p,q); 
+      ImageContainerBySTLVector<Domain,double> f(Domain(p,q)); 
       std::fill(f.begin(),f.end(), 1.0 );  
 
       //evolution

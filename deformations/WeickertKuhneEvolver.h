@@ -45,7 +45,7 @@
 #include <cstdlib>
 #include <cmath>
 #include "DGtal/base/Common.h"
-#include "DGtal/images/CImageContainer.h"
+#include "DGtal/images/CImage.h"
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -72,7 +72,7 @@ namespace DGtal
   {
 
     //ASSERT
-    BOOST_CONCEPT_ASSERT(( CImageContainer<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:

@@ -16,10 +16,10 @@ bool drawContour(const TImage& img, std::string filename, std::string format, co
   Color blue( 0, 0, 192 );
   
   Board2D b; 
-  Z2i::Domain d(img.lowerBound(), img.upperBound()); 
+  Z2i::Domain d(img.domain()); 
   Z2i::Domain::ConstIterator cIt = d.begin(); 
   Z2i::Domain::ConstIterator cItEnd = d.end(); 
-  b << img.lowerBound() << img.upperBound();
+  b << d.lowerBound() << d.upperBound();
   for ( ; cIt != cItEnd; ++cIt)
   { 
     if (img(*cIt) <= threshold) 
@@ -45,8 +45,8 @@ bool drawContour(const TImage& img, std::string filename, std::string format, co
 
     //create a label image from the implicit function
     typedef ImageContainerBySTLVector<Domain,int> LabelImage; 
-    LabelImage labelImage( img.lowerBound(), img.upperBound() ); 
-    Domain d(labelImage.lowerBound(), labelImage.upperBound()); 
+    LabelImage labelImage( img.domain() ); 
+    Domain d = labelImage.domain(); 
     Domain::ConstIterator cIt = d.begin(); 
     Domain::ConstIterator cItEnd = d.end(); 
     for ( ; cIt != cItEnd; ++cIt)
