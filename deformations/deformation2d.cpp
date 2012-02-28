@@ -21,6 +21,7 @@ using namespace Z2i;
 
 //phase field
 #include "ExactDiffusionEvolver.h"
+#include "ExplicitReactionEvolver.h"
 #include "ExactReactionEvolver.h"
 #include "LieSplittingEvolver.h"
 
@@ -200,7 +201,7 @@ int main(int argc, char** argv)
 
 
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
-    typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
     Diffusion diffusion; 
     Reaction reaction( epsilon );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 

@@ -22,6 +22,7 @@ using namespace Z3i;
 //phase field
 #include "ExactDiffusionEvolver.h"
 #include "ExactReactionEvolver.h"
+#include "ExplicitReactionEvolver.h"
 #include "LieSplittingEvolver.h"
 
 /////////////////////////// useful functions
@@ -203,7 +204,7 @@ int main(int argc, char** argv)
     std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
 
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
-    typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
     Diffusion diffusion; 
     Reaction reaction( epsilon );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 

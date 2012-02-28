@@ -96,6 +96,7 @@ bool writeImage(const TImage& img, string filename, string format, const double&
     viewer.saveCairo(s.str().c_str(),Board3DTo2D::CairoPNG,3*size/2,3*size/2 ); 
     return true; 
   #else
+    trace.emphase() << "Failed to use Cairo 3d to 2d (not installed)" << std::endl;
     return false; 
   #endif
 
