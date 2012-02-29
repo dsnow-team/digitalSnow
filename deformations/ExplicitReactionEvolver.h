@@ -89,11 +89,15 @@ namespace DGtal
 
     /**
      * Constructor.
+     * @param anEps width of the interface in the phase field equation
      * @param aF extern scalar field
      * @param aG any signed value standing for the balloon force (default 0)
-     * @param anEps width of the interface in the phase field equation
+     * @param aFlag boolean equal to 'true' if the volume need to remain constant
+     * and equal to 'false' otherwise (default)
      */
-    ExplicitReactionEvolver(const double& anEps, const ExternImage& aF, const double& aG = 0.0 );
+    ExplicitReactionEvolver(const double& anEps, const ExternImage& aF, 
+			    const double& aG = 0.0, 
+			    bool aFlag = false );
 
     /**
      * Destructor. Does nothing.
@@ -135,7 +139,8 @@ namespace DGtal
     double myEpsilon;
 
     /**
-     * Const aliasing pointer on the extern scalar field
+     * Const aliasing pointer on 
+     * the extern scalar field
      */
     const ExternImage* myExternField; 
 
@@ -144,6 +149,12 @@ namespace DGtal
      */
     double myG; 
 
+    /**
+     * Flag indicating whether the volume 
+     * of the characteristic function need 
+     * to be constant or not
+     */
+    bool myWithVolumeConservation; 
 
     // ------------------------- Hidden services ------------------------------
   protected:
@@ -179,6 +190,14 @@ namespace DGtal
      * @return the value returned by W' from @a aValue
      */
     double derivative ( const double & aV ) const;
+
+    /**
+     * Balloon force needed for the volume conservation
+     * during the evolution of @a aF
+     * @param aF implicit function to evolve
+     * @return the force
+     */
+    double force ( Image& aF ) const;
 
     // ------------------------- Internals ------------------------------------
   private:
