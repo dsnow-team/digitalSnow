@@ -139,11 +139,12 @@ int main(int argc, char** argv)
   std::fill(g.begin(),g.end(), 1.0 );  
 
   //distance map
-  ImageContainerBySTLMap<Domain,double> map( d );
+  typedef ImageContainerBySTLMap<Domain,double> DistanceImage; 
+  DistanceImage map( d );
 
   //predicate and functor
   typedef TruePointPredicate<Point> Predicate; 
-  typedef LocalBalloonForce<ImageContainerBySTLMap<Domain,double>, 
+  typedef LocalBalloonForce<DistanceImage, 
    ImageContainerBySTLVector<Domain,double> > Functor; 
   Functor f(g, k); 
 
@@ -158,7 +159,8 @@ int main(int argc, char** argv)
 		 << std::endl;
  
     //frontier evolver
-    FrontierEvolver<KSpace, LabelImage, Functor, Predicate> e(ks, labelImage, bel, f, Predicate() ); 
+    FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
+      e(ks, labelImage, map, bel, f, Predicate() ); 
 
     for (unsigned int i = 1; i <= max; ++i) 
       {
@@ -175,7 +177,7 @@ int main(int argc, char** argv)
 	    //3d to 2d display
 	    std::stringstream s; 
 	    s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-	    writeImage( labelImage, s.str(), format, 1 );
+	    writeImage( labelImage, s.str(), format );
 
 	  }
 	DGtal::trace.endBlock();   

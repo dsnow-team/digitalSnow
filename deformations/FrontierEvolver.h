@@ -74,19 +74,26 @@ namespace DGtal
    * returns false.
    *
    * @tparam TKSpace a model of CCellularGridSpaceND
-   * @tparam TImage a model of CImage 
+   * @tparam TLabelImage a model of CImage (storing labels)
+   * @tparam TDistanceImage a model of CImage (storing distance values)
    * @tparam TFunctor a model of CPointFunctorAdapter
    * @tparam TPredicate a model of CPointPredicate
    */
-  template <typename TKSpace, typename TImage, typename TFunctor, typename TPredicate>
+  template <typename TKSpace, 
+	    typename TLabelImage, typename TDistanceImage, 
+	    typename TFunctor, typename TPredicate>
   class FrontierEvolver
   {
 
 
-    BOOST_CONCEPT_ASSERT(( CImage<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( CImage<TLabelImage> )); 
+    BOOST_CONCEPT_ASSERT(( CImage<TDistanceImage> )); 
     BOOST_STATIC_ASSERT
     (( ConceptUtils::SameType< typename TKSpace::Point,
-       typename TImage::Point>::value ));
+       typename TLabelImage::Point>::value ));
+    BOOST_STATIC_ASSERT
+    (( ConceptUtils::SameType< typename TKSpace::Point,
+       typename TDistanceImage::Point>::value ));
 
     BOOST_CONCEPT_ASSERT(( CPointFunctor<TFunctor> )); 
     BOOST_STATIC_ASSERT
@@ -106,10 +113,13 @@ namespace DGtal
     typedef typename TKSpace::Point Point;
 
     /// Image of labels
-    typedef TImage Image;
+    typedef TLabelImage LImage;
+
+    /// Image of distance values
+    typedef TDistanceImage DImage;
 
     /// Frontier
-  typedef FrontierPredicate<KSpace, Image> SurfelPredicate;
+  typedef FrontierPredicate<KSpace, LImage> SurfelPredicate;
   typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
     /// Surfel 
   typedef typename Frontier::Surfel Surfel;
@@ -129,12 +139,13 @@ namespace DGtal
      * Constructor.
      * @param aK khalimsky space where the digital frontier is defined 
      * @param aI an image of labels
+     * @param aD an image of distance values
      * @param aS a surfel lying between two regions of @a aI
      * @param aF a point functor mapping a velocity to points 
      * @param aP any point predicate
      * @param aW maximal width of the deformation band (1.0 by default)
      */
-    FrontierEvolver(const KSpace& aK, Image& aI, Surfel& aS, 
+    FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, Surfel& aS, 
  const Functor& aF, const Predicate& aP, const double& aW = 1.0);
 
     /**
@@ -178,7 +189,11 @@ namespace DGtal
     /**
      * Reference on the image of labels
      */
-    Image& myImage; 
+    LImage& myLImage; 
+    /**
+     * Reference on the image of distance values
+     */
+    DImage& myDImage; 
     /**
      * Reference on the starting surfel of the digital frontier 
      */
@@ -233,6 +248,20 @@ namespace DGtal
     // ------------------------- Internals ------------------------------------
   private:
 
+    /**
+     * Get inner point.
+     * @param s a surfel
+     * @return the inner point
+     */
+    Point getInnerPoint ( const Surfel& s ) const ;
+
+    /**
+     * Get outer point.
+     * @param s a surfel
+     * @return the outer point
+     */
+    Point getOuterPoint ( const Surfel& s ) const ;
+
   }; // end of class FrontierEvolver
 
 
@@ -242,9 +271,12 @@ namespace DGtal
    * @param object the object of class 'FrontierEvolver' to write.
    * @return the output stream after the writing.
    */
-   template <typename TKSpace, typename TImage, typename TFunctor, typename TPredicate>
+  template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	    typename TFunctor, typename TPredicate>
   std::ostream&
-  operator<< ( std::ostream & out, const FrontierEvolver<TKSpace, TImage, TFunctor, TPredicate> & object );
+  operator<< ( std::ostream & out, 
+	       const FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, 
+	       TFunctor, TPredicate> & object );
 
 
 } // namespace DGtal
