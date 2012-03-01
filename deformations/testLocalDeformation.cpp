@@ -188,7 +188,7 @@ int main(int argc, char** argv)
   }
 
   //interactive display after the evolution
-  //if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
+  if (vm.count("withVisu")) displayImage( argc, argv, labelImage ); 
 
   
   return 0;

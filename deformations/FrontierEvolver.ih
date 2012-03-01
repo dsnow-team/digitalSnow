@@ -73,14 +73,73 @@ bool
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::update()
 {
-/*
-  init(); 
-  order(); 
-  evolve(); 
-*/
+
+  /// set of points that are candidate to the flip
+  typedef DigitalSetBySTLSet<Domain> CandidatePointSet; 
+  CandidatePointSet candidates( myLImage.domain() ); 
+
+  /// initialization of the set
+  DigitalSetInserter<CandidatePointSet> inserter( candidates ); 
+  init( inserter );
+ 
+  /// ordering of the points according 
+  /// to their zero-crossing time
+  //order();
+
+  /// flip points one by one, in order
+  /// while possible
+  //evolve(); 
+
   return false; 
 }
 
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TPredicate>
+template <typename TOutputIterator>
+inline
+void
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::init( TOutputIterator& out )
+{
+
+  /// set of points for which the distance value 
+  /// is computed and stored in myDImage
+  ///////////////////////get the set type from a traits selector 
+  typedef DigitalSetFromMap<DImage> PointSet; 
+  PointSet points(myDImage);
+
+
+  /// initialization of points from the 
+  /// points adjacent to the frontier
+  unsigned int nbsurfels = 0;
+  for ( SurfelIterator it = myFrontier.begin(), 
+	  itEnd = myFrontier.end();
+        it != itEnd; ++it )
+    {
+      Point in( getInnerPoint( *it ) ); 
+      Point out( getOuterPoint( *it ) );
+ 
+      insertAndAlwaysSetValue( myDImage, points, in, -0.5 );
+      insertAndAlwaysSetValue( myDImage, points, out, 0.5 );
+
+      ++nbsurfels;
+    }
+  trace.info() << nbsurfels << " surfels found." << std::endl;  
+  trace.info() << points << std::endl;  
+  trace.info() << myDImage << std::endl;  
+
+  /// FMM 
+  // distance thresholds
+  double t1 = myW + 1.0; 
+  double t2 = t1 * 2.0; 
+
+  //first pass
+
+  //copy
+
+  //second pass
+
+}
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
 typename TFunctor, typename TPredicate>
@@ -111,7 +170,7 @@ typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage,
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::getInnerPoint(const Surfel& s) const
 {
-  return myKSpace.sCoords( myKSpace.sIndirectIncident( s, *myKSpace.sOrthDirs( s ) ) );
+  return myKSpace.sCoords( myKSpace.sDirectIncident( s, *myKSpace.sOrthDirs( s ) ) );
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
@@ -122,7 +181,7 @@ typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage,
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::getOuterPoint(const Surfel& s) const
 {
-  return myKSpace.sCoords( myKSpace.sDirectIncident( s, *myKSpace.sOrthDirs( s ) ) ); 
+  return myKSpace.sCoords( myKSpace.sIndirectIncident( s, *myKSpace.sOrthDirs( s ) ) ); 
 }
 
 ///////////////////////////////////////////////////////////////////////////////

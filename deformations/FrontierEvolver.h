@@ -48,6 +48,13 @@
 #include "CPointFunctorAdapter.h"
 #include "DGtal/kernel/CPointPredicate.h"
 
+// set
+#include "DGtal/kernel/sets/DigitalSetFromMap.h"
+#include "DGtal/kernel/sets/DigitalSetBySTLSet.h"
+#include "DGtal/kernel/sets/DigitalSetInserter.h"
+#include "DGtal/images/ImageHelper.h"
+
+// frontier
 #include "DGtal/topology/SurfelAdjacency.h"
 #include "DGtal/topology/helpers/FrontierPredicate.h"
 #include "DGtal/topology/LightExplicitDigitalSurface.h"
@@ -63,7 +70,7 @@ namespace DGtal
    * \brief Aim: This class is a way of deforming an image of labels
    * around a connected contact surface between two regions, 
    * according to a velocity field, whose computation is 
-   * delegated to a instance of a model of CLocalVelocity 
+   * delegated to a instance of a model of CPointFunctorAdapter 
    *   
    * At each step, a signed distance function is built. 
    * The points are sorted according to their time of zero-crossing
@@ -114,16 +121,17 @@ namespace DGtal
 
     /// Image of labels
     typedef TLabelImage LImage;
+    typedef typename LImage::Domain Domain;
 
     /// Image of distance values
     typedef TDistanceImage DImage;
 
     /// Frontier
-  typedef FrontierPredicate<KSpace, LImage> SurfelPredicate;
-  typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
+    typedef FrontierPredicate<KSpace, LImage> SurfelPredicate;
+    typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
     /// Surfel 
-  typedef typename Frontier::Surfel Surfel;
-  typedef typename Frontier::SurfelConstIterator SurfelIterator;
+    typedef typename Frontier::Surfel Surfel;
+    typedef typename Frontier::SurfelConstIterator SurfelIterator;
 
 
     /// Point functor for the mapping velocity-points
@@ -146,7 +154,7 @@ namespace DGtal
      * @param aW maximal width of the deformation band (1.0 by default)
      */
     FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, Surfel& aS, 
- const Functor& aF, const Predicate& aP, const double& aW = 1.0);
+		    const Functor& aF, const Predicate& aP, const double& aW = 1.0);
 
     /**
      * Destructor. Does nothing.
@@ -162,6 +170,18 @@ namespace DGtal
      */
     bool update();
 
+     /**
+     * Return through @a out the points
+     * for which the distance value has been
+     * computed and stored in @a myDImage ,
+     * which are candidate to the flip
+     *
+     * @tparam TOutputIterator a model of output iterator
+     *
+     * @param out an output iterator
+     */
+    template <typename TOutputIterator>
+    void init(TOutputIterator& out);
 
     /**
      * Checks the validity/consistency of the object.
