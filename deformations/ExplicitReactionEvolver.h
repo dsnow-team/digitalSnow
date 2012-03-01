@@ -45,6 +45,7 @@
 #include "DGtal/base/Common.h"
 #include "DGtal/images/CImage.h"
 
+#include "DGtal/images/DifferentialOperators.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -59,9 +60,10 @@ namespace DGtal
    * explicit time discretisation scheme 
    * for a double-well function W(s) = 0.5*s^2*(1-s)^2. 
    *
-   * @tparam TImage, the type of image 
+   * @tparam TImage the type of image used as the implicit function
+   * @tparam TFunctor the type of functor used as an extern field
    */
-  template <typename TImage>
+  template <typename TImage, typename TFunctor>
   class ExplicitReactionEvolver
   {
 
@@ -72,6 +74,7 @@ namespace DGtal
   public:
 
     typedef TImage Image;
+    typedef TFunctor ExternImage; 
     typedef typename Image::Value Value; 
     typedef typename Image::Point Point;
     typedef typename Image::Vector Vector;  
@@ -86,9 +89,15 @@ namespace DGtal
 
     /**
      * Constructor.
-     * @param anEpsilon width of the interface in the phase field equation
+     * @param anEps width of the interface in the phase field equation
+     * @param aF extern scalar field
+     * @param aG any signed value standing for the balloon force (default 0)
+     * @param aFlag boolean equal to 'true' if the volume need to remain constant
+     * and equal to 'false' otherwise (default)
      */
-    ExplicitReactionEvolver(const double& anEpsilon);
+    ExplicitReactionEvolver(const double& anEps, const ExternImage& aF, 
+			    const double& aG = 0.0, 
+			    bool aFlag = false );
 
     /**
      * Destructor. Does nothing.
@@ -124,7 +133,29 @@ namespace DGtal
     // ------------------------- Private Datas --------------------------------
   private:
 
-    double myEpsilon; 
+    /**
+     * Width of the interface
+     */
+    double myEpsilon;
+
+    /**
+     * Const aliasing pointer on 
+     * the extern scalar field
+     */
+    const ExternImage* myExternField; 
+
+    /**
+     * Balloon force
+     */
+    double myG; 
+
+    /**
+     * Flag indicating whether the volume 
+     * of the characteristic function need 
+     * to be constant or not
+     */
+    bool myWithVolumeConservation; 
+
     // ------------------------- Hidden services ------------------------------
   protected:
 
@@ -147,11 +178,26 @@ namespace DGtal
   private:
 
     /**
+     * Double well function W.
+     * @param aV any value
+     * @return the value returned by W from @a aValue
+     */
+    double function ( const double & aV ) const;
+
+    /**
      * Derivative function W' of the double well function W.
      * @param aV any value
-     * @return the returned value of W' from @a aValue
+     * @return the value returned by W' from @a aValue
      */
     double derivative ( const double & aV ) const;
+
+    /**
+     * Balloon force needed for the volume conservation
+     * during the evolution of @a aF
+     * @param aF implicit function to evolve
+     * @return the force
+     */
+    double force ( Image& aF ) const;
 
     // ------------------------- Internals ------------------------------------
   private:
@@ -165,9 +211,9 @@ namespace DGtal
    * @param object the object of class 'ExplicitReactionEvolver' to write.
    * @return the output stream after the writing.
    */
-   template <typename TImage>
+  template <typename TImage, typename TFunctor>
   std::ostream&
-  operator<< ( std::ostream & out, const ExplicitReactionEvolver<TImage> & object );
+  operator<< ( std::ostream & out, const ExplicitReactionEvolver<TImage,TFunctor> & object );
 
 
 } // namespace DGtal

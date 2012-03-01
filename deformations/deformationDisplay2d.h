@@ -5,6 +5,7 @@
 #include "DGtal/io/colormaps/GradientColorMap.h"
 #include "DGtal/io/writers/PNMWriter.h"
 
+
 template< typename TImage >
 bool drawContour(const TImage& img, std::string filename, std::string format, const double& threshold = 0)
 {

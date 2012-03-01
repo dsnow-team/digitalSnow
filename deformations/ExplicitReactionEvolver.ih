@@ -38,75 +38,127 @@
 // ----------------------- Standard services ------------------------------
 
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
-DGtal::ExplicitReactionEvolver<TImage>
-::ExplicitReactionEvolver(const double& anEpsilon)
-: myEpsilon(anEpsilon)
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>
+::ExplicitReactionEvolver(const double& anEps, const ExternImage& aF, 
+			  const double& aG, bool aFlag)
+  : myEpsilon( anEps ), myExternField( &aF ), 
+    myG( aG ), myWithVolumeConservation( aFlag )
 { 
 }
 
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
-DGtal::ExplicitReactionEvolver<TImage>::~ExplicitReactionEvolver()
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::~ExplicitReactionEvolver()
 {
 }
 
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 void
-DGtal::ExplicitReactionEvolver<TImage>::update(Image& aF, const double& aT)
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::update(Image& aF, const double& aT)
 {
   ASSERT(aT >= 0); 
 
-	Domain d = aF.domain();  
-	typename Domain::ConstIterator it = d.begin(); 
-	typename Domain::ConstIterator itEnd = d.end();
-	for ( ; it != itEnd; ++it)
-  {
-    double v = static_cast<double>( aF(*it) );
-    Value newValue = v - ( aT / (myEpsilon * myEpsilon ) ) * derivative ( v );  
-    aF.setValue( *it, static_cast<Value>(newValue) ); 
-  }
+  double k = 0; 
+  if (myWithVolumeConservation)
+    k = force(aF); 
+
+  Domain d = aF.domain();  
+  typename Domain::ConstIterator it = d.begin(); 
+  typename Domain::ConstIterator itEnd = d.end();
+  for ( ; it != itEnd; ++it)
+    {
+      //old value
+      double v = static_cast<double>( aF(*it) );
+      //extern force
+      double f = static_cast<double>( myExternField->operator()(*it) );
+      //gradient modulus
+      GodunovGradient<Image> gradient( aF, (myG >= 0) );
+      GradientModulus<GodunovGradient<Image> > m( gradient );
+      //new value
+      double tmp = derivative (v) 
+	- myEpsilon * ( myG + f*m(*it) + k) * std::sqrt( 2*function(v) ); 
+      Value newValue = v - ( aT / (myEpsilon * myEpsilon ) ) * tmp;  
+      aF.setValue( *it, static_cast<Value>(newValue) ); 
+    }
 
 }
 
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 void
-DGtal::ExplicitReactionEvolver<TImage>::selfDisplay ( std::ostream & out ) const
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::selfDisplay ( std::ostream & out ) const
 {
   out << "[ExplicitReactionEvolver]\n";
   out << "\n";
 }
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 bool
-DGtal::ExplicitReactionEvolver<TImage>::isValid() const
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::isValid() const
 {
-    return true;
+  return true;
 }
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 double
-DGtal::ExplicitReactionEvolver<TImage>::derivative(const double& aV) const
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::function(const double& aV) const
 {
-    return aV*(1-aV)*(1-2*aV);
+  return 0.5*(aV*aV)*(1-aV)*(1-aV);
+}
+
+template <typename TImage, typename TFunctor>
+inline
+double
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::derivative(const double& aV) const
+{
+  return aV*(1-aV)*(1-2*aV);
+}
+
+template <typename TImage, typename TFunctor>
+inline
+double
+DGtal::ExplicitReactionEvolver<TImage, TFunctor>::force(Image& aF) const
+{
+  double numsum = 0; 
+  double densum = 0; 
+
+  Domain d = aF.domain();  
+  typename Domain::ConstIterator it = d.begin(); 
+  typename Domain::ConstIterator itEnd = d.end();
+  for ( ; it != itEnd; ++it)
+    {
+      //value
+      double v = static_cast<double>( aF(*it) );
+      //extern force
+      double f = static_cast<double>( myExternField->operator()(*it) );
+      //gradient modulus
+      GodunovGradient<Image> gradient( aF, (myG >= 0) );
+      GradientModulus<GodunovGradient<Image> > m( gradient );
+      //summation
+      densum += std::sqrt( 2*function(v) ); 
+      numsum += derivative (v) 
+	- myEpsilon * ( myG + f * m(*it) ) * std::sqrt( 2*function(v) ); 
+    }
+
+  return ( numsum / (myEpsilon*densum) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation of inline functions                                        //
 
-template <typename TImage>
+template <typename TImage, typename TFunctor>
 inline
 std::ostream&
 DGtal::operator<< ( std::ostream & out, 
-		  const ExplicitReactionEvolver<TImage> & object )
+		    const ExplicitReactionEvolver<TImage, TFunctor> & object )
 {
   object.selfDisplay( out );
   return out;

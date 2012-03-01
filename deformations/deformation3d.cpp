@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
 "can be: \n <levelSet>  \n or <phaseField> " )
-    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force (only for level sets)" )
+    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("png"), 
@@ -139,6 +139,11 @@ int main(int argc, char** argv)
   //interactive display before the evolution
   if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
 
+  //balloon force
+  double k; 
+  if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
+  k = vm["balloonForce"].as<double>(); 
+
   //algo
   std::string algo; 
   if (!(vm.count("algo"))) trace.info() << "default algorithm: levelSet" << std::endl; 
@@ -146,11 +151,6 @@ int main(int argc, char** argv)
 
   if (algo.compare("levelSet")==0)
   {
-
-    //balloon force
-    double k; 
-    if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-    k = vm["balloonForce"].as<double>(); 
 
     //data functions
     ImageContainerBySTLVector<Domain,double> a( Domain(p,q) ); 
@@ -203,10 +203,14 @@ int main(int argc, char** argv)
     Profile p(epsilon); 
     std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
 
+    ImageContainerBySTLVector<Domain,double> a( Domain( implicitFunction.domain() ) ); 
+    std::fill(a.begin(),a.end(), 1.0 );  
+
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
-    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
+      ImageContainerBySTLVector<Domain,double> > Reaction; 
     Diffusion diffusion; 
-    Reaction reaction( epsilon );
+    Reaction reaction( epsilon, a, k );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
     for (unsigned int i = step; i <= max; i += step) 

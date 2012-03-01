@@ -49,11 +49,12 @@ int main(int argc, char** argv)
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
 "can be: \n <levelSet>  \n or <phaseField> " )
-    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force (only for level sets)" )
+    ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
-    ("withFunction",   po::value<string>(), "Output pgm file basename, where the starting implicit function is stored" )
-    ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
-    ("outputFormat,f",   po::value<string>()->default_value("raster"), 
+    ("withCstVol", "with volume conservation (only for phase fields)" )
+    ("withFunction", po::value<string>(), "Output pgm file basename, where the starting implicit function is stored" )
+    ("outputFiles,o", po::value<string>()->default_value("interface"), "Output files basename" )
+    ("outputFormat,f", po::value<string>()->default_value("raster"), 
 "Output files format: either <raster> (image, default) or <vector> (domain representation)" );
 
   
@@ -105,6 +106,12 @@ int main(int argc, char** argv)
     return 0; 
     }
 
+  //balloon force
+  double k; 
+  if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
+  k = vm["balloonForce"].as<double>(); 
+
+
   //image and implicit function
   Point p(0,0);
   Point q(dsize,dsize); 
@@ -124,8 +131,10 @@ int main(int argc, char** argv)
       implicitFunction = ImageContainerBySTLVector<Domain,double>( d ); 
       initWithDT( img, implicitFunction );
     }
- 
 
+  //area
+  double area = (double) setSize( implicitFunction ); 
+  trace.info() << "# area: " << area << std::endl; 
   
   //algo
   std::string algo; 
@@ -134,11 +143,6 @@ int main(int argc, char** argv)
 
   if (algo.compare("levelSet")==0)
   {
-
-    //balloon force
-    double k; 
-    if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-    k = vm["balloonForce"].as<double>(); 
 
     if (vm.count("withFunction")) 
       drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
@@ -174,6 +178,9 @@ int main(int argc, char** argv)
       }
 
       DGtal::trace.endBlock(); 
+
+      //area
+      trace.info() << "# area: " << setSize( implicitFunction ) << std::endl; 
     }
 
   } else if (algo.compare("phaseField")==0)
@@ -188,6 +195,10 @@ int main(int argc, char** argv)
         return 0; 
       } 
 
+    bool flagWithCstVol = false; 
+    if (vm.count("withCstVol")) 
+      flagWithCstVol = true; 
+
     //computing the profile from the signed distance
     Profile p(epsilon); 
     std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
@@ -199,11 +210,14 @@ int main(int argc, char** argv)
     ss << outputFiles << "0001"; 
     drawContour(implicitFunction, ss.str(), format, 0.5); 
 
+    ImageContainerBySTLVector<Domain,double> a( implicitFunction.domain() ); 
+    std::fill(a.begin(),a.end(), 1 );  
 
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
-    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
+      ImageContainerBySTLVector<Domain,double> > Reaction; 
     Diffusion diffusion; 
-    Reaction reaction( epsilon );
+    Reaction reaction( epsilon, a, k, flagWithCstVol );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
     for (unsigned int i = step; i <= max; i += step) 
@@ -220,6 +234,10 @@ int main(int argc, char** argv)
       drawContour(implicitFunction, s.str(), format, 0.5); 
 
       DGtal::trace.endBlock(); 
+
+      //area
+      trace.info() << "# area: " << setSize( implicitFunction, 0.5 ) << std::endl; 
+
     }
 
   } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
