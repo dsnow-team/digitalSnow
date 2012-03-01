@@ -75,16 +75,22 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 {
 
   /// set of points that are candidate to the flip
-  typedef DigitalSetBySTLSet<Domain> CandidatePointSet; 
-  CandidatePointSet candidates( myLImage.domain() ); 
 
-  /// initialization of the set
-  DigitalSetInserter<CandidatePointSet> inserter( candidates ); 
-  init( inserter );
- 
+  // typedef DigitalSetBySTLSet<Domain> CandidatePointSet; 
+  // CandidatePointSet candidates( myLImage.domain() ); 
+  //  DigitalSetInserter<CandidatePointSet> inserter( candidates );
+  // init( inserter );
+
+  std::vector<Point> points; 
+  init ( std::back_inserter( points ) ); 
+  trace.info() << points.size() << " closest points" << std::endl; 
+
   /// ordering of the points according 
   /// to their zero-crossing time
-  //order();
+  //typedef std::pair<Point,Velocity> PointVelocity; 
+  //std::vector<PointVelocity> candidates; 
+  //prepare ( points.begin(), points.end(), std::back_inserter( candidates ) );
+  //std::sort( candidates.begin(), candidates.end(), comparator ? ); 
 
   /// flip points one by one, in order
   /// while possible
@@ -99,8 +105,10 @@ template <typename TOutputIterator>
 inline
 void
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
-::init( TOutputIterator& out )
+::init( const TOutputIterator& out )
 {
+
+  TOutputIterator res = out; 
 
   /// set of points for which the distance value 
   /// is computed and stored in myDImage
@@ -126,18 +134,39 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
     }
   trace.info() << nbsurfels << " surfels found." << std::endl;  
   trace.info() << points << std::endl;  
-  trace.info() << myDImage << std::endl;  
+
+  std::copy( points.begin(), points.end(), res ); 
 
   /// FMM 
-  // distance thresholds
-  double t1 = myW + 1.0; 
-  double t2 = t1 * 2.0; 
+  Point p; 
+  Distance d; 
+  
+  //definition
+  typedef FMM<DImage, PointSet, typename Domain::Predicate > FMM;
+  Domain domain = myLImage.domain(); // computation domain
+  FMM fmm( myDImage, points, domain.predicate() );
 
   //first pass
-
-  //copy
+  {
+    double threshold = myW + 1.0;  // distance threshold
+    fmm.computeOneStep( p, d );
+    while (std::abs(d) < threshold)
+      {
+	*res++ = p; 
+	fmm.computeOneStep( p, d );
+      } 
+  }
+  trace.info() << fmm << std::endl; 
 
   //second pass
+  {
+    double threshold = myW + 2.0;  // distance threshold
+    while (std::abs(d) < threshold)
+      {
+	fmm.computeOneStep( p, d );
+      } 
+  }
+  trace.info() << fmm << std::endl; 
 
 }
 

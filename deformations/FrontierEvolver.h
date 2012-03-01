@@ -54,6 +54,9 @@
 #include "DGtal/kernel/sets/DigitalSetInserter.h"
 #include "DGtal/images/ImageHelper.h"
 
+// FMM
+#include "DGtal/geometry/volumes/distance/FMM.h"
+
 // frontier
 #include "DGtal/topology/SurfelAdjacency.h"
 #include "DGtal/topology/helpers/FrontierPredicate.h"
@@ -125,6 +128,7 @@ namespace DGtal
 
     /// Image of distance values
     typedef TDistanceImage DImage;
+    typedef typename DImage::Value Distance;
 
     /// Frontier
     typedef FrontierPredicate<KSpace, LImage> SurfelPredicate;
@@ -181,7 +185,7 @@ namespace DGtal
      * @param out an output iterator
      */
     template <typename TOutputIterator>
-    void init(TOutputIterator& out);
+    void init(const TOutputIterator& out);
 
     /**
      * Checks the validity/consistency of the object.
