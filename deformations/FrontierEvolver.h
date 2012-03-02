@@ -80,18 +80,28 @@ namespace DGtal
     template<typename I>
     class ZeroCrossingTimeCompare {
     private: 
-      const I& myI; /// underlying distance map
+      const I* myI; /// underlying distance map
     public: 
       /* Constructor */
-      ZeroCrossingTimeCompare( const I& i ): myI( i ) {};
+      ZeroCrossingTimeCompare( const I& i ): myI( &i ) 
+      {
+	trace.info() << myI->domain() << std::endl; 
+      };
       /* Destructor */
       ~ZeroCrossingTimeCompare() {};
       /* operator */
       template<typename T>
       bool operator()(const T& a, const T& b) 
       {
-	return ( (std::abs(myI( a.first )) * std::abs(b.second))
-		 < (std::abs(myI( b.first )) * std::abs(a.second)) ); 
+	if ( !myI->domain().isInside( a.first ) ) 
+	  {
+	    std::cerr << a.first << " not in domain (from time comp)" << std::endl; 
+	    throw DGtal::InputException(); 
+	  }
+	ASSERT( myI->domain().isInside( a.first ) && "a.first in time comparison");  
+	ASSERT( myI->domain().isInside( b.first ) && "b.first in time comparison");  
+	return ( (std::abs((*myI)( a.first )) * std::abs(b.second))
+		 < (std::abs((*myI)( b.first )) * std::abs(a.second)) ); 
       }
     };
   }
@@ -282,7 +292,7 @@ namespace DGtal
     /**
      * (implicit) digital frontier
      */
-    Frontier myFrontier; 
+    const Frontier* myFrontier; 
 
     // ------------------------- Hidden services ------------------------------
   protected:
@@ -328,8 +338,12 @@ namespace DGtal
      * Update the starting surfel @a mySurfel
      * of the digital frontier from point @a p
      * @param p any (digital) point
+     * @param isPos bool equal to 'true' if @a p
+     * belongs to the inner region (and the
+     * corresponding spel is positive) but 'false'
+     * otherwise
      */
-    void updateSurfel ( const Point& p );
+    void updateFrontier ( const Point& p, bool isPos );
 
   }; // end of class FrontierEvolver
 

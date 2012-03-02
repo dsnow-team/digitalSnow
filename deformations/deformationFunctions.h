@@ -27,18 +27,16 @@ template< typename TImage >
 void inv(TImage& img, const double& threshold = 0)
 {
  
-  typename TImage::Domain d = img.domain(); 
-  typename TImage::Domain::ConstIterator cIt = d.begin(); 
-  typename TImage::Domain::ConstIterator cItEnd = d.end(); 
+  typename TImage::OutputIterator res = img.outputIterator(); 
+  typename TImage::ConstRange r = img.range(); 
+  typename TImage::ConstRange::ConstIterator cIt = r.begin(); 
+  typename TImage::ConstRange::ConstIterator cItEnd = r.end(); 
   for ( ; cIt != cItEnd; ++cIt)
-  { //for each domain point
-
-    typedef typename TImage::Point Point; 
-    Point p( *cIt ); //point p
-    if (img(p) <= threshold) 
-      img.setValue(p, (typename TImage::Value) 1);  
+  { //for each
+    if (*cIt <= threshold) 
+      *res++ = 1;  
     else 
-      img.setValue(p, (typename TImage::Value) 0);  
+      *res++ = 0;  
   }
 
 }

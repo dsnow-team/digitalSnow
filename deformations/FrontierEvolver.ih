@@ -49,13 +49,14 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
     myInnerLabel( myLImage( getInnerPoint( mySurfel ) ) ), 
     myOuterLabel( myLImage( getOuterPoint( mySurfel ) ) ), 
     mySurfelPred( myKSpace, myLImage, myInnerLabel, myOuterLabel ), 
-    myFrontier( myKSpace, mySurfelPred, 
-		SurfelAdjacency<KSpace::dimension>( true ), 
-                mySurfel )
+    myFrontier( new Frontier ( myKSpace, mySurfelPred, 
+			       SurfelAdjacency<KSpace::dimension>( true ), 
+			       mySurfel ) )
 { 
   ASSERT( myW > 0 );   
   ASSERT( myW <= 1.0 ); 
   ASSERT( myKSpace.sIsSurfel( mySurfel ) );
+  trace.info() << "Labels: " << myInnerLabel << " and " << myOuterLabel << std::endl;  
   ASSERT( myInnerLabel != myOuterLabel ); 
 }
 
@@ -65,6 +66,7 @@ inline
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::~FrontierEvolver()
 {
+  delete( myFrontier ); 
 }
 
 
@@ -89,7 +91,13 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	 itEnd = points.end(); 
        it != itEnd; ++it)
     {
+
       Velocity v = myFunctor( *it ); 
+	if ( !myDImage.domain().isInside( *it ) ) 
+	  {
+	    std::cerr << *it << " not in domain (after velocity)" << std::endl; 
+	    throw DGtal::InputException(); 
+	  }
       //TODO velocity max computation here! and store zero-crossing time instead
       candidates.push_back( PointVelocity( *it, v ) ); 
     }
@@ -107,6 +115,20 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
   /// ordering of the points according 
   /// to their zero-crossing time
+  for (typename std::vector<PointVelocity>::const_iterator 
+	 it = candidates.begin(), 
+	 itEnd = candidates.end(); 
+       it != itEnd; ++it)
+    {
+	if ( !myDImage.domain().isInside( it->first ) ) 
+	  {
+	    std::cerr << it->first << " not in domain (verif)" << std::endl; 
+	    throw DGtal::InputException(); 
+	  }
+    }
+  trace.info() << candidates.size() << " candidates " << std::endl; 
+
+  trace.info() << "sorting..." << std::endl; 
   details::ZeroCrossingTimeCompare<DImage> timeCompare( myDImage ); 
   std::sort( candidates.begin(), candidates.end(), timeCompare ); 
   trace.info() << "Times ranging from " 
@@ -114,41 +136,77 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 		    / std::abs(candidates.begin()->second) ) 
 	       << " to " 
 	       << ( std::abs(myDImage( candidates.rbegin()->first ))
-		    / std::abs(candidates.begin()->second) ) 
+		    / std::abs(candidates.rbegin()->second) ) 
 	       << std::endl; 
 
   /// flip points one by one, in order,
   /// while possible
   ASSERT (candidates.begin() != candidates.end()); 
-  Point p; 
-  double t; 
-  bool flag = true; 
+  bool go = true;
+  bool isInner; 
   for (typename std::vector<PointVelocity>::const_iterator 
 	 it = candidates.begin(), 
 	 itEnd = candidates.end(); 
-       ( (it != itEnd)&&(flag) ); ++it)
+       ( (it != itEnd)&&(go) ); ++it)
     {
-      p = it->first;
-      t = ( std::abs(myDImage(p)) / std::abs(it->second) ); 
+      Point p = it->first;
+      double t = ( std::abs(myDImage(p)) / std::abs(it->second) ); 
       if ( (t <= tmax) && ( myPointPred( p ) ) )
-	{
-	  /// flip( p );
+	{ /// flip
 	  if ( myLImage(p) == myInnerLabel )
-	    myLImage.setValue( p, myOuterLabel ); 
+	    {
+	      isInner = false; 
+	      myLImage.setValue( p, myOuterLabel );
+	    }
 	  else if ( myLImage(p) == myOuterLabel )
-	    myLImage.setValue( p, myInnerLabel ); 
+	    {
+	      isInner = true; 
+	      myLImage.setValue( p, myInnerLabel ); 
+	    }
 	  else 
 	    ASSERT( false && "impossible label in update method" ); 
 	}
       else 
-	flag = false; 
+	go = false; 
     }
 
-  trace.info() << "Lastest flipped point: " << p << std::endl; 
-  // updateSurfel( p ); 
-  // trace.info() << "new bel: " << mySurfel << std::endl; 
+  /// update digital frontier
+  // moving mySurfel in one direction (but 2 orientation)
+  DGtal::Dimension q = *myKSpace.sOrthDirs( mySurfel ); 
+  Surfel sIncr = mySurfel; 
+  Surfel sDecr = mySurfel;
+  bool isIncr = true; 
+  bool stop = mySurfelPred( mySurfel ); 
+  while ( !stop )
+    {
+      if (isIncr)
+	{
+	  ASSERT( !myKSpace.sIsMax( sIncr, q) ); 
+	  sIncr = myKSpace.sGetIncr( sIncr, q );   
+	  stop = mySurfelPred( sIncr ); 
+	  isIncr = false; 
+	}
+      else 
+	{
+	  ASSERT( !myKSpace.sIsMin( sDecr, q) ); 
+	  sDecr = myKSpace.sGetDecr( sDecr, q );   
+	  stop = mySurfelPred( sDecr ); 
+	  isIncr = true; 
+	}
+    }
+  if (isIncr)
+    mySurfel = sDecr; 
+  else 
+    mySurfel = sIncr; 
+  trace.info() << "new bel: " << mySurfel << std::endl; 
 
-  return false; 
+  /// update frontier
+  delete ( myFrontier ); 
+  myFrontier = new Frontier ( myKSpace, mySurfelPred, 
+			      SurfelAdjacency<KSpace::dimension>( true ), 
+			      mySurfel ); 
+
+  return true; 
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
@@ -167,20 +225,23 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   ///////////////////////get the set type from a traits selector 
   typedef DigitalSetFromMap<DImage> PointSet; 
   PointSet points(myDImage);
-
+  points.clear(); 
 
   /// initialization of points from the 
   /// points adjacent to the frontier
+  trace.info() << "starting surfel: " << mySurfel << std::endl;  
   unsigned int nbsurfels = 0;
-  for ( SurfelIterator it = myFrontier.begin(), 
-	  itEnd = myFrontier.end();
+  for ( SurfelIterator it = myFrontier->begin(), 
+	  itEnd = myFrontier->end();
         it != itEnd; ++it )
     {
       Point in( getInnerPoint( *it ) ); 
       Point out( getOuterPoint( *it ) );
- 
-      insertAndAlwaysSetValue( myDImage, points, in, -0.5 );
-      insertAndAlwaysSetValue( myDImage, points, out, 0.5 );
+
+      if ( myDImage.domain().isInside( in ) ) //TODO using predicate on labels
+	insertAndAlwaysSetValue( myDImage, points, in, -0.5 );
+      if ( myDImage.domain().isInside( out ) )
+	insertAndAlwaysSetValue( myDImage, points, out, 0.5 );
 
       ++nbsurfels;
     }
@@ -190,33 +251,37 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   std::copy( points.begin(), points.end(), res ); 
 
   /// FMM 
-  Point p; 
-  Distance d; 
   
   //definition
-  typedef FMM<DImage, PointSet, typename Domain::Predicate > FMM;
-  Domain domain = myLImage.domain(); // computation domain
-  FMM fmm( myDImage, points, domain.predicate() );
+  typedef FMM<DImage, PointSet, typename DImage::Domain::Predicate > FMM;
+  trace.info() << myDImage.domain() << std::endl; 
+  //TODO restreindre a deux labels
+  FMM fmm( myDImage, points, myDImage.domain().predicate() );
 
+  Point p = Point::diagonal(0);      //last point
+  Distance d = 0;                  //its distance
   //first pass
   {
-    double threshold = myW + 1.0;  // distance threshold
-    fmm.computeOneStep( p, d );
-    while (std::abs(d) < threshold)
+    double threshold = myW + 1.5;  // distance threshold
+    while ( (fmm.computeOneStep( p, d )) 
+	    && (std::abs(d) < threshold) )
       {
+	if ( !myDImage.domain().isInside( p ) ) 
+	  {
+	    std::cerr << p << " not in domain (from FMM)" << std::endl; 
+	    throw DGtal::InputException(); 
+	  }
 	*res++ = p; 
-	fmm.computeOneStep( p, d );
-      } 
+      }
   }
   trace.info() << fmm << std::endl; 
 
   //second pass
   {
-    double threshold = myW + 2.0;  // distance threshold
-    while (std::abs(d) < threshold)
-      {
-	fmm.computeOneStep( p, d );
-      } 
+    double threshold = myW + 2.5;  // distance threshold
+    while ( (fmm.computeOneStep( p, d )) 
+	    && (std::abs(d) < threshold) )
+      { }
   }
   trace.info() << fmm << std::endl; 
 
@@ -270,54 +335,66 @@ template <typename TKSpace, typename TLabelImage, typename TDistanceImage,
 inline
 void
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
-::updateSurfel(const Point& p)
+::updateFrontier(const Point& p, bool isPos)
 {
   /// update mySurfel
+  //neigbors
+  Point neighbor = p; 
+  for (Dimension k = 0; k < Point::dimension; ++k)
+    {
+      typename Point::Coordinate c = neighbor.at(k); 
+      neighbor.at(k) = (c+1); 
+      std::cout << neighbor << myLImage(neighbor) << " "; 
+      neighbor.at(k) = (c-1); 
+      std::cout << neighbor << myLImage(neighbor) << " "; 
+      neighbor.at(k) = c; 
+    }
+  std::cout << std::endl; 
+
 
   /// spel creation
   typename KSpace::SCell spel; 
-  if ( myLImage(p) == myInnerLabel )
+  if ( isPos )
     spel = myKSpace.sSpel( p, KSpace::POS ); 
-  else if ( myLImage(p) == myOuterLabel )
+  else
     spel = myKSpace.sSpel( p, KSpace::NEG ); 
-  else 
-    ASSERT( false && "impossible label in updateSurfel method" ); 
 
   /// for each direction 
   bool flag = false; 
   for ( typename KSpace::DirIterator q = myKSpace.sDirs( spel ); 
-	( (q != 0)&&(!flag) ); ++q ) 
+  	( (q != 0)&&(!flag) ); ++q ) 
     { 
       DGtal::Dimension dir = *q;
 
       /// for the direct orientation
       typename KSpace::SCell surfel 
-	= myKSpace.sDirectIncident( spel, dir );
+  	= myKSpace.sDirectIncident( spel, dir );
       ASSERT( myKSpace.sIsSurfel( surfel ) ); 
       if ( mySurfelPred( surfel ) )
-	{
-	  mySurfel = surfel; 
-	  flag = true; 
-	}
+  	{
+  	  mySurfel = surfel; 
+  	  flag = true; 
+  	}
       if (!flag)
-	{
-	  /// for the indirect orientation
-	  surfel = myKSpace.sIndirectIncident( spel, dir ); 
-	  ASSERT( myKSpace.sIsSurfel( surfel ) ); 
-	  if ( mySurfelPred( surfel ) )
-	    {
-	      mySurfel = surfel; 
-	      flag = true; 
-	    }
-	}
+  	{
+  	  /// for the indirect orientation
+  	  surfel = myKSpace.sIndirectIncident( spel, dir ); 
+  	  ASSERT( myKSpace.sIsSurfel( surfel ) ); 
+  	  if ( mySurfelPred( surfel ) )
+  	    {
+  	      mySurfel = surfel; 
+  	      flag = true; 
+  	    }
+  	}
     } 
 
-  ASSERT( flag && "impossible case in updateSurfel method" ); 
+  ASSERT( flag && "last flipped point must be a border point in updateSurfel method" ); 
 
   /// update frontier
-    // myFrontier( myKSpace, mySurfelPred, 
-    // 		SurfelAdjacency<KSpace::dimension>( true ), 
-    //             mySurfel )
+  delete ( myFrontier ); 
+  myFrontier = new Frontier ( myKSpace, mySurfelPred, 
+			      SurfelAdjacency<KSpace::dimension>( true ), 
+			      mySurfel ); 
 
 }
 

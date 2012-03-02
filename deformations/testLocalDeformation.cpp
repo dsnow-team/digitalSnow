@@ -104,7 +104,7 @@ int main(int argc, char** argv)
 
 
   //image of labels
-  typedef ImageContainerBySTLVector<Domain,unsigned char> LabelImage; 
+  typedef ImageContainerBySTLVector<Domain,short int> LabelImage; 
   if (!(vm.count("inputImage"))) 
     {
     trace.info() << "you must use --inputImage option" << std::endl;
@@ -135,22 +135,23 @@ int main(int argc, char** argv)
   ks.init( d.lowerBound(), d.upperBound(), true ); 
  
   //data functions
-  ImageContainerBySTLVector<Domain,double> g( d ); 
-  std::fill(g.begin(),g.end(), 1.0 );  
+  ImageContainerBySTLMap<Domain,double> g( d, 1.0 ); 
 
   //distance map
   typedef ImageContainerBySTLMap<Domain,double> DistanceImage; 
-  DistanceImage map( d );
+  DistanceImage map( d, 0.0 );
 
   //predicate and functor
   typedef TruePointPredicate<Point> Predicate; 
+  Predicate predicate; 
   typedef LocalBalloonForce<DistanceImage, 
-   ImageContainerBySTLVector<Domain,double> > Functor; 
-  Functor f(map, g, k); 
+   ImageContainerBySTLMap<Domain,double> > Functor; 
+  Functor functor(map, g, k); 
 
   //getting a bel
   Thresholder<LabelImage::Value> t( 0 ); 
-  ConstImageAdapter<LabelImage, Thresholder<LabelImage::Value>, bool> binaryImage(labelImage, t);
+  typedef ConstImageAdapter<LabelImage, Thresholder<LabelImage::Value>, bool> BinaryImage; 
+  BinaryImage binaryImage(labelImage, t);
   try {
     KSpace::SCell bel = Surfaces<KSpace>::findABel( ks, binaryImage, 10000 );
 
@@ -160,7 +161,7 @@ int main(int argc, char** argv)
  
     //frontier evolver
     FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
-      e(ks, labelImage, map, bel, f, Predicate() ); 
+      e(ks, labelImage, map, bel, functor, predicate ); 
 
     for (unsigned int i = 1; i <= max; ++i) 
       {
