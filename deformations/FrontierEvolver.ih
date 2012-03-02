@@ -138,15 +138,15 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  else if ( myLImage(p) == myOuterLabel )
 	    myLImage.setValue( p, myInnerLabel ); 
 	  else 
-	    ASSERT( false && "impossible case" ); 
+	    ASSERT( false && "impossible label in update method" ); 
 	}
       else 
 	flag = false; 
     }
 
   trace.info() << "Lastest flipped point: " << p << std::endl; 
-  //updateSurfel( p ); 
-  trace.info() << "new bel: " << mySurfel << std::endl; 
+  // updateSurfel( p ); 
+  // trace.info() << "new bel: " << mySurfel << std::endl; 
 
   return false; 
 }
@@ -272,8 +272,16 @@ void
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::updateSurfel(const Point& p)
 {
-  typename KSpace::SCell spel, surfel; 
-  myKSpace.sSetCoords( spel, p ); 
+  /// update mySurfel
+
+  /// spel creation
+  typename KSpace::SCell spel; 
+  if ( myLImage(p) == myInnerLabel )
+    spel = myKSpace.sSpel( p, KSpace::POS ); 
+  else if ( myLImage(p) == myOuterLabel )
+    spel = myKSpace.sSpel( p, KSpace::NEG ); 
+  else 
+    ASSERT( false && "impossible label in updateSurfel method" ); 
 
   /// for each direction 
   bool flag = false; 
@@ -283,10 +291,10 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       DGtal::Dimension dir = *q;
 
       /// for the direct orientation
-      surfel = myKSpace.sDirectIncident( spel, dir );
+      typename KSpace::SCell surfel 
+	= myKSpace.sDirectIncident( spel, dir );
       ASSERT( myKSpace.sIsSurfel( surfel ) ); 
-      if ( ( myLImage(getInnerPoint( surfel )) == myInnerLabel ) 
-	   && ( myLImage(getOuterPoint( surfel )) == myOuterLabel ) )
+      if ( mySurfelPred( surfel ) )
 	{
 	  mySurfel = surfel; 
 	  flag = true; 
@@ -296,8 +304,7 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  /// for the indirect orientation
 	  surfel = myKSpace.sIndirectIncident( spel, dir ); 
 	  ASSERT( myKSpace.sIsSurfel( surfel ) ); 
-	  if ( ( myLImage(getInnerPoint( surfel )) == myInnerLabel ) 
-	       && ( myLImage(getOuterPoint( surfel )) == myOuterLabel ) )
+	  if ( mySurfelPred( surfel ) )
 	    {
 	      mySurfel = surfel; 
 	      flag = true; 
@@ -305,7 +312,13 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	}
     } 
 
-  ASSERT( flag && "impossible case" ); 
+  ASSERT( flag && "impossible case in updateSurfel method" ); 
+
+  /// update frontier
+    // myFrontier( myKSpace, mySurfelPred, 
+    // 		SurfelAdjacency<KSpace::dimension>( true ), 
+    //             mySurfel )
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
