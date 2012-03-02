@@ -88,12 +88,13 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   /// velocity computation
   typedef std::pair<Point,Velocity> PointVelocity; 
   std::vector<PointVelocity> candidates; 
-  typename std::vector<Point>::const_iterator 
-    it = points.begin(), 
-    itEnd = points.end(); 
-  for ( ; it != itEnd; ++it)
+  for (typename std::vector<Point>::const_iterator 
+	 it = points.begin(), 
+	 itEnd = points.end(); 
+       it != itEnd; ++it)
     {
       Velocity v = myFunctor( *it ); 
+      //TODO velocity max computation here! and store zero-crossing time instead
       candidates.push_back( PointVelocity( *it, v ) ); 
     }
   trace.info() << candidates.size() << " candidates " << std::endl; 
@@ -120,9 +121,29 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 		    / std::abs(candidates.begin()->second) ) 
 	       << std::endl; 
 
-  /// flip points one by one, in order
+  /// flip points one by one, in order,
   /// while possible
-  //evolve(); 
+  ASSERT (candidates.begin() != candidates.end()); 
+  Point p; 
+  double t; 
+  bool flag = true; 
+  for (typename std::vector<PointVelocity>::const_iterator 
+	 it = candidates.begin(), 
+	 itEnd = candidates.end(); 
+       ( (it != itEnd)&&(flag) ); ++it)
+    {
+      p = it->first;
+      t = ( std::abs(myDImage(p)) / std::abs(it->second) ); 
+      if ( (t <= tmax) && ( myPointPred( p ) ) )
+	{
+	  //flip( p ); 
+	}
+      else 
+	flag = false; 
+    }
+
+  trace.info() << "Lastest flipped point: " << p << std::endl; 
+
 
   return false; 
 }
