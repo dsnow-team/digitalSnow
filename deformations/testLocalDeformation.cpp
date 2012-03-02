@@ -146,7 +146,7 @@ int main(int argc, char** argv)
   typedef TruePointPredicate<Point> Predicate; 
   typedef LocalBalloonForce<DistanceImage, 
    ImageContainerBySTLVector<Domain,double> > Functor; 
-  Functor f(g, k); 
+  Functor f(map, g, k); 
 
   //getting a bel
   Thresholder<LabelImage::Value> t( 0 ); 

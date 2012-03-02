@@ -38,28 +38,9 @@
 template <typename TFunction, typename TExternField>
 inline
 DGtal::LocalBalloonForce<TFunction, TExternField>
-::LocalBalloonForce(const ExternField& aF, const double& aK)
- : myFuncPtr( NULL ), myFieldPtr( &aF ), myK( aK )
+::LocalBalloonForce(PointFunctor& aF1, const ExternField& aF2, const double& aK)
+ : myFuncPtr( &aF1 ), myFieldPtr( &aF2 ), myK( aK )
 { 
-}
-
-template <typename TFunction, typename TExternField>
-inline
-const typename DGtal::LocalBalloonForce<TFunction, TExternField>::PointFunctor&
-DGtal::LocalBalloonForce<TFunction, TExternField>
-::base()
-{ 
-  ASSERT( myFuncPtr ); 
-  return *myFuncPtr; 
-}
-
-template <typename TFunction, typename TExternField>
-inline
-void
-DGtal::LocalBalloonForce<TFunction, TExternField>
-::attach(const PointFunctor& aF)
-{ 
-  myFuncPtr = &aF; 
 }
 
 template <typename TFunction, typename TExternField>
@@ -74,8 +55,8 @@ DGtal::LocalBalloonForce<TFunction, TExternField>
 //ugly until differential operators are updated 
   GodunovGradient<PointFunctor> gradient( *tmpPtr, (myK >= 0) );
   GradientModulus<GodunovGradient<PointFunctor> > m(gradient);
-  double res = 
-    static_cast<double>( myK * myFieldPtr->operator()(aPoint) * m(aPoint) ); 
+  double res = myK * static_cast<double>( myFieldPtr->operator()(aPoint) )
+                   * static_cast<double>( m(aPoint) ); 
   return res; 
 }
 //------------------------------------------------------------------------------

@@ -85,12 +85,40 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   init ( std::back_inserter( points ) ); 
   trace.info() << points.size() << " closest points" << std::endl; 
 
+  /// velocity computation
+  typedef std::pair<Point,Velocity> PointVelocity; 
+  std::vector<PointVelocity> candidates; 
+  typename std::vector<Point>::const_iterator 
+    it = points.begin(), 
+    itEnd = points.end(); 
+  for ( ; it != itEnd; ++it)
+    {
+      Velocity v = myFunctor( *it ); 
+      candidates.push_back( PointVelocity( *it, v ) ); 
+    }
+  trace.info() << candidates.size() << " candidates " << std::endl; 
+
+  /// time threshold computation
+  details::VelocityCompare velocityCompare;  
+  typename std::vector<PointVelocity>::iterator 
+    itmax = std::max_element( candidates.begin(), candidates.end(), velocityCompare );
+  Velocity vmax = itmax->second;  
+  double tmax = myW / std::abs(vmax); 
+  trace.info() << "Distance max: " << myW << " / " 
+	       << "Velocity max: " << vmax << " = " 
+	       << "Time threshold: " << tmax << std::endl; 
+
   /// ordering of the points according 
   /// to their zero-crossing time
-  //typedef std::pair<Point,Velocity> PointVelocity; 
-  //std::vector<PointVelocity> candidates; 
-  //prepare ( points.begin(), points.end(), std::back_inserter( candidates ) );
-  //std::sort( candidates.begin(), candidates.end(), comparator ? ); 
+  details::ZeroCrossingTimeCompare<DImage> timeCompare( myDImage ); 
+  std::sort( candidates.begin(), candidates.end(), timeCompare ); 
+  trace.info() << "Times ranging from " 
+	       << ( std::abs(myDImage( candidates.begin()->first ))
+		    / std::abs(candidates.begin()->second) ) 
+	       << " to " 
+	       << ( std::abs(myDImage( candidates.rbegin()->first ))
+		    / std::abs(candidates.begin()->second) ) 
+	       << std::endl; 
 
   /// flip points one by one, in order
   /// while possible

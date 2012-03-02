@@ -66,6 +66,35 @@
 namespace DGtal
 {
 
+  namespace details
+  {
+    class VelocityCompare {
+    public: 
+      template <typename T>
+      bool operator()(const T& a, const T& b) 
+      {
+	return ( std::abs(a.second) < std::abs(b.second) ); 
+      }
+    };
+
+    template<typename I>
+    class ZeroCrossingTimeCompare {
+    private: 
+      const I& myI; /// underlying distance map
+    public: 
+      /* Constructor */
+      ZeroCrossingTimeCompare( const I& i ): myI( i ) {};
+      /* Destructor */
+      ~ZeroCrossingTimeCompare() {};
+      /* operator */
+      template<typename T>
+      bool operator()(const T& a, const T& b) 
+      {
+	return ( (std::abs(myI( a.first )) * std::abs(b.second))
+		 < (std::abs(myI( b.first )) * std::abs(a.second)) ); 
+      }
+    };
+  }
   /////////////////////////////////////////////////////////////////////////////
   // template class FrontierEvolver
   /**
@@ -73,20 +102,20 @@ namespace DGtal
    * \brief Aim: This class is a way of deforming an image of labels
    * around a connected contact surface between two regions, 
    * according to a velocity field, whose computation is 
-   * delegated to a instance of a model of CPointFunctorAdapter 
+   * delegated to a point functor. 
    *   
    * At each step, a signed distance function is built. 
    * The points are sorted according to their time of zero-crossing
    * (ie. their distance to the interface divided by their velocity)
-   * so that they are flipped from a region to another one by one and 
+   * so that they are flipped from a region to another, one by one and 
    * in order, until a time greater than a threshold is reached or 
    * until a point predicate (possibly based on topological properties)
-   * returns false.
+   * returns false. 
    *
    * @tparam TKSpace a model of CCellularGridSpaceND
    * @tparam TLabelImage a model of CImage (storing labels)
    * @tparam TDistanceImage a model of CImage (storing distance values)
-   * @tparam TFunctor a model of CPointFunctorAdapter
+   * @tparam TFunctor a model of CPointFunctor
    * @tparam TPredicate a model of CPointPredicate
    */
   template <typename TKSpace, 
@@ -138,8 +167,9 @@ namespace DGtal
     typedef typename Frontier::SurfelConstIterator SurfelIterator;
 
 
-    /// Point functor for the mapping velocity-points
+    /// Point functor for the mapping points-velocity
     typedef TFunctor Functor; 
+    typedef typename Functor::Value Velocity; 
     /// Point predicate 
     typedef TPredicate Predicate; 
 

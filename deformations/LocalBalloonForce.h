@@ -56,8 +56,6 @@ namespace DGtal
    * and some extern data (a balloon force and 
    * an extern scalar field for weighting). 
    *
-   * It is a model of CPointFunctorAdapter
-   *
    * @tparam TFunction type of implicit function, 
    * which a model of point functor
    * @tparam TExternField type of the extern field, 
@@ -76,22 +74,12 @@ namespace DGtal
        typename ExternField::Point>::value ));
 
     typedef typename PointFunctor::Point Point; 
-    typedef typename PointFunctor::Value Value; 
+    typedef double Value; 
 
     /**
      * Constructor
      */
-    LocalBalloonForce(const ExternField& aF, const double& aK = 0);
-
-    /**
-     * Get the underlying function
-     */
-    const PointFunctor& base();
-
-    /**
-     * Set the underlying function
-     */
-    void attach(const PointFunctor& aF);
+    LocalBalloonForce(PointFunctor& aF1, const ExternField& aF2, const double& aK = 0);
 
     /**
      * Main operator
@@ -106,9 +94,9 @@ namespace DGtal
     /**
      * Aliasing pointer to the implicit function
      */
-    const PointFunctor* myFuncPtr;  
+    PointFunctor* myFuncPtr;  
     /**
-     * Aliasing pointer to the extern field
+     * Constant aliasing pointer to the extern field
      */
     const ExternField* myFieldPtr;  
     /**
