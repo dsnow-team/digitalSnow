@@ -153,6 +153,7 @@ namespace DGtal
 
     /// Image of labels
     typedef TLabelImage LImage;
+    typedef typename LImage::Value Label;
     typedef typename LImage::Domain Domain;
 
     /// Image of distance values
@@ -265,7 +266,14 @@ namespace DGtal
      * the frontier is moving
      */
     double myW; 
-
+    /**
+     * Label of the inner region 
+     */
+    Label myInnerLabel; 
+    /**
+     * Label of the outer region 
+     */
+    Label myOuterLabel; 
     /**
      * Surfel predicate telling whether a given surfel
      * belongs to the frontier or not
@@ -315,6 +323,13 @@ namespace DGtal
      * @return the outer point
      */
     Point getOuterPoint ( const Surfel& s ) const ;
+
+    /**
+     * Update the starting surfel @a mySurfel
+     * of the digital frontier from point @a p
+     * @param p any (digital) point
+     */
+    void updateSurfel ( const Point& p );
 
   }; // end of class FrontierEvolver
 
