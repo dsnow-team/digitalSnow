@@ -1,0 +1,80 @@
+/**
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
+/**
+ * @file LocalMCM.ih
+ * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
+ * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
+ * @date 2012/02/02
+ *
+ * Implementation of inline methods defined in LocalMCM.h
+ *
+ * This file is part of the DGtal library.
+ */
+
+
+//////////////////////////////////////////////////////////////////////////////
+#include <cstdlib>
+//////////////////////////////////////////////////////////////////////////////
+
+#include "DGtal/images/DifferentialOperators.h"
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+template <typename TFunction, typename TExternField>
+inline
+DGtal::LocalMCM<TFunction, TExternField>
+::LocalMCM(PointFunctor& aF1, const ExternField& aA, const ExternField& aB)
+ : myFuncPtr( &aF1 ), myAPtr( &aA ), myBPtr( &aB )
+{ 
+}
+
+template <typename TFunction, typename TExternField>
+template <typename TInputPoint>
+inline
+double
+DGtal::LocalMCM<TFunction, TExternField>
+::operator()( const TInputPoint& aPoint ) const
+{
+  ASSERT( myFuncPtr );
+  PointFunctor* tmpFuncPtr = const_cast<PointFunctor*>(myFuncPtr); 
+  PointFunctor* tmpBPtr = const_cast<PointFunctor*>(myBPtr); 
+//ugly until differential operators are updated 
+
+//gradient modulus
+  CentralDifference<PointFunctor> cdiff( *tmpFuncPtr ); 
+  Gradient<CentralDifference<PointFunctor> > cg( cdiff );
+  GradientModulus<Gradient<CentralDifference<PointFunctor> > > cm(cg); 
+
+//mean curvature
+  //TODO allow different types for implicit function and extern field
+  //in weightedDifference
+  WeightedDifference2<PointFunctor> diff2( *tmpFuncPtr, *tmpBPtr ); 
+  Divergence<WeightedDifference2<PointFunctor> > div(diff2); 
+  double res = static_cast<double>( (*myAPtr)(aPoint) )
+        * static_cast<double>( cm(aPoint) ) 
+        * static_cast<double>( div(aPoint) ); 
+
+  return res; 
+}
+//------------------------------------------------------------------------------
+
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+

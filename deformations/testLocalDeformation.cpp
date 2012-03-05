@@ -21,6 +21,7 @@ namespace po = boost::program_options;
 #include "DGtal/shapes/Shapes.h"
 
 #include "LocalBalloonForce.h"
+#include "LocalMCM.h"
 #include "FrontierEvolver.h"
 
 
@@ -144,9 +145,12 @@ int main(int argc, char** argv)
   //predicate and functor
   typedef TruePointPredicate<Point> Predicate; 
   Predicate predicate; 
-  typedef LocalBalloonForce<DistanceImage, 
+  // typedef LocalBalloonForce<DistanceImage, 
+  //  ImageContainerBySTLMap<Domain,double> > Functor; 
+  // Functor functor(map, g, k); 
+  typedef LocalMCM<DistanceImage, 
    ImageContainerBySTLMap<Domain,double> > Functor; 
-  Functor functor(map, g, k); 
+  Functor functor(map, g, g); 
 
   //getting a bel
   Thresholder<LabelImage::Value> t( 0 ); 
