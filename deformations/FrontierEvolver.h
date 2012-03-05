@@ -68,42 +68,15 @@ namespace DGtal
 
   namespace details
   {
-    class VelocityCompare {
+    class CompareSecondElement {
     public: 
       template <typename T>
       bool operator()(const T& a, const T& b) 
       {
-	return ( std::abs(a.second) < std::abs(b.second) ); 
+	return ( a.second < b.second ); 
       }
     };
 
-    template<typename I>
-    class ZeroCrossingTimeCompare {
-    private: 
-      const I* myI; /// underlying distance map
-    public: 
-      /* Constructor */
-      ZeroCrossingTimeCompare( const I& i ): myI( &i ) 
-      {
-	trace.info() << myI->domain() << std::endl; 
-      };
-      /* Destructor */
-      ~ZeroCrossingTimeCompare() {};
-      /* operator */
-      template<typename T>
-      bool operator()(const T& a, const T& b) 
-      {
-	if ( !myI->domain().isInside( a.first ) ) 
-	  {
-	    std::cerr << a.first << " not in domain (from time comp)" << std::endl; 
-	    throw DGtal::InputException(); 
-	  }
-	ASSERT( myI->domain().isInside( a.first ) && "a.first in time comparison");  
-	ASSERT( myI->domain().isInside( b.first ) && "b.first in time comparison");  
-	return ( (std::abs((*myI)( a.first )) * std::abs(b.second))
-		 < (std::abs((*myI)( b.first )) * std::abs(a.second)) ); 
-      }
-    };
   }
   /////////////////////////////////////////////////////////////////////////////
   // template class FrontierEvolver

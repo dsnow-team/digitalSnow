@@ -83,130 +83,127 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   init ( std::back_inserter( points ) ); 
   trace.info() << points.size() << " closest points" << std::endl; 
 
-  /// velocity computation
-  typedef std::pair<Point,Velocity> PointVelocity; 
-  std::vector<PointVelocity> candidates; 
+  /// velocity and zero-crossing time computation
+  typedef std::pair<Point,double> PointTime; 
+  std::vector<PointTime> candidates; 
+  double vmax = 0; 
   for (typename std::vector<Point>::const_iterator 
 	 it = points.begin(), 
 	 itEnd = points.end(); 
        it != itEnd; ++it)
     {
-
-      Velocity v = myFunctor( *it ); 
-	if ( !myDImage.domain().isInside( *it ) ) 
-	  {
-	    std::cerr << *it << " not in domain (after velocity)" << std::endl; 
-	    throw DGtal::InputException(); 
-	  }
-      //TODO velocity max computation here! and store zero-crossing time instead
-      candidates.push_back( PointVelocity( *it, v ) ); 
+      // velocity
+      Velocity v = myFunctor( *it );
+      // maximal velocity
+      double vabs = std::abs( static_cast<double>( v ) ); 
+      if (vabs > vmax) vmax = vabs; 
+      // new candidate with its zero-crossing time
+      double d = myDImage( *it );
+      if ( ( (d>=0) && (v<0) ) 
+	   || ( (d<=0) && (v>0) ) )
+	{ //if opposite signs (and v != 0)
+	  double t = - d / v;
+	  ASSERT( t >= 0 ); 
+	  candidates.push_back( PointTime( *it, t ) ); 
+	}
     }
   trace.info() << candidates.size() << " candidates " << std::endl; 
 
   /// time threshold computation
-  details::VelocityCompare velocityCompare;  
-  typename std::vector<PointVelocity>::iterator 
-    itmax = std::max_element( candidates.begin(), candidates.end(), velocityCompare );
-  Velocity vmax = itmax->second;  
-  double tmax = myW / std::abs(vmax); 
+  double tmax = myW / vmax; 
   trace.info() << "Distance max: " << myW << " / " 
 	       << "Velocity max: " << vmax << " = " 
 	       << "Time threshold: " << tmax << std::endl; 
 
-  /// ordering of the points according 
-  /// to their zero-crossing time
-  for (typename std::vector<PointVelocity>::const_iterator 
-	 it = candidates.begin(), 
-	 itEnd = candidates.end(); 
-       it != itEnd; ++it)
-    {
-	if ( !myDImage.domain().isInside( it->first ) ) 
-	  {
-	    std::cerr << it->first << " not in domain (verif)" << std::endl; 
-	    throw DGtal::InputException(); 
-	  }
-    }
-  trace.info() << candidates.size() << " candidates " << std::endl; 
+  if (candidates.begin() != candidates.end())
+    { //if they are candidates
 
-  trace.info() << "sorting..." << std::endl; 
-  details::ZeroCrossingTimeCompare<DImage> timeCompare( myDImage ); 
-  std::sort( candidates.begin(), candidates.end(), timeCompare ); 
-  trace.info() << "Times ranging from " 
-	       << ( std::abs(myDImage( candidates.begin()->first ))
-		    / std::abs(candidates.begin()->second) ) 
-	       << " to " 
-	       << ( std::abs(myDImage( candidates.rbegin()->first ))
-		    / std::abs(candidates.rbegin()->second) ) 
-	       << std::endl; 
+      /// ordering of the points according 
+      /// to their zero-crossing time
+      trace.info() << "ordering..." << std::endl; 
+      details::CompareSecondElement timeCompare; 
+      std::sort( candidates.begin(), candidates.end(), timeCompare ); 
+      trace.info() << "Times ranging from " 
+		   << candidates.begin()->second 
+		   << " to " 
+		   << candidates.rbegin()->second 
+		   << std::endl; 
 
-  /// flip points one by one, in order,
-  /// while possible
-  ASSERT (candidates.begin() != candidates.end()); 
-  bool go = true;
-  bool isInner; 
-  for (typename std::vector<PointVelocity>::const_iterator 
-	 it = candidates.begin(), 
-	 itEnd = candidates.end(); 
-       ( (it != itEnd)&&(go) ); ++it)
-    {
-      Point p = it->first;
-      double t = ( std::abs(myDImage(p)) / std::abs(it->second) ); 
-      if ( (t <= tmax) && ( myPointPred( p ) ) )
-	{ /// flip
-	  if ( myLImage(p) == myInnerLabel )
-	    {
-	      isInner = false; 
-	      myLImage.setValue( p, myOuterLabel );
-	    }
-	  else if ( myLImage(p) == myOuterLabel )
-	    {
-	      isInner = true; 
-	      myLImage.setValue( p, myInnerLabel ); 
+      /// flip points one by one, in order,
+      /// while possible
+      unsigned int nbFlips = 0; 
+      bool go = true;
+      //      bool isInner = true; 
+      for (typename std::vector<PointTime>::const_iterator 
+	     it = candidates.begin(), 
+	     itEnd = candidates.end(); 
+	   ( (it != itEnd)&&(go) ); ++it)
+	{
+	  const Point p = it->first;
+	  const double t = it->second; 
+	  if ( (t <= tmax) && ( myPointPred( p ) ) )
+	    { /// flip
+	      nbFlips++; 
+	      if ( myLImage(p) == myInnerLabel )
+		{
+		  //		  isInner = false; 
+		  myLImage.setValue( p, myOuterLabel );
+		}
+	      else if ( myLImage(p) == myOuterLabel )
+		{
+		  //		  isInner = true; 
+		  myLImage.setValue( p, myInnerLabel ); 
+		}
+	      else 
+		ASSERT( false && "impossible label in update method" ); 
 	    }
 	  else 
-	    ASSERT( false && "impossible label in update method" ); 
+	    go = false; 
 	}
-      else 
-	go = false; 
-    }
+      trace.info() << nbFlips << " flipped points" << std::endl; 
 
-  /// update digital frontier
-  // moving mySurfel in one direction (but 2 orientation)
-  DGtal::Dimension q = *myKSpace.sOrthDirs( mySurfel ); 
-  Surfel sIncr = mySurfel; 
-  Surfel sDecr = mySurfel;
-  bool isIncr = true; 
-  bool stop = mySurfelPred( mySurfel ); 
-  while ( !stop )
-    {
+      /// update digital frontier
+      // moving mySurfel in one direction 
+      // (but along 2 orientations) until
+      // it is a contact surfel
+      DGtal::Dimension q = *myKSpace.sOrthDirs( mySurfel ); 
+      Surfel sIncr = mySurfel; 
+      Surfel sDecr = mySurfel;
+      bool isIncr = true; 
+      bool stop = mySurfelPred( mySurfel ); 
+      while ( !stop )
+	{
+	  if (isIncr)
+	    {
+	      ASSERT( !myKSpace.sIsMax( sIncr, q) ); 
+	      sIncr = myKSpace.sGetIncr( sIncr, q );   
+	      stop = mySurfelPred( sIncr ); 
+	      isIncr = false; 
+	    }
+	  else 
+	    {
+	      ASSERT( !myKSpace.sIsMin( sDecr, q) ); 
+	      sDecr = myKSpace.sGetDecr( sDecr, q );   
+	      stop = mySurfelPred( sDecr ); 
+	      isIncr = true; 
+	    }
+	}
       if (isIncr)
-	{
-	  ASSERT( !myKSpace.sIsMax( sIncr, q) ); 
-	  sIncr = myKSpace.sGetIncr( sIncr, q );   
-	  stop = mySurfelPred( sIncr ); 
-	  isIncr = false; 
-	}
+	mySurfel = sDecr; 
       else 
-	{
-	  ASSERT( !myKSpace.sIsMin( sDecr, q) ); 
-	  sDecr = myKSpace.sGetDecr( sDecr, q );   
-	  stop = mySurfelPred( sDecr ); 
-	  isIncr = true; 
-	}
+	mySurfel = sIncr; 
+      trace.info() << "new bel: " << mySurfel << std::endl; 
+
+      /// update frontier
+      delete ( myFrontier ); 
+      myFrontier = new Frontier ( myKSpace, mySurfelPred, 
+				  SurfelAdjacency<KSpace::dimension>( true ), 
+				  mySurfel ); 
+
+      return true; 
     }
-  if (isIncr)
-    mySurfel = sDecr; 
   else 
-    mySurfel = sIncr; 
-  trace.info() << "new bel: " << mySurfel << std::endl; 
-
-  /// update frontier
-  delete ( myFrontier ); 
-  myFrontier = new Frontier ( myKSpace, mySurfelPred, 
-			      SurfelAdjacency<KSpace::dimension>( true ), 
-			      mySurfel ); 
-
-  return true; 
+    return false; 
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
