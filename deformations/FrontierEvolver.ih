@@ -132,26 +132,28 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       /// flip points one by one, in order,
       /// while possible
       unsigned int nbFlips = 0; 
+      Point p = Point::diagonal(0);
+      double t = 0;
+      bool isInner = true; 
       bool go = true;
-      //      bool isInner = true; 
       for (typename std::vector<PointTime>::const_iterator 
 	     it = candidates.begin(), 
 	     itEnd = candidates.end(); 
 	   ( (it != itEnd)&&(go) ); ++it)
 	{
-	  const Point p = it->first;
-	  const double t = it->second; 
+	  p = it->first; 
+	  t = it->second; 
 	  if ( (t <= tmax) && ( myPointPred( p ) ) )
 	    { /// flip
 	      nbFlips++; 
 	      if ( myLImage(p) == myInnerLabel )
 		{
-		  //		  isInner = false; 
+		  isInner = false; 
 		  myLImage.setValue( p, myOuterLabel );
 		}
 	      else if ( myLImage(p) == myOuterLabel )
 		{
-		  //		  isInner = true; 
+		  isInner = true; 
 		  myLImage.setValue( p, myInnerLabel ); 
 		}
 	      else 
@@ -162,43 +164,44 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	}
       trace.info() << nbFlips << " flipped points" << std::endl; 
 
-      /// update digital frontier
-      // moving mySurfel in one direction 
-      // (but along 2 orientations) until
-      // it is a contact surfel
-      DGtal::Dimension q = *myKSpace.sOrthDirs( mySurfel ); 
-      Surfel sIncr = mySurfel; 
-      Surfel sDecr = mySurfel;
-      bool isIncr = true; 
-      bool stop = mySurfelPred( mySurfel ); 
-      while ( !stop )
-	{
-	  if (isIncr)
-	    {
-	      ASSERT( !myKSpace.sIsMax( sIncr, q) ); 
-	      sIncr = myKSpace.sGetIncr( sIncr, q );   
-	      stop = mySurfelPred( sIncr ); 
-	      isIncr = false; 
-	    }
-	  else 
-	    {
-	      ASSERT( !myKSpace.sIsMin( sDecr, q) ); 
-	      sDecr = myKSpace.sGetDecr( sDecr, q );   
-	      stop = mySurfelPred( sDecr ); 
-	      isIncr = true; 
-	    }
-	}
-      if (isIncr)
-	mySurfel = sDecr; 
-      else 
-	mySurfel = sIncr; 
-      trace.info() << "new bel: " << mySurfel << std::endl; 
+      updateFrontier( p, !isInner ); 
+      // /// update digital frontier
+      // // moving mySurfel in one direction 
+      // // (but along 2 orientations) until
+      // // it is a contact surfel
+      // DGtal::Dimension q = *myKSpace.sOrthDirs( mySurfel ); 
+      // Surfel sIncr = mySurfel; 
+      // Surfel sDecr = mySurfel;
+      // bool isIncr = true; 
+      // bool stop = mySurfelPred( mySurfel ); 
+      // while ( !stop )
+      // 	{
+      // 	  if (isIncr)
+      // 	    {
+      // 	      ASSERT( !myKSpace.sIsMax( sIncr, q) ); 
+      // 	      sIncr = myKSpace.sGetIncr( sIncr, q );   
+      // 	      stop = mySurfelPred( sIncr ); 
+      // 	      isIncr = false; 
+      // 	    }
+      // 	  else 
+      // 	    {
+      // 	      ASSERT( !myKSpace.sIsMin( sDecr, q) ); 
+      // 	      sDecr = myKSpace.sGetDecr( sDecr, q );   
+      // 	      stop = mySurfelPred( sDecr ); 
+      // 	      isIncr = true; 
+      // 	    }
+      // 	}
+      // if (isIncr)
+      // 	mySurfel = sDecr; 
+      // else 
+      // 	mySurfel = sIncr; 
+      // trace.info() << "new bel: " << mySurfel << std::endl; 
 
-      /// update frontier
-      delete ( myFrontier ); 
-      myFrontier = new Frontier ( myKSpace, mySurfelPred, 
-				  SurfelAdjacency<KSpace::dimension>( true ), 
-				  mySurfel ); 
+      // /// update frontier
+      // delete ( myFrontier ); 
+      // myFrontier = new Frontier ( myKSpace, mySurfelPred, 
+      // 				  SurfelAdjacency<KSpace::dimension>( true ), 
+      // 				  mySurfel ); 
 
       return true; 
     }

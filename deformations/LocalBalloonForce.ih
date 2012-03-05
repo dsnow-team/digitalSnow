@@ -53,11 +53,10 @@ DGtal::LocalBalloonForce<TFunction, TExternField>
   ASSERT( myFuncPtr );
   PointFunctor* tmpPtr = const_cast<PointFunctor*>(myFuncPtr); 
 //ugly until differential operators are updated 
-  GodunovGradient<PointFunctor> gradient( *tmpPtr, (myK >= 0) );
+  GodunovGradient<PointFunctor> gradient( *tmpPtr, (myK <= 0), 1 );
   GradientModulus<GodunovGradient<PointFunctor> > m(gradient);
-  double res = myK 
-/** static_cast<double>( myFieldPtr->operator()(aPoint) )
-                   * static_cast<double>( m(aPoint) )*/; 
+  double res = myK * static_cast<double>( (*myFieldPtr)(aPoint) )
+                   * static_cast<double>( m(aPoint) ); 
   return res; 
 }
 //------------------------------------------------------------------------------
