@@ -182,11 +182,9 @@ namespace DGtal
      /**
      * Deform the image of labels around the digital frontier
      *
-     * @return 'true' if the maximal time is reached, 
-     * 'false' if the deformation stopped because of 
-     * the point predicate. 
+     * @return time spent during the deformation. 
      */
-    bool update();
+    double update();
 
      /**
      * Return through @a out the points
@@ -311,12 +309,8 @@ namespace DGtal
      * Update the starting surfel @a mySurfel
      * of the digital frontier from point @a p
      * @param p any (digital) point
-     * @param isPos bool equal to 'true' if @a p
-     * belongs to the inner region (and the
-     * corresponding spel is positive) but 'false'
-     * otherwise
      */
-    void updateFrontier ( const Point& p, bool isPos );
+    void updateFrontier ( const Point& p );
 
   }; // end of class FrontierEvolver
 

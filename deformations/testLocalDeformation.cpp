@@ -22,6 +22,7 @@ namespace po = boost::program_options;
 
 #include "LocalBalloonForce.h"
 #include "LocalMCM.h"
+#include "LocalMCMforDT.h"
 #include "FrontierEvolver.h"
 
 
@@ -51,6 +52,7 @@ int main(int argc, char** argv)
     ("timeStep,t",  po::value<double>()->default_value(1.0), "Time step for the evolution" )
     ("displayStep,d",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
+    ("bandWidth,w",  po::value<double>()->default_value(1.0), "Width of the flipping band" )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("png"), 
@@ -79,10 +81,12 @@ int main(int argc, char** argv)
     
   //iterations
   int step; 
-  if (!(vm.count("displayStep"))) trace.info() << "number of steps between two drawings: 1 by default" << std::endl; 
+  if (!(vm.count("displayStep"))) 
+    trace.info() << "number of steps between two drawings: 1 by default" << std::endl; 
   step = vm["displayStep"].as<int>(); 
   int max; 
-  if (!(vm.count("stepsNumber"))) trace.info() << "maximal number of steps: 1 by default" << std::endl; 
+  if (!(vm.count("stepsNumber"))) 
+    trace.info() << "maximal number of steps: 1 by default" << std::endl; 
   max = vm["stepsNumber"].as<int>(); 
 
 
@@ -125,9 +129,19 @@ int main(int argc, char** argv)
   if (vm.count("withVisu")) displayImage( argc, argv, labelImage ); 
 
   //balloon force
-  double k; 
+  double k = 0.0; 
   if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
   k = vm["balloonForce"].as<double>(); 
+
+  //width of the flipping band
+  double w = 1.0; 
+  if (!(vm.count("bandWidth"))) trace.info() << "band width default value: 1" << std::endl; 
+  w = vm["bandWidth"].as<double>(); 
+  if( (w < 0) || (w > 1) ) 
+    {
+      trace.info() << "The band width should be between 0 and 1 " << std::endl; 
+      return 0; 
+    }
 
   //algo
   //space
@@ -135,13 +149,12 @@ int main(int argc, char** argv)
   Domain d( labelImage.domain() ); 
   ks.init( d.lowerBound(), d.upperBound(), true ); 
  
-  //data functions
-  ImageContainerBySTLMap<Domain,double> g( d, 1.0 ); 
-
   //distance map
   typedef ImageContainerBySTLMap<Domain,double> DistanceImage; 
   DistanceImage map( d, 0.0 );
 
+  //data functions
+  ImageContainerBySTLMap<Domain,double> g( d, 1.0 ); 
   //predicate and functor
   typedef TruePointPredicate<Point> Predicate; 
   Predicate predicate; 
@@ -151,6 +164,8 @@ int main(int argc, char** argv)
   typedef LocalMCM<DistanceImage, 
    ImageContainerBySTLMap<Domain,double> > Functor; 
   Functor functor(map, g, g); 
+  // typedef LocalMCMforDT<DistanceImage> Functor; 
+  // Functor functor(map); 
 
   //getting a bel
   Thresholder<LabelImage::Value> t( 0 ); 
@@ -165,16 +180,17 @@ int main(int argc, char** argv)
  
     //frontier evolver
     FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
-      e(ks, labelImage, map, bel, functor, predicate ); 
+      e(ks, labelImage, map, bel, functor, predicate, w ); 
 
+    double sumt = 0; 
     for (unsigned int i = 1; i <= max; ++i) 
       {
 	std::stringstream s0; 
 	s0 << "iteration # " << i; 
-	DGtal::trace.beginBlock( s0.str() );
+	trace.beginBlock( s0.str() );
 
 	//update
-	e.update(); 
+	sumt += e.update(); 
 
 	if ((i%step)==0) 
 	  {
@@ -185,8 +201,11 @@ int main(int argc, char** argv)
 	    writeImage( labelImage, s.str(), format );
 
 	  }
-	DGtal::trace.endBlock();   
+
+	trace.info() << "Total time spent: " << sumt << std::endl; 
+	trace.endBlock();   
       }
+
 
   } catch (DGtal::InputException i) {
     trace.emphase() << "starting bel not found" << std::endl; 
