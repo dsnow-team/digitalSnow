@@ -168,48 +168,50 @@ int main(int argc, char** argv)
   // Functor functor(map); 
 
   //getting a bel
-  Thresholder<LabelImage::Value> t( 0 ); 
-  typedef ConstImageAdapter<LabelImage, Thresholder<LabelImage::Value>, bool> BinaryImage; 
-  BinaryImage binaryImage(labelImage, t);
+  KSpace::SCell bel;
   try {
-    KSpace::SCell bel = Surfaces<KSpace>::findABel( ks, binaryImage, 10000 );
+    Thresholder<LabelImage::Value> t( 0 ); 
+    typedef ConstImageAdapter<LabelImage, Thresholder<LabelImage::Value>, bool> BinaryImage; 
+    BinaryImage binaryImage(labelImage, t);
+
+    bel = Surfaces<KSpace>::findABel( ks, binaryImage, 10000 );
 
     trace.info() << "starting bel: "
 		 << bel
 		 << std::endl;
- 
-    //frontier evolver
-    FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
-      e(ks, labelImage, map, bel, functor, predicate, w ); 
-
-    double sumt = 0; 
-    for (unsigned int i = 1; i <= max; ++i) 
-      {
-	std::stringstream s0; 
-	s0 << "iteration # " << i; 
-	trace.beginBlock( s0.str() );
-
-	//update
-	sumt += e.update(); 
-
-	if ((i%step)==0) 
-	  {
-
-	    //3d to 2d display
-	    std::stringstream s; 
-	    s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-	    writeImage( labelImage, s.str(), format );
-
-	  }
-
-	trace.info() << "Total time spent: " << sumt << std::endl; 
-	trace.endBlock();   
-      }
-
-
   } catch (DGtal::InputException i) {
     trace.emphase() << "starting bel not found" << std::endl; 
+    return 0; 
   }
+ 
+  //frontier evolver
+  FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
+    e(ks, labelImage, map, bel, functor, predicate, w ); 
+
+  double sumt = 0; 
+  for (unsigned int i = 1; i <= max; ++i) 
+    {
+      std::stringstream s0; 
+      s0 << "iteration # " << i; 
+      trace.beginBlock( s0.str() );
+
+      //update
+      sumt += e.update(); 
+
+      if ((i%step)==0) 
+	{
+
+	  //3d to 2d display
+	  std::stringstream s; 
+	  s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+	  writeImage( labelImage, s.str(), format );
+
+	}
+
+      trace.info() << "Total time spent: " << sumt << std::endl; 
+      trace.endBlock();   
+    }
+
 
   //interactive display after the evolution
   if (vm.count("withVisu")) displayImage( argc, argv, labelImage ); 
