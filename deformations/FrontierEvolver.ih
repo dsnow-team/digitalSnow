@@ -294,14 +294,12 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	    {
 	      Distance d = myDImage( in ); 
 	      ASSERT( d <= 0 ); 
-	      //std::cout << d << " " << (d<=0) << std::endl; 
 	      adjacentPoints.push_back( PointDistance( in, d ) ); 
 	    }
 	  if ( myDImage.domain().isInside( out ) )
 	    {
 	      Distance d = myDImage( out );
 	      ASSERT( d > 0 ); 
-	      //std::cout << d << " " << (d>0) << std::endl;  
 	      adjacentPoints.push_back( PointDistance( out, d ) ); 
 	    }
 	  ++nbsurfels;
@@ -408,10 +406,12 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
     while ( (fmm.computeOneStep( p, d )) 
 	    && (std::abs(d) < threshold) )
       {
-	ASSERT( ((myLImage(p) == myInnerLabel)&&(myDImage(p)<=0))
-		|| ((myLImage(p) == myOuterLabel)&&(myDImage(p)>0)) ); 
+	ASSERT( myDImage(p) == d ); 
+	ASSERT( ((myLImage(p) == myInnerLabel)&&(d<0))
+		|| ((myLImage(p) == myOuterLabel)&&(d>0)) ); 
 	*res++ = p; 
       }
+    std::cout << std::endl; 
   }
   trace.info() << fmm << std::endl; 
 
