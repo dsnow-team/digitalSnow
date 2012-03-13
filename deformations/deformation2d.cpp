@@ -214,10 +214,13 @@ int main(int argc, char** argv)
     std::fill(a.begin(),a.end(), 1 );  
 
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
-    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
-      ImageContainerBySTLVector<Domain,double> > Reaction; 
-    Diffusion diffusion; 
-    Reaction reaction( epsilon, a, k, flagWithCstVol );
+      typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+      Diffusion diffusion; 
+      Reaction reaction( epsilon );
+    // typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
+    //   ImageContainerBySTLVector<Domain,double> > Reaction; 
+    // Diffusion diffusion; 
+    // Reaction reaction( epsilon, a, k, flagWithCstVol );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
     for (unsigned int i = step; i <= max; i += step) 

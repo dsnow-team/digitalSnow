@@ -113,20 +113,24 @@ int main(int argc, char** argv)
   Point q(dsize,dsize,dsize); 
   Point c(dsize/2,dsize/2,dsize/2); 
   ImageContainerBySTLVector<Domain,double> implicitFunction( Domain(p,q) ); 
-  //initWithBall( implicitFunction, c, (dsize*3/5)/2);
-  initWithFlower( implicitFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 ); 
 
   if (!(vm.count("inputImage"))) 
-    trace.info() << "starting interface initialized with a flower shape" << std::endl;
+    {
+      DGtal::trace.beginBlock("image reading..."); 
+      initWithFlower( implicitFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 ); 
+      trace.info() << "starting interface initialized with a flower shape" << std::endl;
+      DGtal::trace.endBlock(); 
+    }
   else
     { 
       string imageFileName = vm["inputImage"].as<std::string>();
       trace.emphase() << imageFileName <<std::endl; 
+      DGtal::trace.beginBlock("image reading..."); 
       typedef ImageContainerBySTLVector<Domain,unsigned char> BinaryImage; 
       BinaryImage img = VolReader<BinaryImage>::importVol( imageFileName);
       Domain d = img.domain(); 
-      p = d.lowerBound(); q = d.upperBound(); 
-      implicitFunction = ImageContainerBySTLVector<Domain,double>( Domain(p,q) ); 
+      implicitFunction = ImageContainerBySTLVector<Domain,double>( d ); 
+      DGtal::trace.endBlock(); 
       initWithDT( img, implicitFunction );
 
     }
@@ -207,10 +211,13 @@ int main(int argc, char** argv)
     std::fill(a.begin(),a.end(), 1.0 );  
 
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
-    typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
-      ImageContainerBySTLVector<Domain,double> > Reaction; 
-    Diffusion diffusion; 
-    Reaction reaction( epsilon, a, k );
+      typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
+      Diffusion diffusion; 
+      Reaction reaction( epsilon );
+    // typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
+    //   ImageContainerBySTLVector<Domain,double> > Reaction; 
+    // Diffusion diffusion; 
+    // Reaction reaction( epsilon, a, k );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
     for (unsigned int i = step; i <= max; i += step) 
