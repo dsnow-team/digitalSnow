@@ -45,8 +45,8 @@
 #include "DGtal/base/Common.h"
 #include "DGtal/images/CImage.h"
 #include "DGtal/kernel/CPointFunctor.h"
-#include "CPointFunctorAdapter.h"
 #include "DGtal/kernel/CPointPredicate.h"
+
 
 // set
 #include "DGtal/kernel/sets/DigitalSetFromMap.h"
@@ -122,10 +122,11 @@ namespace DGtal
     (( ConceptUtils::SameType< typename TKSpace::Point,
        typename TFunctor::Point>::value ));
 
-    BOOST_CONCEPT_ASSERT(( CPointPredicate<TPredicate> )); 
-    BOOST_STATIC_ASSERT
-    (( ConceptUtils::SameType< typename TKSpace::Point,
-       typename TPredicate::Point>::value ));
+    // BOOST_CONCEPT_ASSERT(( CPointPredicate<TPredicate> )); 
+    // BOOST_STATIC_ASSERT
+    // (( ConceptUtils::SameType< typename TKSpace::Point,
+    //    typename TPredicate::Point>::value ));
+    //TODO testing TPredicate as a binary predicate on points and labels
 
     // ----------------------- Types ------------------------------
   public:

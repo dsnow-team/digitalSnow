@@ -164,24 +164,27 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  p = it->first;
 	  tlast = t; 
 	  t = it->second; 
-	  if ( (t <= tmax) && ( myPointPred( p ) ) )
-	    { /// flip
-	      nbFlips++; 
+	  if (t <= tmax)
+	    { 
 	      const Label pLabel = myLImage(p); 
-	      if ( pLabel == myInnerLabel )
-		{
-		  ASSERT(myDImage(p) <= 0);  
-		  std::cout << "i" ; 
-		  myLImage.setValue( p, myOuterLabel );
+	      if ( myPointPred( p, pLabel ) )
+		{ /// flip
+		  nbFlips++; 
+		  if ( pLabel == myInnerLabel )
+		    {
+		      ASSERT(myDImage(p) <= 0);  
+		      std::cout << "i" ; 
+		      myLImage.setValue( p, myOuterLabel );
+		    }
+		  else if ( pLabel == myOuterLabel )
+		    {
+		      ASSERT(myDImage(p) > 0);
+		      std::cout << "o" ; 
+		      myLImage.setValue( p, myInnerLabel ); 
+		    }
+		  else 
+		    ASSERT( false && "impossible label in update method" ); 
 		}
-	      else if ( pLabel == myOuterLabel )
-		{
-		  ASSERT(myDImage(p) > 0);
-		  std::cout << "o" ; 
-		  myLImage.setValue( p, myInnerLabel ); 
-		}
-	      else 
-		ASSERT( false && "impossible label in update method" ); 
 	    }
 	  else 
 	    go = false; 
@@ -210,6 +213,9 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	      if (myLImage( *it ) == myInnerLabel) newDist = -0.0001; 
 	      else newDist = 0.0001; 
 	    }
+	  //correction due to the non simplicity
+	  //if not simple, ....
+
 	  // set value
 	  myDImage.setValue( *it, newDist );
 
@@ -311,6 +317,7 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	      itEnd = adjacentPoints.end();
 	    it != itEnd; ++it )
 	{
+	  //TODO renormalize the distance values
 	  PointDistance pair( *it ); 
 	  insertAndSetValue( myDImage, points, pair.first, pair.second );
 	}

@@ -17,6 +17,7 @@ namespace po = boost::program_options;
 #include "DGtal/images/ImageContainerBySTLMap.h"
 #include "DGtal/base/BasicFunctors.h"
 #include "DGtal/images/ConstImageAdapter.h"
+#include "BinaryPredicates.h"
 
 #include "DGtal/shapes/Shapes.h"
 
@@ -156,7 +157,7 @@ int main(int argc, char** argv)
   //data functions
   ImageContainerBySTLMap<Domain,double> g( d, 1.0 ); 
   //predicate and functor
-  typedef TruePointPredicate<Point> Predicate; 
+  typedef TrueBinaryPredicate Predicate; 
   Predicate predicate; 
   // typedef LocalBalloonForce<DistanceImage, 
   //  ImageContainerBySTLMap<Domain,double> > Functor; 
