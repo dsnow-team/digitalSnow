@@ -284,8 +284,12 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
     }
   else 
     {//next steps
-      typedef std::pair<Point, Distance> PointDistance; 
-      std::vector<PointDistance> adjacentPoints; 
+
+      //TODO think about the best way of dealing adjacentPoints
+      //and copying it in the band
+      typedef std::pair<const Point, Distance> PointDistance; 
+      std::map<Point, Distance> adjacentPoints; 
+      typedef typename std::map<Point, Distance>::iterator IteratorPointDistance; 
 
       for ( SurfelIterator it = myFrontier->begin(), 
 	      itEnd = myFrontier->end();
@@ -295,29 +299,56 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  ASSERT( myLImage(in) == myInnerLabel ); 
 	  Point out( getOuterPoint( *it ) );
 	  ASSERT( myLImage(out) == myOuterLabel ); 
-	  //TODO using predicate on labels
-	  if ( myDImage.domain().isInside( in ) )
+	  //TODO using predicate on labels myInnerLabel and myOuterLabel
+	  bool flagIn = ( myDImage.domain().isInside( in ) ); 
+	  bool flagOut = ( myDImage.domain().isInside( out ) ); 
+	  if (flagIn && flagOut)
 	    {
-	      Distance d = myDImage( in ); 
-	      ASSERT( d <= 0 ); 
-	      adjacentPoints.push_back( PointDistance( in, d ) ); 
+	      Distance din = myDImage( in ); 
+	      ASSERT( din <= 0 ); 
+	      Distance dout = myDImage( out );
+	      ASSERT( dout > 0 );
+ 
+	      // //TODO renormalize the distance values
+	      // Distance e = std::abs(din)+std::abs(dout);
+	      // Distance ndin = din/e; 
+	      // Distance ndout = dout/e; 
+	      Distance ndin = din; 
+	      Distance ndout = dout; 
+
+	      std::pair<IteratorPointDistance, bool> rin 
+		= adjacentPoints.insert( PointDistance( in, ndin ) );
+	      if (rin.second == false) 
+		{//if the same point is already stored
+		  //take the minimal distance
+		  if (ndin < rin.first->second)
+		    rin.first->second = ndin;
+		}
+	      std::pair<IteratorPointDistance, bool> rout 
+		= adjacentPoints.insert( PointDistance( out, ndout ) );
+	      if (rout.second == false) 
+		{//if the same point is already stored
+		  //take the minimal distance
+		  if (ndout < rout.first->second)
+		    rout.first->second = ndout;
+		}
 	    }
-	  if ( myDImage.domain().isInside( out ) )
+	  else
 	    {
-	      Distance d = myDImage( out );
-	      ASSERT( d > 0 ); 
-	      adjacentPoints.push_back( PointDistance( out, d ) ); 
+	      if (flagIn)
+	        {ASSERT(false && "not implemented yet");}
+	      if (flagOut)
+		{ASSERT(false && "not implemented yet");}
 	    }
 	  ++nbsurfels;
 	}
 
       points.clear();
-      for ( typename std::vector<PointDistance>::const_iterator 
+      for ( IteratorPointDistance 
 	      it = adjacentPoints.begin(), 
 	      itEnd = adjacentPoints.end();
 	    it != itEnd; ++it )
 	{
-	  //TODO renormalize the distance values
 	  PointDistance pair( *it ); 
 	  insertAndSetValue( myDImage, points, pair.first, pair.second );
 	}
