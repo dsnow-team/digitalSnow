@@ -27,6 +27,7 @@
  */
 
 
+//#define WITHINFO
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -79,14 +80,18 @@ double
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::update()
 {
+  #ifdef WITHINFO
   trace.info() << "starting surfel: " << mySurfel << std::endl;  
+  #endif
 
   /// set of points that are candidate to the flip
   typedef std::vector<Point> Band;
   typedef typename Band::const_iterator BandIterator; 
   Band narrowBand; 
   init ( std::back_inserter( narrowBand ) ); 
+  #ifdef WITHINFO
   trace.info() << narrowBand.size() << " closest points" << std::endl; 
+  #endif
 
   /// velocity and zero-crossing time computation
   typedef std::pair<Point,double> PointTime; 
@@ -127,27 +132,38 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       // 		<< std::endl; 
 
     }
+  #ifdef WITHINFO
   trace.info() << candidates.size() << " candidates " << std::endl; 
+  #endif
 
   /// time threshold computation
   double tmax = myW / vmax; 
+
+  #ifdef WITHINFO
   trace.info() << "Distance max: " << myW << " / " 
 	       << "Velocity max: " << vmax << " = " 
 	       << "Time threshold: " << tmax << std::endl; 
+  #endif
 
   if (candidates.begin() != candidates.end())
     { //if they are candidates
 
       /// ordering of the points according 
       /// to their zero-crossing time
-      trace.info() << "ordering..." << std::endl; 
+      #ifdef WITHINFO
+      trace.info() << "ordering..." << std::endl;
+      #endif
+ 
       details::CompareSecondElement timeCompare; 
       std::sort( candidates.begin(), candidates.end(), timeCompare ); 
+
+      #ifdef WITHINFO
       trace.info() << "Times ranging from " 
 		   << candidates.begin()->second 
 		   << " to " 
 		   << candidates.rbegin()->second 
 		   << std::endl; 
+      #endif
 
       /// flip points one by one, in order,
       /// while possible
@@ -173,13 +189,13 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 		  if ( pLabel == myInnerLabel )
 		    {
 		      ASSERT(myDImage(p) <= 0);  
-		      std::cout << "i" ; 
+		      //std::cout << "i" ; 
 		      myLImage.setValue( p, myOuterLabel );
 		    }
 		  else if ( pLabel == myOuterLabel )
 		    {
 		      ASSERT(myDImage(p) > 0);
-		      std::cout << "o" ; 
+		      //std::cout << "o" ; 
 		      myLImage.setValue( p, myInnerLabel ); 
 		    }
 		  else 
@@ -189,11 +205,16 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  else 
 	    go = false; 
 	}
-      std::cout << std::endl; 
+      //std::cout << std::endl;
+
+      #ifdef WITHINFO
       trace.info() << nbFlips << " flipped points in " << tlast << " unit time" << std::endl; 
+      #endif
 
       /// update distance map
+      #ifdef WITHINFO
       trace.info() << "updating signed distance function..." << std::endl; 
+      #endif
 
       if (tlast == 0.0) 
 	tlast = tmax; 
@@ -352,11 +373,15 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  PointDistance pair( *it ); 
 	  insertAndSetValue( myDImage, points, pair.first, pair.second );
 	}
-      trace.info() << adjacentPoints.size() << " adjacent points." << std::endl;  
+      #ifdef WITHINFO
       trace.info() << points.size() << " distinct adjacent points." << std::endl;  
+      #endif
     }
 
+  #ifdef WITHINFO
   trace.info() << nbsurfels << " surfels found." << std::endl;  
+  #endif
+
   std::copy( points.begin(), points.end(), res ); 
 
   ///////////// debug
@@ -434,7 +459,9 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   typedef FMM<DImage, PointSet, typename DImage::Domain::Predicate > FMM;
   //TODO restreindre a deux labels
   FMM fmm( myDImage, points, myDImage.domain().predicate() );
+  #ifdef WITHINFO
   trace.info() << fmm << std::endl;  
+  #endif
 
   Point p = Point::diagonal(0);      //last point
   Distance d = 0;                  //its distance
@@ -451,7 +478,9 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       }
     std::cout << std::endl; 
   }
-  trace.info() << fmm << std::endl; 
+  #ifdef WITHINFO
+  trace.info() << fmm << std::endl;  
+  #endif
 
   //second pass
   {
@@ -460,7 +489,9 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	    && (std::abs(d) < threshold) )
       { }
   }
-  trace.info() << fmm << std::endl; 
+  #ifdef WITHINFO
+  trace.info() << fmm << std::endl;  
+  #endif
 
 }
 
