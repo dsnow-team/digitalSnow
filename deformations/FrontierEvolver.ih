@@ -310,18 +310,18 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	      ASSERT( dout > 0 );
  
 	      // //TODO renormalize the distance values
-	      // Distance e = std::abs(din)+std::abs(dout);
-	      // Distance ndin = din/e; 
-	      // Distance ndout = dout/e; 
-	      Distance ndin = din; 
-	      Distance ndout = dout; 
+	      Distance e = std::abs(din)+std::abs(dout);
+	      Distance ndin = din/e; 
+	      Distance ndout = dout/e; 
+	      // Distance ndin = din; 
+	      // Distance ndout = dout; 
 
 	      std::pair<IteratorPointDistance, bool> rin 
 		= adjacentPoints.insert( PointDistance( in, ndin ) );
 	      if (rin.second == false) 
 		{//if the same point is already stored
 		  //take the minimal distance
-		  if (ndin < rin.first->second)
+		  if (std::abs(ndin) < std::abs(rin.first->second))
 		    rin.first->second = ndin;
 		}
 	      std::pair<IteratorPointDistance, bool> rout 
@@ -329,7 +329,7 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	      if (rout.second == false) 
 		{//if the same point is already stored
 		  //take the minimal distance
-		  if (ndout < rout.first->second)
+		  if (std::abs(ndout) < std::abs(rout.first->second))
 		    rout.first->second = ndout;
 		}
 	    }
