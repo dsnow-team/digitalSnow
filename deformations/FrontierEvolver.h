@@ -47,6 +47,12 @@
 #include "DGtal/kernel/CPointFunctor.h"
 #include "DGtal/kernel/CPointPredicate.h"
 
+//predicates
+#include "DGtal/base/BasicBoolFunctions.h"
+#include "DGtal/kernel/BasicPointPredicates.h"
+#include "PointPredicates.h"
+
+
 
 // set
 #include "DGtal/kernel/sets/DigitalSetFromMap.h"
@@ -155,9 +161,9 @@ namespace DGtal
     /// Point functor for the mapping points-velocity
     typedef TFunctor Functor; 
     typedef typename Functor::Value Velocity; 
-    /// Point predicate 
-    typedef TPredicate Predicate; 
-
+    /// Topological predicate 
+    typedef TPredicate Predicate;
+ 
 
     // ----------------------- Standard services ------------------------------
   public:
