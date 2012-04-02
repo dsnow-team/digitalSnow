@@ -27,7 +27,7 @@
  */
 
 
-//#define WITHINFO
+#define WITHINFO
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -473,12 +473,12 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   /// FMM 
   
   //predicate definition
-  //TODO restreindre a deux labels
   typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
   typedef BinaryPointPredicate<LabelPredicate, 
-    typename Domain::Predicate > FMMPointPredicate; 
+    typename Domain::Predicate, std::logical_and<bool> > FMMPointPredicate; 
   LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
   FMMPointPredicate pred( predOnLabels, myLImage.domain().predicate(), std::logical_and<bool>() );   
+
   //FMM definition
   typedef FMM<DImage, PointSet, FMMPointPredicate > FMM;
   FMM fmm( myDImage, points, pred );
