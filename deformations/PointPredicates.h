@@ -47,6 +47,113 @@ namespace DGtal
 {
 
   /////////////////////////////////////////////////////////////////////////////
+  // template class CascadingPointPredicate
+  /**
+   * Description of template class 'CascadingPointPredicate' <p> \brief
+   * Aim: The predicate returns true when the given binary functor
+   * returns true for the two PointPredicates given at construction.
+   *
+   * @tparam PointPredicate1 the left predicate type.
+   * @tparam PointPredicate2 the right predicate type.
+   */
+  template <typename TPointPredicate1, typename TPointPredicate2>
+  struct CascadingPointPredicate
+  {
+    typedef TPointPredicate1 PointPredicate1;
+    typedef TPointPredicate2 PointPredicate2;
+    typedef typename PointPredicate1::Point Point;
+    // should be the same.
+    BOOST_STATIC_ASSERT ((boost::is_same< Point, typename PointPredicate2::Point >::value)); 
+    typedef typename PointPredicate2::Point Point2;
+
+    /**
+       Constructor from predicates
+       @param pred1 the left predicate.
+       @param pred2 the right predicate.
+     */
+    CascadingPointPredicate( const PointPredicate1 & pred1,
+        const PointPredicate2 & pred2 );
+
+    /**
+       Copy constructor.
+       @param other the object to copy
+      */
+    CascadingPointPredicate(  const CascadingPointPredicate& other );
+
+    /**
+       Assignement
+       @param other the object to copy
+       @return reference to the current object
+     */
+    CascadingPointPredicate& operator=( const CascadingPointPredicate& other );
+
+    /**
+       Destructor
+     */
+    ~CascadingPointPredicate();
+
+    /**
+     * @param p any point.
+     * @return the value of the predicate at this point.
+     */
+    bool operator()( const Point & p ) const;
+
+    /// aliasing pointer to the left predicate.
+    const PointPredicate1* myPred1;
+    /// aliasing pointer to the right predicate.
+    const PointPredicate2* myPred2;
+  };
+
+//------------------------------------------------------------------------------
+template <typename TPointPredicate1, typename TPointPredicate2>
+inline
+DGtal::CascadingPointPredicate<TPointPredicate1,TPointPredicate2>
+::CascadingPointPredicate( const PointPredicate1 & pred1,
+      const PointPredicate2 & pred2 )
+  : myPred1( &pred1 ), myPred2( &pred2 )
+{
+}
+//------------------------------------------------------------------------------
+template <typename TPointPredicate1, typename TPointPredicate2>
+inline
+DGtal::CascadingPointPredicate<TPointPredicate1,TPointPredicate2>
+::CascadingPointPredicate( const CascadingPointPredicate& other )
+  : myPred1( other.pred1 ), myPred2( other.pred2 )
+{
+}
+//------------------------------------------------------------------------------
+template <typename TPointPredicate1, typename TPointPredicate2>
+inline
+DGtal::CascadingPointPredicate<TPointPredicate1,TPointPredicate2>&
+DGtal::CascadingPointPredicate<TPointPredicate1,TPointPredicate2>
+::operator=( const CascadingPointPredicate& other )
+{
+  if (this != &other)
+    {
+      myPred1 = other.myPred1; 
+      myPred2 = other.myPred2; 
+    }
+}
+//------------------------------------------------------------------------------
+template <typename TPointPredicate1, typename TPointPredicate2>
+inline
+DGtal::CascadingPointPredicate<TPointPredicate1,TPointPredicate2>
+::~CascadingPointPredicate()
+{
+}
+//------------------------------------------------------------------------------
+template <typename TPointPredicate1, typename TPointPredicate2>
+inline
+bool 
+DGtal::CascadingPointPredicate<TPointPredicate1,TPointPredicate2>
+::operator()( const Point & p ) const
+{
+  if ( myPred1->operator()( p ) ) 
+		return myPred2->operator()( p );
+}
+
+
+  /////////////////////////////////////////////////////////////////////////////
   // template class OneLabelPredicate
   /**
    * \brief Aim: Predicate returning true or false

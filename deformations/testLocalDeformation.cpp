@@ -145,11 +145,13 @@ int main(int argc, char** argv)
   ks.init( d.lowerBound(), d.upperBound(), true ); 
  
   //distance map
-  typedef ImageContainerBySTLMap<Domain,double> DistanceImage; 
-  DistanceImage map( d, 0.0 );
+  typedef ImageContainerBySTLVector<Domain,double> DistanceImage; 
+  DistanceImage distanceImage( d );
 
   //data functions
-  ImageContainerBySTLMap<Domain,double> g( d, 1.0 ); 
+  DistanceImage g( d );
+  std::fill( g.begin(), g.end(), 1.0 ); 
+
   //predicate
   // typedef TrueBinaryPredicate Predicate; 
   // Predicate predicate; 
@@ -161,8 +163,8 @@ int main(int argc, char** argv)
   //  ImageContainerBySTLMap<Domain,double> > Functor; 
   // Functor functor(map, g, k); 
   typedef LocalMCM<DistanceImage, 
-   ImageContainerBySTLMap<Domain,double> > Functor; 
-  Functor functor(map, g, g); 
+   DistanceImage > Functor; 
+  Functor functor(distanceImage, g, g); 
 
   //getting a bel
   KSpace::SCell bel;
@@ -183,7 +185,7 @@ int main(int argc, char** argv)
  
   //frontier evolver
   FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
-    e(ks, labelImage, map, bel, functor, predicate, w ); 
+    e(ks, labelImage, distanceImage, bel, functor, predicate, w ); 
 
   trace.beginBlock( "Deformation" );
   double sumt = 0; 

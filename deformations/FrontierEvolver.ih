@@ -27,7 +27,7 @@
  */
 
 
-#define WITHINFO
+//#define WITHINFO
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -45,8 +45,9 @@ inline
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, Surfel& aS, 
  const Functor& aF, const Predicate& aP, const double& aW)
-  : myKSpace( aK ), myLImage( aI ), myDImage( aD ), mySurfel( aS ), 
-    myFunctor( aF ), myPointPred( aP ), myW( aW ),
+  : myKSpace( aK ), myLImage( aI ), myDImage( aD ), 
+    myPointSet( SetFromImageSelector<DImage>::get( myDImage ) ), 
+    mySurfel( aS ), myFunctor( aF ), myPointPred( aP ), myW( aW ),
     myInnerLabel( myLImage( getInnerPoint( mySurfel ) ) ), 
     myOuterLabel( myLImage( getOuterPoint( mySurfel ) ) ), 
     mySurfelPred( myKSpace, myLImage, myInnerLabel, myOuterLabel ), 
@@ -127,9 +128,6 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  ASSERT( t >= 0 ); 
 	  candidates.push_back( PointTime( *it, t ) ); 
 	}
-      // std::cout << d << " " << v << " " 
-      // 		<< std::abs(d)/std::abs(v)
-      // 		<< std::endl; 
 
     }
   #ifdef WITHINFO
@@ -191,20 +189,6 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 		{ /// flip
 		  nbFlips++; 
 		  myLImage.setValue( p, oppositeLabel ); 
-		  // if ( pLabel == myInnerLabel )
-		  //   {
-		  //     ASSERT(myDImage(p) <= 0);  
-		  //     //std::cout << "i" ; 
-		  //     myLImage.setValue( p, myOuterLabel );
-		  //   }
-		  // else if ( pLabel == myOuterLabel )
-		  //   {
-		  //     ASSERT(myDImage(p) > 0);
-		  //     //std::cout << "o" ; 
-		  //     myLImage.setValue( p, myInnerLabel ); 
-		  //   }
-		  // else 
-		  //   ASSERT( false && "impossible label in update method" ); 
 		}
 	      else 
 		{
@@ -217,7 +201,6 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  else 
 	    go = false; 
 	}
-      //std::cout << std::endl;
 
       #ifdef WITHINFO
       trace.info() << nbFlips << " flipped points in " << tlast << " unit time" << std::endl; 
@@ -257,11 +240,6 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  // set value
 	  myDImage.setValue( *it, newDist );
 
-	  // debug info
-	  // std::cout << pair.first << " " << newDist << " " 
-	  // 	    << pair.second << " " 
-	  // 	    << std::abs(pair.first)/std::abs(pair.second)
-	  // 	    << std::endl; 
 	  ASSERT( ( (newDist <= 0)&&(myLImage( *it ) == myInnerLabel) ) 
 		  || ( (newDist > 0)&&(myLImage( *it ) == myOuterLabel) ) );
 	}
@@ -287,18 +265,10 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
   TOutputIterator res = out; 
 
-  /// set of points for which the distance value 
-  /// is computed and stored in myDImage
-  /////////////////////// TODO get the set type from a traits selector 
-  /////////////////////// TODO store points as class member
-  typedef DigitalSetFromMap<DImage> PointSet; 
-  PointSet points(myDImage);
-  //points.clear(); 
-
   /// initialization of the band from the 
   /// points adjacent to the frontier   
   unsigned int nbsurfels = 0;
-  if (points.size() == 0)
+  if (myPointSet.size() == 0)
     {//first step
       for ( SurfelIterator it = myFrontier->begin(), 
 	      itEnd = myFrontier->end();
@@ -309,12 +279,12 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  if ( myDImage.domain().isInside( in ) ) 
 	    {
 	      ASSERT( myLImage(in) == myInnerLabel ); 
-	      insertAndAlwaysSetValue( myDImage, points, in, -0.5 );
+	      insertAndAlwaysSetValue( myDImage, myPointSet, in, -0.5 );
 	    }
 	  if ( myDImage.domain().isInside( out ) )
 	    {
 	      ASSERT( myLImage(out) == myOuterLabel ); 
-	      insertAndAlwaysSetValue( myDImage, points, out, 0.5 );
+	      insertAndAlwaysSetValue( myDImage, myPointSet, out, 0.5 );
 	    }
 	  ++nbsurfels;
 	}
@@ -322,7 +292,7 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   else 
     {//next steps
 
-      //TODO think about the best way of dealing adjacentPoints
+      //TODO think about the best way of dealing with adjacentPoints
       //and copying it in the band
       typedef std::pair<const Point, Distance> PointDistance; 
       std::map<Point, Distance> adjacentPoints; 
@@ -351,8 +321,6 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	      Distance e = std::abs(din)+std::abs(dout);
 	      Distance ndin = din/e; 
 	      Distance ndout = dout/e; 
-	      // Distance ndin = din; 
-	      // Distance ndout = dout; 
 
 	      std::pair<IteratorPointDistance, bool> rin 
 		= adjacentPoints.insert( PointDistance( in, ndin ) );
@@ -381,25 +349,26 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  ++nbsurfels;
 	}
 
-      points.clear();
+      myPointSet.clear();
       for ( IteratorPointDistance 
 	      it = adjacentPoints.begin(), 
 	      itEnd = adjacentPoints.end();
 	    it != itEnd; ++it )
 	{
 	  PointDistance pair( *it ); 
-	  insertAndSetValue( myDImage, points, pair.first, pair.second );
+	  insertAndSetValue( myDImage, myPointSet, pair.first, pair.second );
 	}
-      #ifdef WITHINFO
-      trace.info() << points.size() << " distinct adjacent points." << std::endl;  
-      #endif
     }
 
   #ifdef WITHINFO
   trace.info() << nbsurfels << " surfels found." << std::endl;  
   #endif
 
-  std::copy( points.begin(), points.end(), res ); 
+  std::copy( myPointSet.begin(), myPointSet.end(), res ); 
+
+  #ifdef WITHINFO
+  trace.info() << myPointSet.size() << " distinct adjacent points." << std::endl;  
+  #endif
 
   ///////////// debug
   // for (typename PointSet::Iterator it = points.begin(), 
@@ -474,14 +443,18 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   
   //predicate definition
   typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
-  typedef BinaryPointPredicate<LabelPredicate, 
-    typename Domain::Predicate, std::logical_and<bool> > FMMPointPredicate; 
+  typedef CascadingPointPredicate< typename Domain::Predicate, 
+    LabelPredicate > FMMPointPredicate; 
   LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
-  FMMPointPredicate pred( predOnLabels, myLImage.domain().predicate(), std::logical_and<bool>() );   
+  FMMPointPredicate pred( myLImage.domain().predicate(), predOnLabels );   
+
+  // typedef typename Domain::Predicate FMMPointPredicate; 
+  // FMMPointPredicate pred = myLImage.domain().predicate();   
+  
 
   //FMM definition
   typedef FMM<DImage, PointSet, FMMPointPredicate > FMM;
-  FMM fmm( myDImage, points, pred );
+  FMM fmm( myDImage, myPointSet, pred );
   #ifdef WITHINFO
   trace.info() << fmm << std::endl;  
   #endif
