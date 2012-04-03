@@ -128,11 +128,11 @@ int main(int argc, char** argv)
       DGtal::trace.beginBlock("image reading..."); 
       typedef ImageContainerBySTLVector<Domain,unsigned char> BinaryImage; 
       BinaryImage img = VolReader<BinaryImage>::importVol( imageFileName);
-      Domain d = img.domain(); 
-      implicitFunction = ImageContainerBySTLVector<Domain,double>( d ); 
+      Domain d = img.domain();
+      p = d.lowerBound(); q = d.upperBound(); 
+      implicitFunction = ImageContainerBySTLVector<Domain,double>( Domain(p,q) );  
       DGtal::trace.endBlock(); 
       initWithDT( img, implicitFunction );
-
     }
 
   //3d to 2d display
