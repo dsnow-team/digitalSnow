@@ -18,8 +18,8 @@ namespace po = boost::program_options;
 #include "DGtal/base/BasicFunctors.h"
 #include "DGtal/images/ConstImageAdapter.h"
 #include "BinaryPredicates.h"
-//#include "SimplePointHelper.h"
-#include "DGtal/topology/helpers/SimplePointHelper.h"
+#include "SimplePointHelper.h"
+//#include "DGtal/topology/helpers/SimplePointHelper.h"
 
 #include "DGtal/shapes/Shapes.h"
 
@@ -159,9 +159,18 @@ int main(int argc, char** argv)
   Predicate predicate(labelImage); 
 
   //functor
+
+  // balloon force test
   // typedef LocalBalloonForce<DistanceImage, 
-  //  ImageContainerBySTLMap<Domain,double> > Functor; 
-  // Functor functor(map, g, k); 
+  //  ImageContainerBySTLVector<Domain,double> > Functor; 
+  // Functor functor(distanceImage, g, k); 
+
+  // local MCM test
+  // does not work at all
+  // typedef LocalMCMforDT<DistanceImage> Functor; 
+  // Functor functor(distanceImage); 
+
+  // local MCM a la Weickert
   typedef LocalMCM<DistanceImage, 
    DistanceImage > Functor; 
   Functor functor(distanceImage, g, g); 
@@ -210,7 +219,7 @@ int main(int argc, char** argv)
 
 
   //interactive display after the evolution
-  if (vm.count("withVisu")) displayImage( argc, argv, labelImage ); 
+  if (vm.count("withVisu")) displayImage2( argc, argv, distanceImage, g, g ); 
 
   
   return 0;

@@ -1,0 +1,366 @@
+namespace SimplePointHelperDetails 
+{
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class OneLabelPredicate
+  /**
+   * \brief Aim: Predicate returning true or false
+   * according to the comparison of a label with a reference label. 
+   *
+   * @tparam TLabel  type of labels 
+   (must be default-constructible and equally-comparable)
+   * @tparam TBinaryPredicate  type of binary predicate
+   (must have a () operator taking two input parameters
+   and returning a boolean). 
+   *
+   */
+  template <typename TImage, typename TBinaryPredicate>
+  class OneLabelPredicate
+  {
+  public: 
+    typedef typename TImage::Value Label; 
+    typedef typename TImage::Point Point; 
+
+  public: 
+    /**
+     * Constructor 
+     * @param aImg  any image
+     * @param aLabel any label
+     * @param aFunctor  any binary functor
+     */
+    OneLabelPredicate(const TImage& aImg, const Label& aLabel, 
+		      const TBinaryPredicate& aFunctor = TBinaryPredicate() )
+      : myImg(aImg), myLabel(aLabel), myF(aFunctor)
+    { 
+    }
+    
+  private: 
+    /**
+     * Reference on an image 
+     */
+    const TImage& myImg; 
+    /**
+     * Label to compare with
+     */
+    Label myLabel; 
+    /**
+     * Comparison method
+     */
+    TBinaryPredicate myF; 
+
+  public: 
+    /**
+     * Compare @a aLabel to @a myLabel with @a myF 
+     * @param aPoint any point of the image domain
+     * whose label has to be compared to @a myLabel
+     * @return true or false
+     */
+    bool operator()(const Point& aPoint) const
+    {
+      return myF(myLabel, myImg(aPoint) ); 
+    }
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const 
+    { 
+      return true;
+    }
+    /**
+     * Writes/Displays the object on an output stream.
+     * @param out the output stream where the object is written.
+     */
+    void selfDisplay ( std::ostream & out ) const 
+    {
+      out << "(" << myLabel << ")"; 
+    }  
+
+  }; 
+
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class TwoLabelsPredicate
+  /**
+   * \brief Aim: Predicate returning true or false
+   * according to the comparison of a label with 
+   * two reference labels. 
+   *
+   * @tparam TLabel  type of labels 
+   (must be default-constructible and equally-comparable)
+   * @tparam TBinaryPredicate  type of binary predicate
+   (must have a () operator taking two input parameters
+   and returning a boolean). 
+   *
+   */
+  template <typename TImage, typename TBinaryPredicate>
+  class TwoLabelsPredicate
+  {
+
+  public: 
+    typedef typename TImage::Value Label; 
+    typedef typename TImage::Point Point; 
+
+  public: 
+    /**
+     * Constructor 
+     * @param aImg any image
+     * @param aLabel1  any value
+     * @param aLabel2  any value
+     * @param aFunctor  any binary functor
+     */
+    TwoLabelsPredicate(const TImage& aImg, 
+		       const Label& aLabel1, const Label& aLabel2, 
+		       const TBinaryPredicate& aFunctor = TBinaryPredicate() )
+      : myImg(aImg), myLabel1(aLabel1), myLabel2(aLabel2), myF(aFunctor)
+    { 
+    }
+    
+  private: 
+    /**
+     * Reference on an image 
+     */
+    const TImage& myImg; 
+    /**
+     * Label to compare with
+     */
+    Label myLabel1;
+    /**
+     * Label to compare with
+     */
+    Label myLabel2;   
+    /**
+     * Comparison method
+     */
+    TBinaryPredicate myF; 
+
+  public: 
+    /**
+     * Compare the label of @a aPoint to @a myLabel1 and @a myLabel2 
+     * with @a myF 
+     * @param aPoint any point whose label has to be compared
+     * @return true or false
+     */
+    bool operator()(const Point& aPoint) const
+    {
+      return ( myF(myLabel1, myImg(aPoint)) || myF(myLabel2, myImg(aPoint)) ); 
+    }
+    /**
+     * Checks the validity/consistency of the object.
+     * @return 'true' if the object is valid, 'false' otherwise.
+     */
+    bool isValid() const 
+    { 
+      return true;
+    }
+    /**
+     * Writes/Displays the object on an output stream.
+     * @param out the output stream where the object is written.
+     */
+    void selfDisplay ( std::ostream & out ) const 
+    {
+      out << "(" << myLabel1 << " U " << myLabel2 << ")"; 
+    }
+  }; 
+
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class NeighborhoodInDomain
+  /**
+   * \brief Aim: Functor retrieving the intersection between 
+   * the neighborhood of a given point and a given domain. 
+   *
+   * @tparam TDomain  type of domain
+   * @tparam TPoint  type of point 
+   */
+  template <typename TDomain, typename TPoint>
+  class NeighborhoodInDomain
+  {
+
+  public: 
+    /**
+     * Domain
+     */
+    const TDomain& myD; 
+
+    /**
+     * Constructor
+     */
+    NeighborhoodInDomain(const TDomain& aDomain): myD(aDomain) {}
+
+    /**
+     * Returns the points that are (dim-1)-adjacent to @a aPoint
+     * AND that are inside the image domain 
+     *
+     * @param aPoint any point
+     * @param returned STL vector of neighbors
+     */
+    void operator()(const TPoint& aPoint, std::vector<TPoint>& aPointsVector) const
+    {
+
+      TPoint p(aPoint); 
+      for (typename TPoint::Dimension i = 0; i != TPoint::dimension; ++i)
+	{ //for each coordinate
+	  typename TPoint::Coordinate c = p.at(i); 
+	  //candidate1
+	  p.at(i) = c + 1; 
+	  if (myD.isInside(p)) aPointsVector.push_back(p); 
+	  //candidate2
+	  p.at(i) = c - 1; 
+	  if (myD.isInside(p)) aPointsVector.push_back(p);
+	  //
+	  p.at(i) = c; 
+	} //end for each coordinate
+    }
+  }; 
+
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class RestrictedNeighborhoodUp
+  /**
+   * \brief Aim: Functor retrieving the part of a neighborhood 
+   * of a given point that is adjacent to another point. 
+   *
+   * @tparam TPoint  type of point 
+   */
+  template <typename TPoint>
+  class RestrictedNeighborhoodUp
+  {
+
+  public: 
+    /**
+     * Center
+     */
+    const TPoint& myCenter; 
+
+    /**
+     * Constructor
+     */
+    RestrictedNeighborhoodUp(const TPoint& aPoint): myCenter(aPoint) {}
+
+    /**
+     * Let @a aPoint be (dim-i)-adjacent to @a myCenter. 
+     * Returns the points (dim-i+1)-adjacent to @a aPoint
+     * and in the <r-neighborhood of @a myCenter 
+     *
+     * @param aPoint any point
+     * @param returned STL vector of neighbors
+     */
+    void operator()(const TPoint& aPoint, std::vector<TPoint>& aPointsVector) const
+    {
+      TPoint p(aPoint); 
+      for (typename TPoint::Dimension i = 0; i != TPoint::dimension; ++i)
+	{ //for each coordinate
+	  if (p.at(i) == myCenter.at(i)) 
+	    { //if coordinate i of p is equal to the one of myCenter
+	      typename TPoint::Coordinate c = p.at(i); 
+	      //candidate1
+	      p.at(i) = c + 1; 
+	      ASSERT ( (p-myCenter).norm(TPoint::L_1) == ((aPoint-myCenter).norm(TPoint::L_1)+1) ); 
+	      aPointsVector.push_back(p); 
+	      //candidate2
+	      p.at(i) = c - 1; 
+	      ASSERT ( (p-myCenter).norm(TPoint::L_1) == ((aPoint-myCenter).norm(TPoint::L_1)+1) ); 
+	      aPointsVector.push_back(p);
+	      //
+	      p.at(i) = c; 
+	    } 
+	} //end for each coordinate
+
+    }
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class RestrictedNeighborhoodDown
+  /**
+   * \brief Aim: Functor retrieving the part of a neighborhood 
+   * of a given point that is adjacent to another point. 
+   *
+   * @tparam TPoint  type of point 
+   */
+  template <typename TPoint>
+  class RestrictedNeighborhoodDown
+  {
+
+  public: 
+    /**
+     * Center
+     */
+    const TPoint& myCenter; 
+
+    /**
+     * Constructor
+     */
+    RestrictedNeighborhoodDown(const TPoint& aPoint): myCenter(aPoint) {}
+
+    /**
+     * Let @a aPoint be (dim-i)-adjacent to @a myCenter. 
+     * Returns the points (dim-i-1)-adjacent to @a aPoint
+     * and in the <r-neighborhood of @a myCenter 
+     *
+     * @param aPoint any point
+     * @param returned STL vector of neighbors
+     */
+    void operator()(const TPoint& aPoint, std::vector<TPoint>& aPointsVector) const
+    {
+      TPoint p(aPoint); 
+      for (typename TPoint::Dimension i = 0; i != TPoint::dimension; ++i)
+	{ //for each coordinate
+	  if (p.at(i) != myCenter.at(i)) 
+	    { //if coordinate i of p is not equal to the one of myCenter
+	      typename TPoint::Coordinate c = p.at(i); 
+	      //new candidate
+	      p.at(i) = myCenter.at(i); 
+	      ASSERT ( (p-myCenter).norm(TPoint::L_1) == ((aPoint-myCenter).norm(TPoint::L_1)-1) ); 
+	      aPointsVector.push_back(p);
+	      //
+	      p.at(i) = c; 
+	    } 
+	} //end for each coordinate
+    }
+  }; 
+
+  /////////////////////////////////////////////////////////////////////////////
+  // template class RestrictedNeighborhood
+  /**
+   * \brief Aim: Functor retrieving the part of a neighborhood 
+   * of a given point that is adjacent to another point. 
+   *
+   * @tparam TPoint type of point 
+   *
+   * @see RestrictedNeighborhoodUp RestrictedNeighborhoodDown
+   */
+  template <typename TPoint>
+  class RestrictedNeighborhood
+  {
+
+  public: 
+    /**
+     * First type of neighborhood
+     */
+    typename SimplePointHelperDetails::RestrictedNeighborhoodDown<TPoint> myN1; 
+    /**
+     * Second type of neighborhood
+     */
+    typename SimplePointHelperDetails::RestrictedNeighborhoodUp<TPoint> myN2; 
+    /**
+     * Constructor
+     */
+    RestrictedNeighborhood(const TPoint& aPoint): myN1(aPoint), myN2(aPoint) {}
+    /**
+     * Returns the points (dim-1)-adjacent to @a aPoint
+     * and in the <r-neighborhood of @a myCenter 
+     *
+     * @param aPoint any point
+     * @param returned STL vector of neighbors
+     *
+     * @see RestrictedNeighborhoodUp RestrictedNeighborhoodDown
+     */
+    void operator()(const TPoint& aPoint, std::vector<TPoint>& aPointsVector) const
+    {
+      myN1(aPoint,aPointsVector); 
+      myN2(aPoint,aPointsVector); 
+    }
+  }; 
+  
+} //end namespace SimplePointHelperDetails

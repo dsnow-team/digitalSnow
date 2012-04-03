@@ -321,6 +321,8 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	      Distance e = std::abs(din)+std::abs(dout);
 	      Distance ndin = din/e; 
 	      Distance ndout = dout/e; 
+	      // Distance ndin = din; 
+	      // Distance ndout = dout; 
 
 	      std::pair<IteratorPointDistance, bool> rin 
 		= adjacentPoints.insert( PointDistance( in, ndin ) );
