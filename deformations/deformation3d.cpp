@@ -163,11 +163,12 @@ int main(int argc, char** argv)
     //interface evolver
     WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,k,1); 
 
+    DGtal::trace.beginBlock( "Deformation" );
+
+    double sumt = 0; 
     for (unsigned int i = 1; i <= max; ++i) 
     {
-      std::stringstream s0; 
-      s0 << "iteration # " << i; 
-      DGtal::trace.beginBlock( s0.str() );
+      DGtal::trace.info() << "iteration # " << i << std::endl; 
 
       //update
       e.update(implicitFunction,tstep); 
@@ -181,8 +182,11 @@ int main(int argc, char** argv)
          writeImage( implicitFunction, s.str(), format );
 
       }
-      DGtal::trace.endBlock();   
+      sumt += tstep; 
+      DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
     }
+
+    DGtal::trace.endBlock();
 
     //interactive display after the evolution
     if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
@@ -213,21 +217,30 @@ int main(int argc, char** argv)
     Reaction reaction( epsilon, a, k );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
-    for (unsigned int i = step; i <= max; i += step) 
+    DGtal::trace.beginBlock( "Deformation" );
+
+    double sumt = 0; 
+    for (unsigned int i = 1; i <= max; ++i) 
     {
-      std::stringstream s0; 
-      s0 << "iteration # " << i; 
-      DGtal::trace.beginBlock( s0.str() );
+      DGtal::trace.info() << "iteration # " << i << std::endl; 
 
-      e.update( implicitFunction, (tstep*step) ); 
+      //update
+      e.update(implicitFunction,tstep); 
 
-      //3d to 2d display
-      std::stringstream s; 
-      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-      writeImage( implicitFunction, s.str(), format, 0.5 );
+      if ((i%step)==0) 
+      {
 
-      DGtal::trace.endBlock();   
+         //3d to 2d display
+         std::stringstream s; 
+         s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+         writeImage( implicitFunction, s.str(), format, 0.5 );
+
+      }
+      sumt += tstep; 
+      DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
     }
+
+    DGtal::trace.endBlock();
 
     //interactive display after the evolution
     if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction, 0.5 ); 
