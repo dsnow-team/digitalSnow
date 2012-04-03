@@ -2,7 +2,9 @@
 
 //display 3D
 // static 
+  #ifdef WITH_CAIRO
 #include "DGtal/io/boards/Board3DTo2D.h"
+  #endif
 
 #include "DGtal/io/Color.h"
 #include "DGtal/io/colormaps/GradientColorMap.h"
@@ -14,6 +16,7 @@ bool writeImage(const TImage& img, string filename, string format, const double&
 
   if (format.compare("png")==0)
   {
+  #ifdef WITH_CAIRO
     Board3DTo2D viewer;
     
     Domain d = img.domain(); 
@@ -91,7 +94,6 @@ bool writeImage(const TImage& img, string filename, string format, const double&
 
     int size = img.extent().at(0); 
     std::stringstream s; 
-  #ifdef WITH_CAIRO
     s << filename << ".png";
     viewer.saveCairo(s.str().c_str(),Board3DTo2D::CairoPNG,3*size/2,3*size/2 ); 
     return true; 
