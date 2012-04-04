@@ -41,8 +41,11 @@
 
 template <typename TImage>
 inline
-DGtal::SimplePointHelper<TImage>::SimplePointHelper(LabelsImage& aImg, const Label& aLabel = Label() )
-  : myImg( aImg ), myLabel( aLabel )
+DGtal::SimplePointHelper<TImage>::SimplePointHelper(LabelsImage& aImg, 
+const Label& aInnerRegionLabel, 
+const Label& aInftyRegionLabel = Label() )
+  : myImg( aImg ), myInnerRegionLabel( aInnerRegionLabel ), 
+myInftyRegionLabel( aInftyRegionLabel )
 {
 }
 
@@ -53,15 +56,6 @@ DGtal::SimplePointHelper<TImage>::~SimplePointHelper()
 }
 
 
-template <typename TImage>
-inline
-bool
-DGtal::SimplePointHelper<TImage>::isSimple(const Point& aPoint) const
-{
-  SimplePointHelperDetails::OneLabelPredicate<Label,std::equal_to<Label> > 
-    pred( myImg(aPoint) ); //predicate from the label of aPoint
-  return isSimple12WithoutFolds( aPoint, pred ); 
-}
 
 template <typename TImage>
 inline
@@ -104,7 +98,7 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(const Point& aPoint, const Label& a
 	      if ( globalDomain.isInside( *it ) )
 		localImage.setValue( *it, myImg(*it) ); 
 	      else //label of the infinite region
-		localImage.setValue( *it, myLabel ); 
+		localImage.setValue( *it, myInftyRegionLabel ); 
 	    }
 	  //test on a local image
 	  return isMLSimple(localImage, aPoint, aLabel); 
@@ -144,19 +138,30 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
       if ( sExtraRegions.size() == 0 )
 	{
 	  {
-	  // //predicate from the label of the first main region
-	  // SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
-	  //   pred0( aImg, *sMainRegions.begin() ); 
-	  // if (!isSimple12( aPoint, pred0 ) ) return false;
-	  // //predicate from the label of the second main region
-	  // SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
-	  //   pred1( aImg, *(++sMainRegions.begin()) ); 
-	  // if (!isSimple12( aPoint, pred1 ) ) return false;
 
-	    //only test on the region of aPoint
-	  SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
-	    pred1( aImg, centerLabel ); 
-	  if (!isSimple12( aPoint, pred1 ) ) return false;
+	    if ( ( aLabel == myInnerRegionLabel )
+	    	 || ( centerLabel == myInnerRegionLabel ) )
+	      { //case of a frontier whose interior is known
+	    	SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
+	    	  pred1( aImg, myInnerRegionLabel ); 
+	    	if (!isSimple12( aPoint, pred1 ) ) return false;
+	      }
+	    else 
+	      { //elsewhere
+		trace.emphase() << "not adjacent to the frontier!" << std::endl; 
+	    	//predicate from the label of the first main region
+	    	SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
+	    	  pred0( aImg, *sMainRegions.begin() ); 
+	    	if (!isSimple12( aPoint, pred0 ) ) return false;
+	    	//predicate from the label of the second main region
+	    	SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
+	    	  pred1( aImg, *(++sMainRegions.begin()) ); 
+	    	if (!isSimple12( aPoint, pred1 ) ) return false;
+	      }
+
+	    // SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
+	    //   pred1( aImg, centerLabel ); 
+	    // if (!isSimple12( aPoint, pred1 ) ) return false;
 
 	  }
 	}

@@ -105,7 +105,8 @@ int main(int argc, char** argv)
 
 
   //image of labels
-  typedef ImageContainerBySTLVector<Domain,short int> LabelImage; 
+  typedef short int Label; 
+  typedef ImageContainerBySTLVector<Domain, Label> LabelImage; 
   if (!(vm.count("inputImage"))) 
     {
     trace.info() << "you must use --inputImage option" << std::endl;
@@ -152,11 +153,33 @@ int main(int argc, char** argv)
   DistanceImage g( d );
   std::fill( g.begin(), g.end(), 1.0 ); 
 
-  //predicate
-  // typedef TrueBinaryPredicate Predicate; 
-  // Predicate predicate; 
-  typedef SimplePointHelper<LabelImage> Predicate; 
-  Predicate predicate(labelImage); 
+
+  //getting a bel
+  KSpace::SCell bel;
+  Label innerRegion; 
+  try {
+    Thresholder<LabelImage::Value> t( 0 ); 
+    typedef ConstImageAdapter<LabelImage, Thresholder<LabelImage::Value>, bool> BinaryImage; 
+    BinaryImage binaryImage(labelImage, t);
+
+    bel = Surfaces<KSpace>::findABel( ks, binaryImage, 10000 );
+
+    trace.info() << "starting bel: "
+		 << bel
+		 << std::endl;
+
+    Point in = ks.sCoords( ks.sDirectIncident( bel, *ks.sOrthDirs( bel ) ) ); 
+    innerRegion = labelImage(in); 
+
+    trace.info() << "inner region: "
+		 << innerRegion
+		 << std::endl;
+
+  } catch (DGtal::InputException i) {
+    trace.emphase() << "starting bel not found" << std::endl; 
+    return 0; 
+  }
+
 
   //functor
 
@@ -175,22 +198,12 @@ int main(int argc, char** argv)
    DistanceImage > Functor; 
   Functor functor(distanceImage, g, g); 
 
-  //getting a bel
-  KSpace::SCell bel;
-  try {
-    Thresholder<LabelImage::Value> t( 0 ); 
-    typedef ConstImageAdapter<LabelImage, Thresholder<LabelImage::Value>, bool> BinaryImage; 
-    BinaryImage binaryImage(labelImage, t);
+  // topological predicate
+  // typedef TrueBinaryPredicate Predicate; 
+  // Predicate predicate; 
+  typedef SimplePointHelper<LabelImage> Predicate; 
+  Predicate predicate(labelImage, innerRegion); 
 
-    bel = Surfaces<KSpace>::findABel( ks, binaryImage, 10000 );
-
-    trace.info() << "starting bel: "
-		 << bel
-		 << std::endl;
-  } catch (DGtal::InputException i) {
-    trace.emphase() << "starting bel not found" << std::endl; 
-    return 0; 
-  }
  
   //frontier evolver
   FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 

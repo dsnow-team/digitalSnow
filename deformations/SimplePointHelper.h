@@ -141,11 +141,14 @@ namespace DGtal
      * Main constructor.
      *
      * @param aImg any image 
-     * @param aLabel label of the infinite region 
+     * @param aInnerRegionLabel label of the inner region   
+     * @param aInftyRegionLabel label of the infinite region 
      * located outside the image domain 
      * (default value if not provided)
      */
-    SimplePointHelper(LabelsImage& aImg, const Label& aLabel);
+    SimplePointHelper(LabelsImage& aImg, 
+		      const Label& aInnerRegionLabel, 
+		      const Label& aInftyRegionLabel);
 
     /**
      * Destructor. Does nothing.
@@ -175,15 +178,6 @@ namespace DGtal
      */
     bool operator()(const Point& aPoint, const Label& aLabel) const;
 
-
-    /**
-     * Checks if @a aPoint is simple with respect 
-     * to the region @a aPoint belongs to.
-     *
-     * @param aPoint any point
-     * @return 'true' if simple, 'false' otherwise.
-     */
-    bool isSimple(const Point& aPoint) const;
 
     /**
      * Checks if the underlying image is labeled, 
@@ -258,11 +252,16 @@ namespace DGtal
      * Reference on an image of labels.
      */
     LabelsImage& myImg; 
+
+    /**
+     * Label of the inner region.
+     */
+    Label myInnerRegionLabel; 
     
     /**
      * Label of the infinite region located outside the image domain.
      */
-    Label myLabel; 
+    Label myInftyRegionLabel; 
 
     // ------------------------- Hidden services ------------------------------
   protected:
