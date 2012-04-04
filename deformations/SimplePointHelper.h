@@ -124,6 +124,7 @@ namespace DGtal
     typedef TImage LabelsImage; 
     typedef typename TImage::Value Label; 
 
+    typedef typename TImage::Domain::Space Space; 
     typedef typename TImage::Domain Domain; 
     typedef typename Domain::Point Point; 
     typedef typename Domain::Point Vector;
@@ -306,6 +307,21 @@ namespace DGtal
      * @return 'true' if ML-simple, 'false' otherwise.
      */
     bool isMLSimple(LabelsImage& aImg, const Point& aPoint, const Label& aLabel) const;
+
+    /**
+     * Checks if @a aPoint, assumed to belong to region X, 
+     * is simple for X, where X is defined as the 
+     * set of voxels that make @a aPredicate be true.
+     *
+     * NB: implies the simplicity with the (dim-1,dim-2) adjacency
+     *
+     * @param aPoint any point to check
+     * @tparam TPredicate  type of predicate
+     * @param aPredicate  any predicate
+     * @return 'true' if simple, 'false' otherwise.
+     */
+    template <typename TPredicate>
+    bool isSimple12bis(const Point& aPoint, const TPredicate& aPredicate) const;
 
     /**
      * Checks if @a aPoint, assumed to belong to region X, 

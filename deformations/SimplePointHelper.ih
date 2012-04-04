@@ -144,7 +144,7 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
 	      { //case of a frontier whose interior is known
 	    	SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
 	    	  pred1( aImg, myInnerRegionLabel ); 
-	    	if (!isSimple12( aPoint, pred1 ) ) return false;
+	    	if (!isSimple12bis( aPoint, pred1 ) ) return false;
 	      }
 	    else 
 	      { //elsewhere
@@ -196,6 +196,57 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
   
   return true; 
 }
+
+
+#include "DGtal/topology/MetricAdjacency.h"
+#include "DGtal/topology/DomainMetricAdjacency.h"
+#include "DGtal/topology/DomainAdjacency.h"
+#include "DGtal/topology/DigitalTopology.h"
+#include "DGtal/topology/Object.h"
+
+template <typename TImage>
+template <typename TPredicate>
+inline
+bool
+DGtal::SimplePointHelper<TImage>::isSimple12bis(const Point& aPoint, 
+					   const TPredicate& aPredicate) const
+{
+  //region
+  // std::cerr << "simple test of " << aPoint; 
+  // std::cerr << " for region of label "; 
+  // aPredicate.selfDisplay(std::cerr); 
+  // std::cerr << std::endl; 
+
+  //object stuff
+  typedef MetricAdjacency<Space, 1> Adj1; 
+  typedef MetricAdjacency<Space, 2> Adj2; 
+  typedef DigitalTopology<Adj1, Adj2> Topo;
+  typedef DigitalSetBySTLSet<Domain> DigitalSet;
+  typedef Object<Topo, DigitalSet > Object;
+  Adj1 adj1;
+  Adj2 adj2;
+  Topo topo( adj1, adj2, JORDAN_DT );
+  Domain d = getLocalDomain(aPoint); 
+  DigitalSet set( d );
+
+  //init
+  {
+  SimplePointHelperDetails::RestrictedNeighborhoodDown<Point> neighborhood(aPoint); 
+
+  typename Domain::ConstIterator it = d.begin(); 
+  typename Domain::ConstIterator itEnd = d.end(); 
+  for ( ; it != itEnd; ++it)
+    {
+      Point p( *it ); 
+      if ( aPredicate( p ) )
+	set.insertNew( p ); 
+    }
+  }
+
+  Object obj( topo, set );
+  return obj.isSimple( aPoint ); 
+}
+
 
 template <typename TImage>
 template <typename TPredicate>
