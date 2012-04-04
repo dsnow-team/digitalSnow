@@ -182,7 +182,6 @@ bool displayImage(int argc, char** argv, const TImage& img, const double& thresh
 
 #include "LocalMCM.h"
 
-#include "DGtal/io/colormaps/HueShadeColorMap.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
 
 template< typename TI1, typename TI2 >
@@ -219,8 +218,10 @@ bool displayImage2(int argc, char** argv, TI1& img,
   Viewer3D viewer;
   viewer.show();
 
-  //20 good for Al
-  HueShadeColorMap<double, 2> colorMap(0,20);
+  //good for Al
+  GradientColorMap<double, 1> colorMap( -10, 10 );
+  colorMap.addColor( Color( 0, 0, 250 ) );
+  colorMap.addColor( Color( 0, 250, 0 ) );
 
   for(unsigned int i=0; i< vectConnectedSCell.size();i++){
 
@@ -233,18 +234,27 @@ bool displayImage2(int argc, char** argv, TI1& img,
 	  Surfel s = *it; 
 	  Point p = K.sCoords( K.sDirectIncident( s, *K.sOrthDirs( s ) ) ); 
 
-	  //normal
-	  typename DiffOperator::Normal normal = op.getNormal( p );
-	  Point center = K.sCoords(s);
-	  viewer.addLine(center[0],center[1],center[2],
-			 center[0]-3*normal[0],center[1]-3*normal[1],center[2]-3*normal[2], 
-			 DGtal::Color(20,200,20), 1.0);
-
 	  //curvature
 	  typename DiffOperator::Curvature curvature = op.getCurvature( p ); 
-	  //viewer << DGtal::CustomColors3D(DGtal::Color(250, 0,0),DGtal::Color(250, 0,0)); 
 	  viewer << DGtal::CustomColors3D( colorMap( curvature ), colorMap( curvature ) ); 
 	  viewer << s; 
+
+
+	  //naive normal
+	  //Vector normal = K.sKCoords( s ) - K.sKCoords( K.sDirectIncident( s, *K.sOrthDirs( s ) ) ); 
+	  //normal
+	  typename DiffOperator::Normal normal = op.getNormal( p );
+	  Space::RealPoint center( K.sKCoords(s) );
+	  center /= 2;
+	  center -= Space::RealVector(0.5, 0.5, 0.5); 
+	  double normalNorm = std::sqrt( normal[0]*normal[0] 
+	  				 + normal[1]*normal[1] 
+	  				 + normal[2]*normal[2] );
+	  normal /= normalNorm; 
+	  viewer.addLine(center[0],center[1],center[2],
+			 center[0]+normal[0],center[1]+normal[1],center[2]+normal[2], 
+			 DGtal::Color(250,0,0), 1.0);
+
 
     	}
 
