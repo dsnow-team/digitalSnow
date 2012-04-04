@@ -140,6 +140,8 @@ bool writeImage(const TImage& img, string filename, string format, const double&
 
 #include "DGtal/topology/KhalimskySpaceND.h"
 #include "DGtal/topology/helpers/Surfaces.h"
+#include "DGtal/topology/helpers/FrontierPredicate.h"
+#include "DGtal/topology/LightExplicitDigitalSurface.h"
 
 template< typename TImage >
 bool displayImage(int argc, char** argv, const TImage& img, const double& threshold = 0)
@@ -153,10 +155,10 @@ bool displayImage(int argc, char** argv, const TImage& img, const double& thresh
   SurfelAdjacency<3> SAdj( true );
   std::vector<std::vector<SCell> > vectConnectedSCell;
   //predicate
-  SimpleThresholdForegroundPredicate<TImage> predicate(img,threshold);
+  typedef SimpleThresholdForegroundPredicate<TImage> PointPredicate; 
+  PointPredicate predicate(img,threshold);
   //tracking 
   Surfaces<KSpace>::extractAllConnectedSCell(vectConnectedSCell,K, SAdj, predicate, true);
-  
 
   #ifdef WITH_VISU3D_QGLVIEWER
   QApplication application(argc,argv);
@@ -178,4 +180,91 @@ bool displayImage(int argc, char** argv, const TImage& img, const double& thresh
 }
 
 
+#include "LocalMCM.h"
+
+#include "DGtal/io/DrawWithDisplay3DModifier.h"
+
+template< typename TI1, typename TI2 >
+bool displayImage2(int argc, char** argv, TI1& img, 
+		  const TI2& ext1, const TI2& ext2, 
+		  const double& threshold = 0)
+{
+
+  //KhalimskySpace
+  Domain d = img.domain(); 
+  KSpace K;
+  K.init(d.lowerBound(), d.upperBound(), true);
+  //adjacency  
+  SurfelAdjacency<3> SAdj( true );
+  std::vector<std::vector<SCell> > vectConnectedSCell;
+  //predicate
+  typedef SimpleThresholdForegroundPredicate<TI1> PointPredicate; 
+  PointPredicate predicate(img,threshold);
+  //tracking 
+  Surfaces<KSpace>::extractAllConnectedSCell(vectConnectedSCell,K, SAdj, predicate, true);
+
+  //light digital surfaces 
+  typedef FrontierPredicate<KSpace, PointPredicate> SurfelPredicate;
+  typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
+  typedef typename Frontier::SurfelConstIterator SurfelIterator;
+  typedef typename Frontier::Surfel Surfel;
+
+  //local MCM operator 
+  typedef LocalMCM<TI1, TI2> DiffOperator; 
+  DiffOperator op(img, ext1, ext2); 
+
+  #ifdef WITH_VISU3D_QGLVIEWER
+  QApplication application(argc,argv);
+  Viewer3D viewer;
+  viewer.show();
+
+  //good for Al
+  GradientColorMap<double, 1> colorMap( -10, 10 );
+  colorMap.addColor( Color( 0, 0, 250 ) );
+  colorMap.addColor( Color( 0, 250, 0 ) );
+
+  for(unsigned int i=0; i< vectConnectedSCell.size();i++){
+
+    SurfelPredicate surfelPred( K, predicate, false, true ); 
+    Frontier frontier( K, surfelPred, SAdj, vectConnectedSCell.at(i).at(0) );
+      for ( SurfelIterator it = frontier.begin(), 
+    	      itEnd = frontier.end();
+    	    it != itEnd; ++it )
+    	{
+	  Surfel s = *it; 
+	  Point p = K.sCoords( K.sDirectIncident( s, *K.sOrthDirs( s ) ) ); 
+
+	  //curvature
+	  typename DiffOperator::Curvature curvature = op.getCurvature( p ); 
+	  viewer << DGtal::CustomColors3D( colorMap( curvature ), colorMap( curvature ) ); 
+	  viewer << s; 
+
+
+	  //naive normal
+	  //Vector normal = K.sKCoords( s ) - K.sKCoords( K.sDirectIncident( s, *K.sOrthDirs( s ) ) ); 
+	  //normal
+	  typename DiffOperator::Normal normal = op.getNormal( p );
+	  Space::RealPoint center( K.sKCoords(s) );
+	  center /= 2;
+	  center -= Space::RealVector(0.5, 0.5, 0.5); 
+	  double normalNorm = std::sqrt( normal[0]*normal[0] 
+	  				 + normal[1]*normal[1] 
+	  				 + normal[2]*normal[2] );
+	  normal /= normalNorm; 
+	  viewer.addLine(center[0],center[1],center[2],
+			 center[0]+normal[0],center[1]+normal[1],center[2]+normal[2], 
+			 DGtal::Color(250,0,0), 1.0);
+
+
+    	}
+
+  }
+
+  viewer << Viewer3D::updateDisplay;
+
+  return application.exec();
+#else
+  return false; 
+#endif
+}
 

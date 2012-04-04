@@ -47,6 +47,12 @@
 #include "DGtal/kernel/CPointFunctor.h"
 #include "DGtal/kernel/CPointPredicate.h"
 
+//predicates
+#include "DGtal/base/BasicBoolFunctions.h"
+#include "DGtal/kernel/BasicPointPredicates.h"
+#include "PointPredicates.h"
+
+
 
 // set
 #include "DGtal/kernel/sets/DigitalSetFromMap.h"
@@ -66,6 +72,52 @@
 namespace DGtal
 {
 
+  //------------------------------------------------------------------------------
+  template<typename I, typename D, typename V>
+struct SetFromImageDomainValueTraits
+  { 
+  public: 
+    typedef DigitalSetBySTLSet<D> Set; 
+  public: 
+  public: 
+    static Set get(I& aImage)
+    {
+      return Set(aImage.domain()); 
+    }
+  }; 
+  //Partial specialization
+  template<typename D, typename V>
+struct SetFromImageDomainValueTraits<
+    ImageContainerBySTLMap<D,V>, 
+    D, V >
+  {
+  public: 
+    typedef DigitalSetFromMap<ImageContainerBySTLMap<D,V> > Set; 
+  public: 
+    static Set get(ImageContainerBySTLMap<D,V>& aImage)
+    {
+      return Set(aImage); 
+    }
+  }; 
+  //------------------------------------------------------------------------------
+  template<typename I>
+struct SetFromImageSelector
+  { 
+  public: 
+    BOOST_CONCEPT_ASSERT(( CImage<I> )); 
+    typedef typename I::Domain Domain; 
+    typedef typename I::Value Value; 
+
+    typedef typename SetFromImageDomainValueTraits<I, Domain, Value>::Set Set;
+
+  public: 
+    static Set get(I& i) 
+    {
+      return SetFromImageDomainValueTraits<I, Domain, Value>::get(i); 
+    }
+  }; 
+
+  //------------------------------------------------------------------------------
   namespace details
   {
     class CompareSecondElement {
@@ -131,18 +183,21 @@ namespace DGtal
     // ----------------------- Types ------------------------------
   public:
 
-    /// Khalimsky space
-    typedef TKSpace KSpace;
-    typedef typename TKSpace::Point Point;
-
     /// Image of labels
     typedef TLabelImage LImage;
     typedef typename LImage::Value Label;
     typedef typename LImage::Domain Domain;
+    typedef typename Domain::Point Point;
 
     /// Image of distance values
     typedef TDistanceImage DImage;
     typedef typename DImage::Value Distance;
+
+    /// Set of points where the distance values are known
+    typedef typename SetFromImageSelector<DImage>::Set PointSet; 
+
+    /// Khalimsky space
+    typedef TKSpace KSpace;
 
     /// Frontier
     typedef FrontierPredicate<KSpace, LImage> SurfelPredicate;
@@ -155,9 +210,9 @@ namespace DGtal
     /// Point functor for the mapping points-velocity
     typedef TFunctor Functor; 
     typedef typename Functor::Value Velocity; 
-    /// Point predicate 
-    typedef TPredicate Predicate; 
-
+    /// Topological predicate 
+    typedef TPredicate Predicate;
+ 
 
     // ----------------------- Standard services ------------------------------
   public:
@@ -232,6 +287,10 @@ namespace DGtal
      */
     DImage& myDImage; 
     /**
+     * Set of points where the distance values are known
+     */
+    PointSet myPointSet; 
+    /**
      * Reference on the starting surfel of the digital frontier 
      */
     Surfel& mySurfel; 
@@ -241,6 +300,7 @@ namespace DGtal
     const Functor& myFunctor; 
     /**
      * Constant reference on the predicate
+     * TODO: rename it into myTopoPred
      */
     const Predicate& myPointPred; 
     /**

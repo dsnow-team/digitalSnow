@@ -30,7 +30,6 @@
 #include <cstdlib>
 //////////////////////////////////////////////////////////////////////////////
 
-#include "DGtal/images/DifferentialOperators.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION of inline methods.
@@ -72,7 +71,43 @@ DGtal::LocalMCM<TFunction, TExternField>
   return res; 
 }
 //------------------------------------------------------------------------------
+template <typename TFunction, typename TExternField>
+template <typename TInputPoint>
+inline
+typename DGtal::LocalMCM<TFunction, TExternField>::Normal
+DGtal::LocalMCM<TFunction, TExternField>
+::getNormal( const TInputPoint& aPoint ) const
+{
+  ASSERT( myFuncPtr );
+  PointFunctor* tmpFuncPtr = const_cast<PointFunctor*>(myFuncPtr); 
+//ugly until differential operators are updated 
 
+//gradient
+  CentralDifference<PointFunctor> cdiff( *tmpFuncPtr ); 
+  Gradient<CentralDifference<PointFunctor> > cg( cdiff );
+  return cg( aPoint ); 
+}
+
+//------------------------------------------------------------------------------
+template <typename TFunction, typename TExternField>
+template <typename TInputPoint>
+inline
+typename DGtal::LocalMCM<TFunction, TExternField>::Curvature
+DGtal::LocalMCM<TFunction, TExternField>
+::getCurvature( const TInputPoint& aPoint ) const
+{
+  ASSERT( myFuncPtr );
+  PointFunctor* tmpFuncPtr = const_cast<PointFunctor*>(myFuncPtr); 
+  PointFunctor* tmpBPtr = const_cast<PointFunctor*>(myBPtr); 
+//ugly until differential operators are updated 
+
+//mean curvature
+  //TODO allow different types for implicit function and extern field
+  //in weightedDifference
+  WeightedDifference2<PointFunctor> diff2( *tmpFuncPtr, *tmpBPtr ); 
+  Divergence<WeightedDifference2<PointFunctor> > div(diff2); 
+  return div( aPoint ); 
+}
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////

@@ -42,6 +42,8 @@
 //////////////////////////////////////////////////////////////////////////////
 // Inclusions
 #include "DGtal/kernel/CPointFunctor.h"
+
+#include "DGtal/images/DifferentialOperators.h"
 //////////////////////////////////////////////////////////////////////////////
 
 namespace DGtal
@@ -75,6 +77,9 @@ namespace DGtal
 
     typedef typename PointFunctor::Point Point; 
     typedef double Value; 
+    
+    typedef typename Gradient<CentralDifference<PointFunctor> >::OutputValue Normal; 
+    typedef typename Divergence<WeightedDifference2<PointFunctor> >::OutputValue Curvature; 
 
     /**
      * Constructor
@@ -89,6 +94,24 @@ namespace DGtal
      */
     template<typename TInputPoint>
     double operator()( const TInputPoint& aPoint ) const;
+
+    /**
+     * Gradient.
+     * @param aPoint any point.
+     * @tparam TInputPoint type of point
+     * @return the gradient at @a aPoint.
+     */
+    template<typename TInputPoint>
+    Normal getNormal( const TInputPoint& aPoint ) const;
+
+    /**
+     * Curvature.
+     * @param aPoint any point.
+     * @tparam TInputPoint type of point
+     * @return curvature at @a aPoint.
+     */
+    template<typename TInputPoint>
+    Curvature getCurvature( const TInputPoint& aPoint ) const;
 
    private: 
     /**

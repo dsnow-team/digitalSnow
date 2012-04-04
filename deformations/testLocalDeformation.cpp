@@ -18,12 +18,13 @@ namespace po = boost::program_options;
 #include "DGtal/base/BasicFunctors.h"
 #include "DGtal/images/ConstImageAdapter.h"
 #include "BinaryPredicates.h"
+#include "SimplePointHelper.h"
+//#include "DGtal/topology/helpers/SimplePointHelper.h"
 
 #include "DGtal/shapes/Shapes.h"
 
 #include "LocalBalloonForce.h"
 #include "LocalMCM.h"
-//#include "LocalMCMforDT.h"
 #include "FrontierEvolver.h"
 
 
@@ -50,9 +51,8 @@ int main(int argc, char** argv)
   general_opt.add_options()
     ("help,h", "display this message")
     ("inputImage,i",  po::value<string>(), "Binary image to initialize the starting interface (vol format)" )
-    ("timeStep,t",  po::value<double>()->default_value(1.0), "Time step for the evolution" )
-    ("displayStep,d",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
-    ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
+    ("timeBound,t",  po::value<double>()->default_value(1.0), "Maximum time for the evolution" )
+    ("displayStep,d",  po::value<int>()->default_value(1), "Number of iterations between 2 drawings" )
     ("bandWidth,w",  po::value<double>()->default_value(1.0), "Width of the flipping band" )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     {
       trace.info()<< "Local deformation" << std::endl
       << "Basic usage: "<<std::endl
-      << argv[0] << " [other options] -t <time step> --withVisu" << std::endl
+      << argv[0] << " [other options] -t <time> --withVisu" << std::endl
       << general_opt << "\n";
       return 0;
     }
@@ -76,20 +76,15 @@ int main(int argc, char** argv)
   //Parse options
 
   //time step
-  double tstep; 
-  if (!(vm.count("timeStep"))) trace.info() << "time step default value: 1.0" << std::endl; 
-  tstep = vm["timeStep"].as<double>(); 
+  double tmax; 
+  if (!(vm.count("timeBound"))) trace.info() << "stopping time default value: 1.0" << std::endl; 
+  tmax = vm["timeBound"].as<double>(); 
     
   //iterations
   int step; 
   if (!(vm.count("displayStep"))) 
-    trace.info() << "number of steps between two drawings: 1 by default" << std::endl; 
+    trace.info() << "number of iterations between two drawings: 1 by default" << std::endl; 
   step = vm["displayStep"].as<int>(); 
-  int max; 
-  if (!(vm.count("stepsNumber"))) 
-    trace.info() << "maximal number of steps: 1 by default" << std::endl; 
-  max = vm["stepsNumber"].as<int>(); 
-
 
   //files
   std::string outputFiles; 
@@ -144,29 +139,41 @@ int main(int argc, char** argv)
       return 0; 
     }
 
-  //algo
   //space
   KSpace ks;
   Domain d( labelImage.domain() ); 
   ks.init( d.lowerBound(), d.upperBound(), true ); 
  
   //distance map
-  typedef ImageContainerBySTLMap<Domain,double> DistanceImage; 
-  DistanceImage map( d, 0.0 );
+  typedef ImageContainerBySTLVector<Domain,double> DistanceImage; 
+  DistanceImage distanceImage( d );
 
   //data functions
-  ImageContainerBySTLMap<Domain,double> g( d, 1.0 ); 
-  //predicate and functor
-  typedef TrueBinaryPredicate Predicate; 
-  Predicate predicate; 
+  DistanceImage g( d );
+  std::fill( g.begin(), g.end(), 1.0 ); 
+
+  //predicate
+  // typedef TrueBinaryPredicate Predicate; 
+  // Predicate predicate; 
+  typedef SimplePointHelper<LabelImage> Predicate; 
+  Predicate predicate(labelImage); 
+
+  //functor
+
+  // balloon force test
   // typedef LocalBalloonForce<DistanceImage, 
-  //  ImageContainerBySTLMap<Domain,double> > Functor; 
-  // Functor functor(map, g, k); 
-  typedef LocalMCM<DistanceImage, 
-   ImageContainerBySTLMap<Domain,double> > Functor; 
-  Functor functor(map, g, g); 
+  //  ImageContainerBySTLVector<Domain,double> > Functor; 
+  // Functor functor(distanceImage, g, k); 
+
+  // local MCM test
+  // does not work at all
   // typedef LocalMCMforDT<DistanceImage> Functor; 
-  // Functor functor(map); 
+  // Functor functor(distanceImage); 
+
+  // local MCM a la Weickert
+  typedef LocalMCM<DistanceImage, 
+   DistanceImage > Functor; 
+  Functor functor(distanceImage, g, g); 
 
   //getting a bel
   KSpace::SCell bel;
@@ -187,35 +194,32 @@ int main(int argc, char** argv)
  
   //frontier evolver
   FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
-    e(ks, labelImage, map, bel, functor, predicate, w ); 
+    e(ks, labelImage, distanceImage, bel, functor, predicate, w ); 
 
+  trace.beginBlock( "Deformation" );
   double sumt = 0; 
-  for (unsigned int i = 1; i <= max; ++i) 
+  for (unsigned int i = 1; (sumt <= tmax); ++i) 
     {
-      std::stringstream s0; 
-      s0 << "iteration # " << i; 
-      trace.beginBlock( s0.str() );
+      trace.info() << "iteration # " << i << std::endl; 
 
       //update
       sumt += e.update(); 
 
       if ((i%step)==0) 
 	{
-
-	  //3d to 2d display
+	  //display
 	  std::stringstream s; 
 	  s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
 	  writeImage( labelImage, s.str(), format );
-
 	}
 
-      trace.info() << "Total time spent: " << sumt << std::endl; 
-      trace.endBlock();   
+      trace.info() << "time spent: " << sumt << std::endl; 
     }
+  trace.endBlock();   
 
 
   //interactive display after the evolution
-  if (vm.count("withVisu")) displayImage( argc, argv, labelImage ); 
+  if (vm.count("withVisu")) displayImage2( argc, argv, distanceImage, g, g ); 
 
   
   return 0;

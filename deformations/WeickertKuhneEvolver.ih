@@ -91,11 +91,12 @@ DGtal::WeickertKuhneEvolver<TImage>::update(Image& aF, const double& aT)
   //trace.info() << "diffusion term..." << std::endl; 
 
   //AOS scheme
-  std::vector<Image> images; 
+  std::vector<Image*> images;
+  images.reserve(dimension); 
   for (Dimension k = 0; k < dimension; ++k)
     { //for each dimension
-      images.push_back( Image( aF.domain() ) ); 
-      diffusion(aF, images[k], aT, k);
+      images.push_back( new Image( aF.domain() ) ); 
+      diffusion(aF, *images[k], aT, k);
     }
   {  //normalization
     Domain d = aF.domain();  
@@ -105,10 +106,13 @@ DGtal::WeickertKuhneEvolver<TImage>::update(Image& aF, const double& aT)
       {
 	Value v = 0; 
 	for (Dimension k = 0; k < dimension; ++k)
-	  v += (images[k](*it) / (double) dimension); 
+	  v += ( (*images[k])(*it) / (double) dimension); 
 	aF.setValue(*it, v ); 
       }
   }
+  //free
+  for (Dimension k = 0; k < dimension; ++k)
+    delete( images[k] ); 
 
 }
 
@@ -140,11 +144,16 @@ DGtal::WeickertKuhneEvolver<TImage>
   data.reserve(size); 
 
   //ranges
-  std::vector<Dimension> vDims(dimension); 
-  for (Dimension k = 0; k < aDim; ++k)
-    vDims.at(k) = ( k + (dimension - aDim) ); 
+  std::vector<Dimension> vDims; 
+  vDims.reserve(dimension); 
   for (Dimension k = aDim; k < dimension; ++k)
-    vDims.at(k) = (k - aDim);
+    vDims.push_back(k);
+  for (Dimension k = 0; k < aDim; ++k)
+    vDims.push_back(k); 
+  
+  // std::copy( vDims.begin(), vDims.end(), std::ostream_iterator<Dimension>(trace.info(), ", ") ); 
+  // trace.info() << std::endl; 
+
   Domain d = aF.domain();  
   typename Domain::ConstSubRange range = d.subRange(vDims);
   
