@@ -140,8 +140,6 @@ bool writeImage(const TImage& img, string filename, string format, const double&
 
 #include "DGtal/topology/KhalimskySpaceND.h"
 #include "DGtal/topology/helpers/Surfaces.h"
-#include "DGtal/topology/helpers/FrontierPredicate.h"
-#include "DGtal/topology/LightExplicitDigitalSurface.h"
 
 template< typename TImage >
 bool displayImage(int argc, char** argv, const TImage& img, const double& threshold = 0)
@@ -182,12 +180,15 @@ bool displayImage(int argc, char** argv, const TImage& img, const double& thresh
 
 #include "LocalMCM.h"
 
+#include "DGtal/base/BasicFunctors.h"
+#include "DGtal/kernel/BasicPointPredicates.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
 
-template< typename TI1, typename TI2 >
-bool displayImage2(int argc, char** argv, TI1& img, 
-		  const TI2& ext1, const TI2& ext2, 
-		  const double& threshold = 0)
+template< typename TLabelImage, typename TDistanceImage, typename TExternImage >
+bool displayImage2(int argc, char** argv, const TLabelImage limg, 
+		   TDistanceImage& img, 
+		  const TExternImage& ext1, const TExternImage& ext2, 
+		  const short int& threshold = 0)
 {
 
   //KhalimskySpace
@@ -195,22 +196,19 @@ bool displayImage2(int argc, char** argv, TI1& img,
   KSpace K;
   K.init(d.lowerBound(), d.upperBound(), true);
   //adjacency  
-  SurfelAdjacency<3> SAdj( true );
+  SurfelAdjacency<Space::dimension> SAdj( true );
   std::vector<std::vector<SCell> > vectConnectedSCell;
   //predicate
-  typedef SimpleThresholdForegroundPredicate<TI1> PointPredicate; 
-  PointPredicate predicate(img,threshold);
+  typedef Thresholder<typename TLabelImage::Value,true,true> Binarizer; 
+  Binarizer b(threshold); 
+  PointFunctorPredicate<TLabelImage,Binarizer> predicate(limg, b);
   //tracking 
   Surfaces<KSpace>::extractAllConnectedSCell(vectConnectedSCell,K, SAdj, predicate, true);
-
-  //light digital surfaces 
-  typedef FrontierPredicate<KSpace, PointPredicate> SurfelPredicate;
-  typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
-  typedef typename Frontier::SurfelConstIterator SurfelIterator;
-  typedef typename Frontier::Surfel Surfel;
+  //NB. tracking is done on the label image because the distance image
+  //may be not defined everywhere with a local evolution method
 
   //local MCM operator 
-  typedef LocalMCM<TI1, TI2> DiffOperator; 
+  typedef LocalMCM<TDistanceImage, TExternImage> DiffOperator; 
   DiffOperator op(img, ext1, ext2); 
 
   #ifdef WITH_VISU3D_QGLVIEWER
@@ -219,45 +217,46 @@ bool displayImage2(int argc, char** argv, TI1& img,
   viewer.show();
 
   //good for Al
-  GradientColorMap<double, 1> colorMap( -10, 10 );
-  colorMap.addColor( Color( 0, 0, 250 ) );
-  colorMap.addColor( Color( 0, 250, 0 ) );
+  GradientColorMap<double> colorMap4Pos( 0.0, 2.5 );
+  colorMap4Pos.addColor( Color( 255, 255, 255 ) );
+  colorMap4Pos.addColor( Color( 0, 0, 255 ) );
+  GradientColorMap<double> colorMap4Neg( -2.5, 0.0 );
+  colorMap4Neg.addColor( Color( 0, 255, 0 ) );
+  colorMap4Neg.addColor( Color( 255, 255, 255 ) );
 
   for(unsigned int i=0; i< vectConnectedSCell.size();i++){
+    for(unsigned int j=0; j< vectConnectedSCell.at(i).size();j++){
 
-    SurfelPredicate surfelPred( K, predicate, false, true ); 
-    Frontier frontier( K, surfelPred, SAdj, vectConnectedSCell.at(i).at(0) );
-      for ( SurfelIterator it = frontier.begin(), 
-    	      itEnd = frontier.end();
-    	    it != itEnd; ++it )
-    	{
-	  Surfel s = *it; 
-	  Point p = K.sCoords( K.sDirectIncident( s, *K.sOrthDirs( s ) ) ); 
+	SCell s = vectConnectedSCell.at(i).at(j); 
+	Point p = K.sCoords( K.sDirectIncident( s, *K.sOrthDirs( s ) ) ); 
 
-	  //curvature
-	  typename DiffOperator::Curvature curvature = op.getCurvature( p ); 
-	  viewer << DGtal::CustomColors3D( colorMap( curvature ), colorMap( curvature ) ); 
-	  viewer << s; 
-
-
-	  //naive normal
-	  //Vector normal = K.sKCoords( s ) - K.sKCoords( K.sDirectIncident( s, *K.sOrthDirs( s ) ) ); 
-	  //normal
-	  typename DiffOperator::Normal normal = op.getNormal( p );
-	  Space::RealPoint center( K.sKCoords(s) );
-	  center /= 2;
-	  center -= Space::RealVector(0.5, 0.5, 0.5); 
-	  double normalNorm = std::sqrt( normal[0]*normal[0] 
-	  				 + normal[1]*normal[1] 
-	  				 + normal[2]*normal[2] );
-	  normal /= normalNorm; 
-	  viewer.addLine(center[0],center[1],center[2],
-			 center[0]+normal[0],center[1]+normal[1],center[2]+normal[2], 
-			 DGtal::Color(250,0,0), 1.0);
+	//curvature
+	typename DiffOperator::Curvature curvature = op.getCurvature( p );
+	if (curvature >= 0)
+	    viewer << DGtal::CustomColors3D( colorMap4Pos( curvature ), 
+					     colorMap4Pos( curvature ) );
+	else 
+	    viewer << DGtal::CustomColors3D( colorMap4Neg( curvature ), 
+					     colorMap4Neg( curvature ) );
+	viewer << s; 
 
 
-    	}
+	//naive normal
+	//Vector normal = K.sKCoords( s ) - K.sKCoords( K.sDirectIncident( s, *K.sOrthDirs( s ) ) ); 
+	//normal
+	typename DiffOperator::Normal normal = op.getNormal( p );
+	Space::RealPoint center( K.sKCoords(s) );
+	center /= 2;
+	center -= Space::RealVector(0.5, 0.5, 0.5); 
+	double normalNorm = std::sqrt( normal[0]*normal[0] 
+				       + normal[1]*normal[1] 
+				       + normal[2]*normal[2] );
+	normal /= normalNorm; 
+	viewer.addLine(center[0],center[1],center[2],
+		       center[0]+normal[0],center[1]+normal[1],center[2]+normal[2], 
+		       DGtal::Color(250,0,0), 1.0);
 
+      }
   }
 
   viewer << Viewer3D::updateDisplay;

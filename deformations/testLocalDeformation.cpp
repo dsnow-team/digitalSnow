@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("png"), 
 "Output files format: either <png> (3d to 2d, default) or <vol> (3d)" )
-    ("withVisu", "Enables interactive 3d visualization before and after evolution" );
+    ("withVisu", "Enables interactive 3d visualization after evolution" );
 
   
   po::variables_map vm;
@@ -122,9 +122,6 @@ int main(int argc, char** argv)
   ss << outputFiles << "0001"; 
   writeImage( labelImage, ss.str(), format );
 
-  //interactive display before the evolution
-  if (vm.count("withVisu")) displayImage( argc, argv, labelImage ); 
-
   //balloon force
   double k = 0.0; 
   if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
@@ -156,7 +153,6 @@ int main(int argc, char** argv)
 
   //getting a bel
   KSpace::SCell bel;
-  Label innerRegion; 
   try {
     Thresholder<LabelImage::Value> t( 0 ); 
     typedef ConstImageAdapter<LabelImage, Thresholder<LabelImage::Value>, bool> BinaryImage; 
@@ -166,13 +162,6 @@ int main(int argc, char** argv)
 
     trace.info() << "starting bel: "
 		 << bel
-		 << std::endl;
-
-    Point in = ks.sCoords( ks.sDirectIncident( bel, *ks.sOrthDirs( bel ) ) ); 
-    innerRegion = labelImage(in); 
-
-    trace.info() << "inner region: "
-		 << innerRegion
 		 << std::endl;
 
   } catch (DGtal::InputException i) {
@@ -210,13 +199,15 @@ int main(int argc, char** argv)
     e(ks, labelImage, distanceImage, bel, functor, predicate, w ); 
 
   trace.beginBlock( "Deformation" );
-  double sumt = 0; 
-  for (unsigned int i = 1; (sumt <= tmax); ++i) 
+  double deltat = 1.0; 
+  double sumt = 0.0; 
+  for (unsigned int i = 1; ( (sumt <= tmax)&&(deltat > 0) ); ++i) 
     {
       trace.info() << "iteration # " << i << std::endl; 
 
       //update
-      sumt += e.update(); 
+      deltat = e.update();
+      sumt += deltat; 
 
       if ((i%step)==0) 
 	{
@@ -232,7 +223,7 @@ int main(int argc, char** argv)
 
 
   //interactive display after the evolution
-  if (vm.count("withVisu")) displayImage2( argc, argv, distanceImage, g, g ); 
+  if (vm.count("withVisu")) displayImage2( argc, argv, labelImage, distanceImage, g, g ); 
 
   
   return 0;
