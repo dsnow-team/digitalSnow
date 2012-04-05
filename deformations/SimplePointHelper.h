@@ -154,6 +154,19 @@ namespace DGtal
 		      const Label& aInftyRegionLabel);
 
     /**
+     * Copy constructor.
+     * @param other the object to clone.
+     */
+    SimplePointHelper ( const SimplePointHelper & other );
+
+    /**
+     * Assignment.
+     * @param other the object to copy.
+     * @return a reference on 'this'.
+     */
+    SimplePointHelper & operator= ( const SimplePointHelper & other );
+
+    /**
      * Destructor. Does nothing.
      */
     ~SimplePointHelper();
@@ -204,9 +217,9 @@ namespace DGtal
 
 
     /**
-     * Reference on an image of labels.
+     * Aliasing pointer on an image of labels.
      */
-    LabelsImage& myImg; 
+    LabelsImage* myImgPtr; 
 
     /**
      * Label of the infinite region located outside the image domain.
@@ -219,25 +232,6 @@ namespace DGtal
 
 
   private:
-
-    /**
-     * Copy constructor.
-     * @param other the object to clone.
-     * Forbidden by default.
-     */
-    SimplePointHelper ( const SimplePointHelper & other );
-
-    /**
-     * Assignment.
-     * @param other the object to copy.
-     * @return a reference on 'this'.
-     * Forbidden by default.
-     */
-    SimplePointHelper & operator= ( const SimplePointHelper & other );
-
-
-
-
 
 
     // ------------------------- Internals ------------------------------------

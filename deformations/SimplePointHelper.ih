@@ -43,9 +43,30 @@ template <typename TImage>
 inline
 DGtal::SimplePointHelper<TImage>::SimplePointHelper(LabelsImage& aImg, 
 const Label& aInftyRegionLabel = Label() )
-  : myImg( aImg ), 
+  : myImgPtr( &aImg ), 
 myInftyRegionLabel( aInftyRegionLabel )
 {
+}
+
+template <typename TImage>
+inline
+DGtal::SimplePointHelper<TImage>::SimplePointHelper( const SimplePointHelper & other )
+  : myImgPtr( other.myImgPtr ), 
+myInftyRegionLabel( other.myInftyRegionLabel )
+{
+}
+
+template <typename TImage>
+inline
+DGtal::SimplePointHelper<TImage>& 
+DGtal::SimplePointHelper<TImage>::operator=( const SimplePointHelper & other )
+{
+  if (this != &other)
+    {
+      myImgPtr = other.myImgPtr; 
+      myInftyRegionLabel = myInftyRegionLabel; 
+    }
+  return this; 
 }
 
 template <typename TImage>
@@ -72,19 +93,19 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(const Point& aPoint, const Label& a
   
 
   // std::cerr << "ML-simple test of " << aPoint; 
-  // std::cerr << " of label " << myImg( aPoint ) << std::endl; 
+  // std::cerr << " of label " << (*myImg)( aPoint ) << std::endl; 
   // std::cerr << " with respect to label " << aLabel << std::endl; 
 
-  if ( aLabel == myImg( aPoint ) )
+  if ( aLabel == (*myImgPtr)( aPoint ) )
     return true; 
   else 
     { //if there is a flip
-      Domain globalDomain = myImg.domain(); 
+      Domain globalDomain = myImgPtr->domain(); 
       Domain localDomain = getLocalDomain( aPoint ); 
       if ( (globalDomain.isInside(localDomain.lowerBound())) && 
 	   (globalDomain.isInside(localDomain.upperBound())) )
 	{ //if outside and not adjacent to the infinite region
-	  return isMLSimple(myImg, aPoint, aLabel); 
+	  return isMLSimple(*myImgPtr, aPoint, aLabel); 
 	}
       else 
 	{ //if inside or adjacent to the infinite region
@@ -95,7 +116,7 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(const Point& aPoint, const Label& a
 	  for ( ; it != itEnd; ++it )
 	    {
 	      if ( globalDomain.isInside( *it ) )
-		localImage.setValue( *it, myImg(*it) ); 
+		localImage.setValue( *it, (*myImgPtr)(*it) ); 
 	      else //label of the infinite region
 		localImage.setValue( *it, myInftyRegionLabel ); 
 	    }
@@ -258,7 +279,7 @@ void
 DGtal::SimplePointHelper<TImage>::selfDisplay ( std::ostream & out ) const
 {
   out << "[SimplePointHelper] d=" << TImage::dimension << std::endl;
-  out << myImg << std::endl; 
+  out << (*myImgPtr) << std::endl; 
   out << "[end SimplePointHelper]" << std::endl;
 }
 
