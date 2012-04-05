@@ -19,7 +19,7 @@
  * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
  * Laboratoire d'InfoRmatique en LabelsImage et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
  *
- * @date 2011/11/03
+ * @date 2012/04/05
  *
  * @brief Implementation of inline methods defined in SimplePointHelper.h
  *
@@ -42,9 +42,8 @@
 template <typename TImage>
 inline
 DGtal::SimplePointHelper<TImage>::SimplePointHelper(LabelsImage& aImg, 
-const Label& aInnerRegionLabel, 
 const Label& aInftyRegionLabel = Label() )
-  : myImg( aImg ), myInnerRegionLabel( aInnerRegionLabel ), 
+  : myImg( aImg ), 
 myInftyRegionLabel( aInftyRegionLabel )
 {
 }
@@ -115,7 +114,7 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
 
   Label centerLabel = aImg(aPoint); 
     
-  //extract distinct regions that are (dim-1)-adjacent to aPoint
+  //extract distinct regions that are adjacent to aPoint
   std::set<Label> sMainRegions; 
   std::set<Label> sExtraRegions; 
 
@@ -135,80 +134,60 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
   //main regions
   if ( sMainRegions.size() == 2 ) 
     {
-      if ( sExtraRegions.size() == 0 )
+
+      //condition 1
+      //predicate from the label of the first main region
+      SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
+	predV( aImg, centerLabel ); 
+      if (!isSimple( aPoint, predV ) ) return false;
+
+      //condition 2
+      //predicate from the label of the second main region
+      SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
+	predR( aImg, aLabel ); 
+      if (!isSimple( aPoint, predR ) ) return false;
+      
+
+      if ( sExtraRegions.size() == 1)
 	{
-	  {
-
-	    if ( ( aLabel == myInnerRegionLabel )
-	    	 || ( centerLabel == myInnerRegionLabel ) )
-	      { //case of a frontier whose interior is known
-	    	SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
-	    	  pred1( aImg, myInnerRegionLabel ); 
-	    	if (!isSimple12bis( aPoint, pred1 ) ) return false;
-	      }
-	    else 
-	      { //elsewhere
-		trace.emphase() << "not adjacent to the frontier!" << std::endl; 
-	    	//predicate from the label of the first main region
-	    	SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
-	    	  pred0( aImg, *sMainRegions.begin() ); 
-	    	if (!isSimple12( aPoint, pred0 ) ) return false;
-	    	//predicate from the label of the second main region
-	    	SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
-	    	  pred1( aImg, *(++sMainRegions.begin()) ); 
-	    	if (!isSimple12( aPoint, pred1 ) ) return false;
-	      }
-
-	    // SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
-	    //   pred1( aImg, centerLabel ); 
-	    // if (!isSimple12( aPoint, pred1 ) ) return false;
-
-	  }
-	}
-      else if ( sExtraRegions.size() <= 1)
-	{
-	  {
-	  //predicate from the label of the first main region
-	  SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
-	    pred0( aImg, *sMainRegions.begin() ); 
-	  if (!isSimple13( aPoint, pred0 ) ) return false;
-	  //predicate from the label of the second main region
-	  SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
-	    pred1( aImg, *(++sMainRegions.begin()) ); 
-	  if (!isSimple13( aPoint, pred1 ) ) return false;
-	  }
 
 	  //extra regions
+	  //condition 3
 	  typename std::set<Label>::iterator it = sExtraRegions.begin(); 
 	  for ( ; it != sExtraRegions.end(); ++it)
 	    {
-	      SimplePointHelperDetails::TwoLabelsPredicate<LabelsImage,std::equal_to<Label> > 
-		pred0( aImg, aLabel, *it ); //predicate from aLabel and *it
-	      if (!isSimple13( aPoint, pred0 ) ) return false;
 
+	      //condition 3.a
 	      SimplePointHelperDetails::TwoLabelsPredicate<LabelsImage,std::equal_to<Label> > 
-		pred1( aImg, centerLabel, *it ); //predicate from centerLabel and *it
-	      if (!isSimple13( aPoint, pred1 ) ) return false;    
+		predOV( aImg, centerLabel, *it ); //predicate from centerLabel and *it
+	      if (!isSimple( aPoint, predOV ) ) return false;    
+
+	      //condition 3.b
+	      SimplePointHelperDetails::TwoLabelsPredicate<LabelsImage,std::equal_to<Label> > 
+		predOR( aImg, aLabel, *it ); //predicate from aLabel and *it
+	      if (!isSimple( aPoint, predOR ) ) return false;
+
 	    } 
 
-	} else return false; 
+	} 
+      else 
+	{//more than 3 adjacent regions
+	  //condition 4 not checked, TODO
+	  if ( sExtraRegions.size() > 1)
+	    return false;
+	} 
     } else return false; 
   
   return true; 
 }
 
 
-#include "DGtal/topology/MetricAdjacency.h"
-#include "DGtal/topology/DomainMetricAdjacency.h"
-#include "DGtal/topology/DomainAdjacency.h"
-#include "DGtal/topology/DigitalTopology.h"
-#include "DGtal/topology/Object.h"
 
 template <typename TImage>
 template <typename TPredicate>
 inline
 bool
-DGtal::SimplePointHelper<TImage>::isSimple12bis(const Point& aPoint, 
+DGtal::SimplePointHelper<TImage>::isSimple(const Point& aPoint, 
 					   const TPredicate& aPredicate) const
 {
   //region
@@ -217,7 +196,7 @@ DGtal::SimplePointHelper<TImage>::isSimple12bis(const Point& aPoint,
   // aPredicate.selfDisplay(std::cerr); 
   // std::cerr << std::endl; 
 
-  //object stuff
+  //set/object stuff
   typedef MetricAdjacency<Space, 1> Adj1; 
   typedef MetricAdjacency<Space, 2> Adj2; 
   typedef DigitalTopology<Adj1, Adj2> Topo;
@@ -229,10 +208,7 @@ DGtal::SimplePointHelper<TImage>::isSimple12bis(const Point& aPoint,
   Domain d = getLocalDomain(aPoint); 
   DigitalSet set( d );
 
-  //init
-  {
-  SimplePointHelperDetails::RestrictedNeighborhoodDown<Point> neighborhood(aPoint); 
-
+  //set construction
   typename Domain::ConstIterator it = d.begin(); 
   typename Domain::ConstIterator itEnd = d.end(); 
   for ( ; it != itEnd; ++it)
@@ -241,449 +217,14 @@ DGtal::SimplePointHelper<TImage>::isSimple12bis(const Point& aPoint,
       if ( aPredicate( p ) )
 	set.insertNew( p ); 
     }
-  }
 
+  //object construction
   Object obj( topo, set );
+
+  //test
   return obj.isSimple( aPoint ); 
 }
 
-
-template <typename TImage>
-template <typename TPredicate>
-inline
-bool
-DGtal::SimplePointHelper<TImage>::isSimple12(const Point& aPoint, 
-					   const TPredicate& aPredicate) const
-{
-  //region
-  // std::cerr << "simple test of " << aPoint; 
-  // std::cerr << " for region of label "; 
-  // aPredicate.selfDisplay(std::cerr); 
-  // std::cerr << std::endl; 
-
-  //binary images  
-  Domain d = getLocalDomain(aPoint); 
-  BinaryImage foreground( d ); 
-  BinaryImage background( d ); 
-  unsigned int fNb = 0; //number of foreground points
-  Point fPt( aPoint ); //one foreground point
-  unsigned int bNb = 0; //number of background points
-  Point bPt( aPoint ); //one background point
-
-  //init
-  {
-  SimplePointHelperDetails::RestrictedNeighborhoodDown<Point> neighborhood(aPoint); 
-
-  typename Domain::ConstIterator it = d.begin(); 
-  typename Domain::ConstIterator itEnd = d.end(); 
-  for ( ; it != itEnd; ++it)
-    { //for each point
-    
-      bool fflag = false; 
-      bool bflag = false;
- 
-      Point p(*it); 
-      Coordinate n1( (aPoint - p).norm(Vector::L_1) );    
-      if ( n1 == 1)
-	{ //(dim-1)-neighbors
-	  if ( aPredicate(p) )
-	    {
-	      fflag = true;
-	      fPt = p;
-	    }
-	  else 
-	    {
-	      bflag = true; 
-	      bPt = p;
-	    }
-	}
-
-      if ( n1 == 2 ) 
-	{ //(dim-2)-neighbors
-	  if ( aPredicate(p) )
-	    { //checks if points (dim-1)-adjacent to p 
-	      //AND (dim-1)-adjacent to myCenter also return true;  
-	      std::vector<Point> list; 
-	      neighborhood(p, list); 
-	      ASSERT( list.size() == 2 );  
-	      if ( aPredicate(list.at(0)) && aPredicate(list.at(1)) )
-	        fflag = true;
-	    }
-	  else 
-	    { 
-	      bflag = true; 
-	      bPt = p;
-	    }
-	}
-        
-      //update counters
-      if (fflag) ++fNb; 
-      if (bflag) ++bNb;
-
-      //mark
-      foreground.setValue( p, fflag );
-      background.setValue( p, bflag );
-
-    } //end for each point
-  }
-
-  //connected components
-  if ( (fNb == 0)||(bNb == 0) ) return false; 
-
-  SimplePointHelperDetails::RestrictedNeighborhood<Point> n(aPoint); 
-  return ( ( isConnected( foreground, fNb, fPt, n ) )
-	   && ( isConnected( background, bNb, bPt, n ) ) ); 
-
-}
-
-template <typename TImage>
-template <typename TPredicate>
-inline
-bool
-DGtal::SimplePointHelper<TImage>::isSimple12WithoutFolds(const Point& aPoint, 
-					   const TPredicate& aPredicate) const
-{
-  //region
-  // std::cerr << "simple test of " << aPoint; 
-  // std::cerr << " for region of label "; 
-  // aPredicate.selfDisplay(std::cerr); 
-  // std::cerr << std::endl; 
-
-  //binary images  
-  Domain d = getLocalDomain(aPoint); 
-  BinaryImage foreground( d ); 
-  BinaryImage background( d ); 
-  unsigned int fNb = 0; //number of foreground points
-  Point fPt( aPoint ); //one foreground point
-  unsigned int bNb = 0; //number of background points
-  Point bPt( aPoint ); //one background point
-
-  //init
-  {
-  SimplePointHelperDetails::RestrictedNeighborhoodDown<Point> neighborhood(aPoint); 
-
-  typename Domain::ConstIterator it = d.begin(); 
-  typename Domain::ConstIterator itEnd = d.end(); 
-  for ( ; it != itEnd; ++it)
-    { //for each point
-    
-      bool fflag = false; 
-      bool bflag = false;
- 
-      Point p(*it); 
-      Coordinate n1( (aPoint - p).norm(Vector::L_1) );    
-      if ( n1 == 1)
-	{ //(dim-1)-neighbors
-	  if ( aPredicate(p) )
-	    {
-	      fflag = true;
-	      fPt = p; 
-	    }
-	  else 
-	    {
-	      bflag = true; 
-	      bPt = p;
-	    }
-	}
-
-      if ( n1 == 2 ) 
-	{ //(dim-2)-neighbors
-	  if ( aPredicate(p) )
-	    { //checks if points (dim-1)-adjacent to p 
-	      //AND (dim-1)-adjacent to myCenter also return true;  
-	      std::vector<Point> list; 
-	      neighborhood(p, list); 
-	      ASSERT( list.size() == 2 );  
-	      if ( (!aPredicate(list.at(0))) && (!aPredicate(list.at(1))) )
-		return false; //reject disappearance of folds
-	      else 
-	        fflag = true;
-	    }
-	  else 
-	    { 
-	      bflag = true; 
-	      bPt = p;
-	    }
-	}
-        
-      //update counters
-      if (fflag) ++fNb; 
-      if (bflag) ++bNb;
-
-      //mark
-      foreground.setValue( p, fflag );
-      background.setValue( p, bflag );
-
-    } //end for each point
-  }
-
-  //connected components
-  if ( (fNb == 0)||(bNb == 0) ) return false; 
-
-  SimplePointHelperDetails::RestrictedNeighborhood<Point> n(aPoint); 
-  return ( ( isConnected( foreground, fNb, fPt, n ) )
-	   && ( isConnected( background, bNb, bPt, n ) ) ); 
-
-}
-
-
-template <typename TImage>
-template <typename TPredicate>
-inline
-bool
-DGtal::SimplePointHelper<TImage>::isSimple13(const Point& aPoint, 
-					   const TPredicate& aPredicate) const
-{
-  //region
-  // std::cerr << "simple test of " << aPoint; 
-  // std::cerr << " for region of label "; 
-  // aPredicate.selfDisplay(std::cerr); 
-  // std::cerr << std::endl; 
-
-  //binary images  
-  Domain d = getLocalDomain(aPoint); 
-  BinaryImage foreground( d ); 
-  BinaryImage background( d ); 
-  unsigned int fNb = 0; //number of foreground points
-  Point fPt( aPoint ); //one foreground point
-  unsigned int bNb = 0; //number of background points
-  Point bPt( aPoint ); //one background point
-
-  //init images
-  {
-  SimplePointHelperDetails::RestrictedNeighborhoodDown<Point> neighborhood(aPoint); 
-
-  typename Domain::ConstIterator it = d.begin(); 
-  typename Domain::ConstIterator itEnd = d.end(); 
-  for ( ; it != itEnd; ++it)
-    { //for each point
-    
-      bool fflag = false; 
-      bool bflag = false;
- 
-      Point p(*it); 
-      Coordinate n1( (aPoint - p).norm(Vector::L_1) );    
-      if ( n1 == 1)
-	{ //(dim-1)-neighbors
-	  if ( aPredicate(p) )
-	    {
-	      fflag = true;
-	      fPt = p;
-	    }
-	  else 
-	    {
-	      bflag = true; 
-	      bPt = p;
-	    }
-	}
-
-      if ( n1 == 2 ) 
-	{ //(dim-2)-neighbors
-	  if ( aPredicate(p) )
-	    { //checks if points (dim-1)-adjacent to p 
-	      //AND (dim-1)-adjacent to myCenter also return true;  
-	      std::vector<Point> list; 
-	      neighborhood(p, list); 
-	      ASSERT( list.size() == 2 );  
-	      if ( aPredicate(list.at(0)) && aPredicate(list.at(1)) )
-	        fflag = true;
-	    }
-	  else 
-	    { 
-	      bflag = true; 
-	      bPt = p;
-	    }
-	}
-        
-      if ( (n1 == 3) )
-	{ //(dim-3)-neighbors
-	  if ( !aPredicate(p) )
-	    { //if p belongs to the background
-	      std::vector<Point> list; 
-	      neighborhood(p, list); 
-	      ASSERT( list.size() == 3 );  
-	      unsigned int nb = 0; 
-	      nb += (!aPredicate(list.at(0)));  
-	      nb += (!aPredicate(list.at(1)));  
-	      nb += (!aPredicate(list.at(2)));
-	      if (nb <= 1)
-	      	{ //if p does not connect two disjoint parts
-		  bflag = true; 
-		  bPt = p; 
-		}
-	    }
-	}
-
-      //update counters
-      if (fflag) ++fNb; 
-      if (bflag) ++bNb;
-
-      //mark
-      foreground.setValue( p, fflag );
-      background.setValue( p, bflag );
-
-    } //end for each point
-  }
-
-  //connected components
-  if ( (fNb == 0)||(bNb == 0) ) return false; 
-
-  SimplePointHelperDetails::RestrictedNeighborhood<Point> n(aPoint); 
-  return ( ( isConnected( foreground, fNb, fPt, n ) )
-	   && ( isConnected( background, bNb, bPt, n ) ) ); 
-
-}
-
-template <typename TImage>
-template <typename TPredicate>
-inline
-bool
-DGtal::SimplePointHelper<TImage>::isSimple13WithoutFolds(const Point& aPoint, 
-					   const TPredicate& aPredicate) const
-{
-  //region
-  // std::cerr << "simple test of " << aPoint; 
-  // std::cerr << " for region of label "; 
-  // aPredicate.selfDisplay(std::cerr); 
-  // std::cerr << std::endl; 
-
-  //binary images  
-  Domain d = getLocalDomain(aPoint); 
-  BinaryImage foreground( d ); 
-  BinaryImage background( d ); 
-  unsigned int fNb = 0; //number of foreground points
-  Point fPt( aPoint ); //one foreground point
-  unsigned int bNb = 0; //number of background points
-  Point bPt( aPoint ); //one background point
-
-  //init images
-  {
-  SimplePointHelperDetails::RestrictedNeighborhoodDown<Point> neighborhood(aPoint); 
-
-  typename Domain::ConstIterator it = d.begin(); 
-  typename Domain::ConstIterator itEnd = d.end(); 
-  for ( ; it != itEnd; ++it)
-    { //for each point
-    
-      bool fflag = false; 
-      bool bflag = false;
- 
-      Point p(*it); 
-      Coordinate n1( (aPoint - p).norm(Vector::L_1) );    
-      if ( n1 == 1)
-	{ //(dim-1)-neighbors
-	  if ( aPredicate(p) )
-	    {
-	      fflag = true;
-	      fPt = p;
-	    }
-	  else 
-	    {
-	      bflag = true; 
-	      bPt = p;
-	    }
-	}
-
-      if ( n1 == 2 ) 
-	{ //(dim-2)-neighbors
-	  if ( aPredicate(p) )
-	    { //checks if points (dim-1)-adjacent to p 
-	      //AND (dim-1)-adjacent to myCenter also return true;  
-	      std::vector<Point> list; 
-	      neighborhood(p, list); 
-	      ASSERT( list.size() == 2 );  
-	      if ( (!aPredicate(list.at(0))) && (!aPredicate(list.at(1))) )
-		return false; //reject disappearance of folds
-	      else 
-	        fflag = true;
-	    }
-	  else 
-	    { 
-	      bflag = true; 
-	      bPt = p;
-	    }
-	}
-        
-      if ( (n1 == 3) )
-	{ //(dim-3)-neighbors
-	  if ( !aPredicate(p) )
-	    { //if p belongs to the background
-	      std::vector<Point> list; 
-	      neighborhood(p, list); 
-	      ASSERT( list.size() == 3 );  
-	      unsigned int nb = 0; 
-	      nb += (!aPredicate(list.at(0)));  
-	      nb += (!aPredicate(list.at(1)));  
-	      nb += (!aPredicate(list.at(2)));
-	      if (nb <= 1)
-	      	{ //if p does not connect two disjoint parts
-		  bflag = true; 
-		  bPt = p; 
-		}
-	    }
-	}
-
-      //update counters
-      if (fflag) ++fNb; 
-      if (bflag) ++bNb;
-
-      //mark
-      foreground.setValue( p, fflag );
-      background.setValue( p, bflag );
-
-    } //end for each point
-  }
-
-  //connected components
-  if ( (fNb == 0)||(bNb == 0) ) return false; 
-
-  SimplePointHelperDetails::RestrictedNeighborhood<Point> n(aPoint); 
-  return ( ( isConnected( foreground, fNb, fPt, n ) )
-	   && ( isConnected( background, bNb, bPt, n ) ) ); 
-
-}
-
-
-template <typename TImage>
-template<typename TFunctor>
-inline
-bool
-DGtal::SimplePointHelper<TImage>::isConnected( BinaryImage& aImg, 
-					       unsigned int& aN, 
-					       const Point& aStartingPoint,
-					       const TFunctor& aNeighborhoodFunctor)
-{
-  if (aN == 1) return true; 
-
-  //Breadth First Search
-  std::queue<Point> q; 
-  unsigned int c = 0; 
-  
-  aImg.setValue(aStartingPoint,false); 
-  q.push(aStartingPoint); 
-
-  while (q.size() != 0)
-    {
-      ++c;
-      Point p = q.front(); 
-      q.pop();
-    
-      std::vector<Point> neighbors; 
-      aNeighborhoodFunctor(p, neighbors);
-      for (unsigned int i = 0; i != neighbors.size(); ++i)
-	{ //for all neigbors
-	  Point p2 = neighbors.at(i); 
-	  if ( aImg(p2) == true ) 
-	    { //if marked true (in the set but not visited)
-	      aImg.setValue(p2,false); 
-	      q.push(p2); 
-	    }
-	}
-    }
-  
-  //test
-  return (c == aN); 
-}
 
 
 template <typename TImage>
@@ -691,24 +232,14 @@ inline
 typename DGtal::SimplePointHelper<TImage>::Domain
 DGtal::SimplePointHelper<TImage>::getLocalDomain(const Point& aPoint)
 {
-  Point low, up; 
-  for (typename Point::Dimension i = 0; i < Point::dimension; ++i)
-    {
-      low.at(i) = aPoint.at(i) - 1; 
-      up.at(i) = aPoint.at(i) + 1; 
-    }
-  return Domain(low,up); 
-}
+  Point p1( aPoint );
+  for ( typename Point::Iterator it = p1.begin(); it != p1.end(); ++it )
+    --(*it);
+  Point p2( aPoint );
+  for ( typename Point::Iterator it = p2.begin(); it != p2.end(); ++it )
+    ++(*it);
 
-
-
-
-template <typename TImage>
-inline
-unsigned int
-DGtal::SimplePointHelper<TImage>::randomInt(const unsigned int& aN)
-{
-  return (unsigned int)((double)std::rand()/((double)RAND_MAX+1)*aN);
+  return Domain( p1, p2 ); 
 }
 
 
@@ -717,264 +248,9 @@ inline
 bool
 DGtal::SimplePointHelper<TImage>::isValid() const
 {
-  //check if the underlying image is labeled
-  return isLabeled(); 
+  return true; 
 }
 
-template <typename TImage>
-inline
-bool
-DGtal::SimplePointHelper<TImage>::isLabeled() const
-{
-
-  //1) Retrieve all regions of the image
-  std::set<Label> sRegions; 
-
-  {
-    Domain d = myImg.domain(); 
-    typename Domain::ConstIterator it = d.begin(); 
-    typename Domain::ConstIterator itEnd = d.end(); 
-    for ( ; it != itEnd; ++it)
-      { //for each domain point
-	Label l = myImg( *it ); 
-	sRegions.insert(l); 
-      }
-  }
-
-  //2) For each region, check if it is (dim-1)-connected
-  bool flag = true; 
-
-  typename std::set<Label>::iterator rl = sRegions.begin(); 
-  for ( ; ( ( rl != sRegions.end() ) && (flag) ); ++rl) 
-    {
-      Label l = *rl; 
-      //a) build a binary image
-      BinaryImage binImg( myImg.domain() ); 
-      unsigned int nb = 0; //number of points
-      Point pt( myImg.domain().lowerBound() ); //one starting point
-
-      Domain d = myImg.domain(); 
-      typename Domain::ConstIterator it = d.begin(); 
-      typename Domain::ConstIterator itEnd = d.end(); 
-      for ( ; it != itEnd; ++it)
-	{ //for each domain point
-
-	  Point p(*it); 
-	  //true if p has label l
-	  if (myImg( p ) == l)
-	    {
-	      binImg.setValue(p, true);
-	      ++nb; 
-	      pt = p; 
-	    }
-	  else
-	    binImg.setValue(p, false); 
-
-	}
-    
-      //b) connectivity test
-      if (nb == 0) flag = false; 
-      else 
-	{
-	  SimplePointHelperDetails::NeighborhoodInDomain<Domain,Point> n(myImg.domain()); 
-	  flag = isConnected( binImg, nb, pt, n ); 
-	}
-    }
-  
-  return flag;
-}
-
-template <typename TImage>
-template <typename TIterator>
-inline
-void
-DGtal::SimplePointHelper<TImage>::readConfiguration ( LabelsImage& aImg, 
-						      const TIterator& itb, 
-						      const TIterator& ite )
-{
-  //domain points
-  Domain d = aImg.domain();
-  typename Domain::ConstIterator dit = d.begin(); 
-  typename Domain::ConstIterator ditEnd = d.end(); 
-  
-  for ( TIterator it = itb ; ( (dit != ditEnd) && (it != ite) ) ; ++dit, ++it)
-    {
-      aImg.setValue( *dit, *it );  
-    }
-}
-
-template <typename TImage>
-inline
-bool
-DGtal::SimplePointHelper<TImage>::
-generateRandomConfiguration ( LabelsImage& aImg, const std::set<Label>& labels, 
-			      const double& prob )
-{
-
-  //fill aImg with the last label
-  Label lastLabel = *(labels.rbegin()); 
-  {
-    Domain d = aImg.domain();
-    typename Domain::ConstIterator dit = d.begin(); 
-    typename Domain::ConstIterator ditEnd = d.end(); 
-    for ( ; (dit != ditEnd); ++dit )
-      {
-	aImg.setValue( *dit, lastLabel );  
-      }
-  }
-  //create bImg with false
-  Point lowerBound = aImg.domain().lowerBound(); 
-  Point upperBound = aImg.domain().upperBound(); 
-  BinaryImage bImg( aImg.domain() ); 
-  {
-    Domain d = bImg.domain();
-    typename Domain::ConstIterator dit = d.begin(); 
-    typename Domain::ConstIterator ditEnd = d.end(); 
-    for ( ; (dit != ditEnd); ++dit )
-      {
-	bImg.setValue( *dit, false );  
-      }
-  }
-
-  //neighborhood functor
-  DGtal::SimplePointHelperDetails::NeighborhoodInDomain<Domain,Point> fNeighbors(bImg.domain()); 
-  //temporary list of neighbors
-  std::vector<Point> vNeighbors; 
-  //set of not-visited points
-  std::deque<Point> freePoints; 
-
-  //from the center 
-  Point deviation = upperBound - lowerBound; 
-  deviation /= 2;
-  Point center = lowerBound + deviation; 
-  Point seed = center; 
-  //for all labels, except the last one
-  typename std::set<Label>::const_iterator it = labels.begin();
-  for (bool stop = false; ( (*it != lastLabel)&&(!stop) ); ++it )
-    {
-      // region growing for label *it
-      //std::cerr << "region of label " << *it << std::endl; 
-
-      // mark the seed as visited
-      bImg.setValue(seed, true); 
-      aImg.setValue(seed, *it); 
-      // init the list of neighbors
-      // a) get the neighbors
-      vNeighbors.clear(); 
-      fNeighbors(seed, vNeighbors); 
-      // b) randomly choose some neighbors not yet visited
-      for (typename std::vector<Point>::iterator vit = vNeighbors.begin();
-  	   vit != vNeighbors.end(); ++vit )
-  	{
-  	  if ( (!bImg(*vit)) && ( (randomInt(1000)/(double)1000) <= prob ) )
-  	    freePoints.push_back(*vit); 
-  	} 
-
-      // while there are not-visited points 
-      while (freePoints.size() > 0)
-  	{
-	  //1) randomly extract a neighbor not yet visited, 
-	  int position = randomInt( freePoints.size()-1 ); 
-	  seed = freePoints.at( position );
-
-  	  //2) mark it as visited,
-  	  bImg.setValue(seed, true); 
-  	  aImg.setValue(seed, *it);
-	  //3) erase it from the list of free points
-  	  freePoints.erase( freePoints.begin()+position );  
-
-  	  //4) add to the list of not visited points
-  	  // its not-visited neighbors
-  	  // a) get the neighbors
-  	  vNeighbors.clear(); 
-  	  fNeighbors(seed, vNeighbors); 
-  	  // b) randomly choose some neighbors not yet visited
-  	  for (typename std::vector<Point>::iterator vit = vNeighbors.begin();
-  	       vit != vNeighbors.end(); ++vit )
-  	    {
-  	      if ( (!bImg(*vit)) && ( (randomInt(1000)/(double)1000) <= prob ) )
-  		freePoints.push_back(*vit); 
-  	    }
-  	}
-
-      // if there are some regions not yet processed,
-      if ( *it != lastLabel )
-  	{
-  	  //find a not-visited point
-
-  	  //1) get the not-visited points
-  	  //a) first, among the neighborhood of the center
-  	  vNeighbors.clear(); 
-  	  fNeighbors(center, vNeighbors); 
-  	  for (unsigned int k = 0; k < vNeighbors.size(); ++k)
-  	    { //if false (not visited)
-  	      if (!bImg(vNeighbors.at(k))) freePoints.push_back(vNeighbors.at(k));
-  	    }
-  	  if (freePoints.size() == 0)
-  	    {//b) if they all have been visited, in the domain
-  	      Domain d = aImg.domain(); 
-  	      typename Domain::ConstIterator dit = d.begin(); 
-  	      typename Domain::ConstIterator ditEnd = d.end();
-  	      for ( ; dit != ditEnd; ++dit)
-  		{ //if false (not visited)
-  		  if (!bImg(*dit)) freePoints.push_back(*dit);
-  		}
-  	      if (freePoints.size() == 0)
-  		{  //if all the points have been visited, stop
-  		  std::cerr << "# Be careful: less regions than expected " << std::endl; 
-  		  stop = true;  
-  		}
-  	      else 
-  		{// randomly chose a point
-  		  seed = freePoints.at( randomInt( freePoints.size()-1 ) ); 
-  		}
-  	    }
-  	  else 
-  	    {// randomly chose a point
-  	      seed = freePoints.at( randomInt( freePoints.size()-1 ) ); 
-  	    }
-  	  // 4) clear the list
-  	  freePoints.clear(); 
-  	} 
-    }
-
-  //test if the last region is (dim-1)-connected
-  bool flag = true; 
-  {
-    //a) build a binary image
-    BinaryImage binImg( aImg.domain() ); 
-    unsigned int nb = 0; //number of points
-    Point pt( aImg.domain().lowerBound() ); //one starting point
-
-    Domain d = aImg.domain(); 
-    typename Domain::ConstIterator dit = d.begin(); 
-    typename Domain::ConstIterator ditEnd = d.end(); 
-    for ( ; dit != ditEnd; ++dit)
-      { //for each domain point
-
-	Point p(*dit); 
-	//true if p has label lastLabel
-	if (aImg( p ) == lastLabel)
-	  {
-	    binImg.setValue(p, true);
-	    ++nb; 
-	    pt = p; 
-	  }
-	else
-	  binImg.setValue(p, false); 
-
-      }
-    
-    //b) connectivity test
-    if (nb == 0) flag = false; 
-    else 
-      {
-	SimplePointHelperDetails::NeighborhoodInDomain<Domain,Point> n(aImg.domain()); 
-	flag = isConnected( binImg, nb, pt, n ); 
-      }
-  }
-  return flag; 
-}
 
 template <typename TImage>
 inline

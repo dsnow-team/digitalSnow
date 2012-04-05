@@ -202,7 +202,7 @@ int main(int argc, char** argv)
   // typedef TrueBinaryPredicate Predicate; 
   // Predicate predicate; 
   typedef SimplePointHelper<LabelImage> Predicate; 
-  Predicate predicate(labelImage, innerRegion); 
+  Predicate predicate(labelImage); 
 
  
   //frontier evolver
