@@ -21,7 +21,7 @@
  * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
  * Laboratoire d'InfoRmatique en LabelsImage et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
  *
- * @date 2011/11/03
+ * @date 2012/04/05
  *
  * @brief Header file for module SimplePointHelper.cpp
  *
@@ -65,7 +65,7 @@
 namespace DGtal
 {
 
-  #include "SimplePointHelperDetails.ih"
+#include "SimplePointHelperDetails.ih"
 
   /////////////////////////////////////////////////////////////////////////////
   // template class SimplePointHelper
@@ -93,12 +93,6 @@ namespace DGtal
    *  -a for all O, v is simple for Q U O U V
    *  -b for all O, v is simple for Q U O U V
    *
-   *
-   * In the binary case (there are only two regions around v),
-   * ie. instead of checking conditions 1 and 2, 
-   * we check whether v is simple for a region Z (chosen at construction),
-   * we arbitrary choose to check either condition 1 if Z = V, 
-   * or condition 2 if Z = R.
    *
    * In order to test if a point is ML-simple for a given label, 
    * it is enough to call the `operator()` or the `isMLSimple` method: 

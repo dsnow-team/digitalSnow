@@ -42,9 +42,9 @@
 template <typename TImage>
 inline
 DGtal::SimplePointHelper<TImage>::SimplePointHelper(LabelsImage& aImg, 
-const Label& aInftyRegionLabel = Label() )
+						    const Label& aInftyRegionLabel = Label() )
   : myImgPtr( &aImg ), 
-myInftyRegionLabel( aInftyRegionLabel )
+    myInftyRegionLabel( aInftyRegionLabel )
 {
 }
 
@@ -52,7 +52,7 @@ template <typename TImage>
 inline
 DGtal::SimplePointHelper<TImage>::SimplePointHelper( const SimplePointHelper & other )
   : myImgPtr( other.myImgPtr ), 
-myInftyRegionLabel( other.myInftyRegionLabel )
+    myInftyRegionLabel( other.myInftyRegionLabel )
 {
 }
 
@@ -168,35 +168,29 @@ DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg,
 	predR( aImg, aLabel ); 
       if (!isSimple( aPoint, predR ) ) return false;
       
-
-      if ( sExtraRegions.size() == 1)
+      //extra regions
+      //conditions 3 and 4
+      typename std::set<Label>::iterator it = sExtraRegions.begin(); 
+      for ( ; it != sExtraRegions.end(); ++it)
 	{
 
-	  //extra regions
-	  //condition 3
-	  typename std::set<Label>::iterator it = sExtraRegions.begin(); 
-	  for ( ; it != sExtraRegions.end(); ++it)
+	  typename std::set<Label>::iterator it2 = sExtraRegions.begin(); 
+	  for ( ; it2 != sExtraRegions.end(); ++it2)
 	    {
-
-	      //condition 3.a
-	      SimplePointHelperDetails::TwoLabelsPredicate<LabelsImage,std::equal_to<Label> > 
-		predOV( aImg, centerLabel, *it ); //predicate from centerLabel and *it
+	      //condition a
+	      SimplePointHelperDetails::ThreeLabelsPredicate<LabelsImage,std::equal_to<Label> > 
+		predOV( aImg, centerLabel, *it, *it2 ); 
 	      if (!isSimple( aPoint, predOV ) ) return false;    
 
-	      //condition 3.b
-	      SimplePointHelperDetails::TwoLabelsPredicate<LabelsImage,std::equal_to<Label> > 
-		predOR( aImg, aLabel, *it ); //predicate from aLabel and *it
+	      //condition b
+	      SimplePointHelperDetails::ThreeLabelsPredicate<LabelsImage,std::equal_to<Label> > 
+		predOR( aImg, aLabel, *it, *it2 );
 	      if (!isSimple( aPoint, predOR ) ) return false;
 
-	    } 
+	    }
 
 	} 
-      else 
-	{//more than 3 adjacent regions
-	  //condition 4 not checked, TODO
-	  if ( sExtraRegions.size() > 1)
-	    return false;
-	} 
+
     } else return false; 
   
   return true; 
