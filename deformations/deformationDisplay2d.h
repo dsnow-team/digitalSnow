@@ -46,7 +46,7 @@ bool drawContour(const TImage& img, std::string filename, std::string format, co
 
     //create a label image from the implicit function
     typedef ImageContainerBySTLVector<Domain,int> LabelImage; 
-    LabelImage labelImage( img.domain() ); 
+    LabelImage labelImage( Domain( img.domain() ) ); 
     Domain d = labelImage.domain(); 
     Domain::ConstIterator cIt = d.begin(); 
     Domain::ConstIterator cItEnd = d.end(); 

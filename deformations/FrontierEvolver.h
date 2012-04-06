@@ -300,9 +300,9 @@ struct SetFromImageSelector
      */
     PointSet myPointSet; 
     /**
-     * Reference on the starting surfel of the digital frontier 
+     * Starting surfel of the digital frontier 
      */
-    Surfel& mySurfel; 
+    Surfel mySurfel; 
     /**
      * Constant reference on the functor
      */

@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     ("withFunction", po::value<string>(), "Output pgm file basename, where the starting implicit function is stored" )
     ("outputFiles,o", po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f", po::value<string>()->default_value("raster"), 
-"Output files format: either <raster> (image, default) or <vector> (domain representation)" );
+     "Output files format: either <raster> (image, default) or <vector> (domain representation)" );
 
   
   po::variables_map vm;
@@ -69,9 +69,9 @@ int main(int argc, char** argv)
   if(vm.count("help")||argc<=1)
     {
       trace.info()<< "Evolution of a 2d interface" << std::endl
-      << "Basic usage: "<<std::endl
-      << argv[0] << " [other options] -t <time step> -n <number of steps>" << std::endl
-      << general_opt << "\n";
+		  << "Basic usage: "<<std::endl
+		  << argv[0] << " [other options] -t <time step> -n <number of steps>" << std::endl
+		  << general_opt << "\n";
       return 0;
     }
   
@@ -107,8 +107,8 @@ int main(int argc, char** argv)
   format = vm["outputFormat"].as<std::string>();
   if ((format != "vector")&&(format != "raster")) 
     {
-    trace.info() << "format is expected to be either vector, or raster " << std::endl;
-    return 0; 
+      trace.info() << "format is expected to be either vector, or raster " << std::endl;
+      return 0; 
     }
 
   //image and implicit function
@@ -155,123 +155,175 @@ int main(int argc, char** argv)
   algo = vm["algo"].as<string>(); 
 
   if (algo.compare("levelSet")==0)
-  {
+    {
 
-    //balloon force
-    double k; 
-    if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-    k = vm["balloonForce"].as<double>(); 
+      //balloon force
+      double k; 
+      if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
+      k = vm["balloonForce"].as<double>(); 
 
       ImageContainerBySTLVector<Domain,double> implicitFunction( d ); 
       initWithDT( *labelImage, implicitFunction );
 
-    if (vm.count("withFunction")) 
-      drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
+      if (vm.count("withFunction")) 
+	drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
 
-    std::stringstream ss; 
-    ss << outputFiles << "0001"; 
-    drawContour(implicitFunction, ss.str(), format); 
+      std::stringstream ss; 
+      ss << outputFiles << "0001"; 
+      drawContour(implicitFunction, ss.str(), format); 
 
-    //data functions
-    ImageContainerBySTLVector<Domain,double> a( d ); 
-    std::fill(a.begin(),a.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> b( d ); 
-    std::fill(b.begin(),b.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> g( d ); 
-    std::fill(g.begin(),g.end(), 1.0 );  
+      //data functions
+      ImageContainerBySTLVector<Domain,double> a( d ); 
+      std::fill(a.begin(),a.end(), 1.0 );  
+      ImageContainerBySTLVector<Domain,double> b( d ); 
+      std::fill(b.begin(),b.end(), 1.0 );  
+      ImageContainerBySTLVector<Domain,double> g( d ); 
+      std::fill(g.begin(),g.end(), 1.0 );  
 
-    //evolution
-    WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,k,1); 
+      //evolution
+      WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,k,1); 
 
       DGtal::trace.beginBlock( "Deformation (Weickert level set method)" );
 
-    for (unsigned int i = 1; i <= max; ++i) 
-    {
+      for (unsigned int i = 1; i <= max; ++i) 
+	{
 
-      DGtal::trace.info() << "iteration # " << i << std::endl;
+	  DGtal::trace.info() << "iteration # " << i << std::endl;
 
-      e.update( implicitFunction, tstep); 
+	  e.update( implicitFunction, tstep); 
 
-      if ((i%step)==0) 
-      {
-        std::stringstream s; 
-        s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-        drawContour(implicitFunction, s.str(), format); 
-      }
+	  if ((i%step)==0) 
+	    {
+	      std::stringstream s; 
+	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+	      drawContour(implicitFunction, s.str(), format); 
+	    }
 
-      //area
-      trace.info() << "# area: " << getSize( implicitFunction ) << std::endl; 
-    }
+	  //area
+	  trace.info() << "# area: " << getSize( implicitFunction ) << std::endl; 
+	}
 
       DGtal::trace.endBlock(); 
 
-  } else if (algo.compare("phaseField")==0)
-  {
+    } else if (algo.compare("phaseField")==0)
+    {
 
-    double epsilon = 3.0; 
-    if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
-    epsilon = vm["epsilon"].as<double>(); 
-    if (epsilon <= 0) 
-      {
-        trace.error() << "epsilon should be greater than 0" << std::endl;
-        return 0; 
-      } 
+      double epsilon = 3.0; 
+      if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
+      epsilon = vm["epsilon"].as<double>(); 
+      if (epsilon <= 0) 
+	{
+	  trace.error() << "epsilon should be greater than 0" << std::endl;
+	  return 0; 
+	} 
 
-    bool flagWithCstVol = false; 
-    if (vm.count("withCstVol")) 
-      flagWithCstVol = true; 
+      bool flagWithCstVol = false; 
+      if (vm.count("withCstVol")) 
+	flagWithCstVol = true; 
 
       ImageContainerBySTLVector<Domain,double> implicitFunction( d ); 
       initWithDT( *labelImage, implicitFunction );
 
-    //computing the profile from the signed distance
-    Profile p(epsilon); 
-    std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
+      //computing the profile from the signed distance
+      Profile p(epsilon); 
+      std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
 
-     if (vm.count("withFunction")) 
+      if (vm.count("withFunction")) 
         drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
 
-    std::stringstream ss; 
-    ss << outputFiles << "0001"; 
-    drawContour(implicitFunction, ss.str(), format, 0.5); 
+      std::stringstream ss; 
+      ss << outputFiles << "0001"; 
+      drawContour(implicitFunction, ss.str(), format, 0.5); 
 
 
 
-    typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
+      typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
       typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
       Diffusion diffusion; 
       Reaction reaction( epsilon );
-    // typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
-    //   ImageContainerBySTLVector<Domain,double> > Reaction; 
-    // ImageContainerBySTLVector<Domain,double> a( implicitFunction.domain() ); 
-    // std::fill(a.begin(),a.end(), 1 );  
-    // Diffusion diffusion; 
-    // Reaction reaction( epsilon, a, k, flagWithCstVol );
-    LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
+      // typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
+      //   ImageContainerBySTLVector<Domain,double> > Reaction; 
+      // ImageContainerBySTLVector<Domain,double> a( implicitFunction.domain() ); 
+      // std::fill(a.begin(),a.end(), 1 );  
+      // Diffusion diffusion; 
+      // Reaction reaction( epsilon, a, k, flagWithCstVol );
+      LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
       DGtal::trace.beginBlock( "Deformation (phase field)" );
 
-    for (unsigned int i = step; i <= max; i += step) 
-    {
+      for (unsigned int i = step; i <= max; i += step) 
+	{
 
-      DGtal::trace.info() << "iteration # " << i << std::endl;
+	  DGtal::trace.info() << "iteration # " << i << std::endl;
 
-      e.update( implicitFunction, tstep); 
+	  e.update( implicitFunction, tstep); 
 
-      if ((i%step)==0) 
-      {
-        std::stringstream s; 
-        s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-        drawContour(implicitFunction, s.str(), format, 0.5); 
-      }
+	  if ((i%step)==0) 
+	    {
+	      std::stringstream s; 
+	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+	      drawContour(implicitFunction, s.str(), format, 0.5); 
+	    }
 
-      //area
-      trace.info() << "# area: " << getSize( implicitFunction, 0.5 ) << std::endl; 
+	  //area
+	  trace.info() << "# area: " << getSize( implicitFunction, 0.5 ) << std::endl; 
 
-    }
+	}
 
       DGtal::trace.endBlock();
-  } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
+    } else if (algo.compare("localLevelSet")==0)
+    {
+
+      std::stringstream ss; 
+      ss << outputFiles << "0001"; 
+      drawContour(*labelImage, ss.str(), format);  
+
+      //space
+      KSpace ks;
+      ks.init( d.lowerBound(), d.upperBound(), true ); 
+   
+      //distance image...
+      typedef ImageContainerBySTLVector<Domain,double> DistanceImage; 
+      //and extern data...
+      DistanceImage g( d );
+      std::fill(g.begin(), g.end(), 1.0); 
+
+      // topological predicate
+      typedef SimplePointHelper<LabelImage> TopologicalPredicate; 
+      TopologicalPredicate topologicalPredicate(*labelImage); 
+      
+      //frontier evolver
+      DGtal::trace.beginBlock( "Partition construction" );
+      PartitionEvolver<KSpace, LabelImage, DistanceImage, DistanceImage, 
+	TopologicalPredicate> 
+	e(ks, *labelImage, g, topologicalPredicate); 
+
+      DGtal::trace.info() << e << std::endl; 
+      DGtal::trace.endBlock(); 
+      
+      DGtal::trace.beginBlock( "Deformation (narrow band with topological control)" );
+
+      double sumt = 0; 
+      for (unsigned int i = 1; i <= max; ++i) 
+	{
+	  DGtal::trace.info() << "iteration # " << i << std::endl; 
+
+	  //update
+	  e.update(tstep); 
+
+	  if ((i%step)==0) 
+	    {
+	      //display
+	      std::stringstream s; 
+	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+	      drawContour(*labelImage, s.str(), format); 
+	    }
+	  sumt += tstep; 
+	}
+
+      DGtal::trace.endBlock();      
+
+    } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
 
   //free
   delete( labelImage ); 
