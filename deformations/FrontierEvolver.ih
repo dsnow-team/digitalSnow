@@ -58,9 +58,11 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   ASSERT( myW > 0 );   
   ASSERT( myW <= 1.0 ); 
   ASSERT( myKSpace.sIsSurfel( mySurfel ) );
+  #ifdef WITHINFO
   trace.info() << "Labels: " << myInnerLabel << " (inner region)" 
 	       << " and " << myOuterLabel << " (outer region) " 
 	       << std::endl;  
+  #endif
   ASSERT( myInnerLabel != myOuterLabel ); 
 }
 
