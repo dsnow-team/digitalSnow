@@ -201,7 +201,7 @@ int main(int argc, char** argv)
   trace.beginBlock( "Deformation" );
   double deltat = 1.0; 
   double sumt = 0.0; 
-  for (unsigned int i = 1; ( (sumt <= tmax)&&(deltat > 0) ); ++i) 
+  for (unsigned int i = 1; ( (sumt <= tmax)&&(deltat > 0.001) ); ++i) 
     {
       trace.info() << "iteration # " << i << std::endl; 
 
