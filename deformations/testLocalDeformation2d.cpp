@@ -51,10 +51,12 @@ int main(int argc, char** argv)
   general_opt.add_options()
     ("help,h", "display this message")
     ("inputImage,i",  po::value<string>(), "Binary image to initialize the starting interface (pgm format)" )
-    ("domainSize,s",  po::value<int>()->default_value(64), "Domain size (if default starting interface)" )
-    ("timeBound,t",  po::value<double>()->default_value(1.0), "Maximum time for the evolution" )
-    ("displayStep,d",  po::value<int>()->default_value(1), "Number of iterations between 2 drawings" )
-    ("bandWidth,w",  po::value<double>()->default_value(1.0), "Width of the flipping band" )
+    ("domainSize,d",  po::value<int>()->default_value(64), "Domain size (if default starting interface)" )
+    ("shape,s", po::value<string>()->default_value("disk"), 
+"Generated shape: either <disk> (default) or <flower> " )
+    ("timeStep,t",  po::value<double>()->default_value(0.25), "Time step for the evolution" )
+    ("displayStep",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
+    ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f", po::value<string>()->default_value("raster"), 
@@ -69,7 +71,7 @@ int main(int argc, char** argv)
     {
       trace.info()<< "Local deformation" << std::endl
       << "Basic usage: "<<std::endl
-      << argv[0] << " [other options] -t <time> --withVisu" << std::endl
+      << argv[0] << " [other options] -t <time step> -n <number of steps> " << std::endl
       << general_opt << "\n";
       return 0;
     }
@@ -81,15 +83,17 @@ int main(int argc, char** argv)
   dsize = vm["domainSize"].as<int>(); 
 
   //time step
-  double tmax; 
-  if (!(vm.count("timeBound"))) trace.info() << "stopping time default value: 1.0" << std::endl; 
-  tmax = vm["timeBound"].as<double>(); 
+  double tstep; 
+  if (!(vm.count("timeStep"))) trace.info() << "time step default value: 1.0" << std::endl; 
+  tstep = vm["timeStep"].as<double>(); 
     
   //iterations
   int step; 
-  if (!(vm.count("displayStep"))) 
-    trace.info() << "number of iterations between two drawings: 1 by default" << std::endl; 
+  if (!(vm.count("displayStep"))) trace.info() << "number of steps between two drawings: 1 by default" << std::endl; 
   step = vm["displayStep"].as<int>(); 
+  int max; 
+  if (!(vm.count("stepsNumber"))) trace.info() << "maximal number of steps: 1 by default" << std::endl; 
+  max = vm["stepsNumber"].as<int>(); 
 
   //files
   std::string outputFiles; 
@@ -120,7 +124,18 @@ int main(int argc, char** argv)
   Point c(dsize/2,dsize/2); 
   Domain dom(p,q);
   Image img( dom ); 
-  initWithBall( img, c, (dsize*3/5)/2 );
+
+  //generated shape
+  if (vm.count("shape"))
+    {
+      if ( (vm["shape"].as<std::string>()) == "flower" )
+	initWithFlower( img, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
+      else 
+	initWithBall( img, c, (dsize*3/5)/2 );
+    } 
+  else 
+    initWithBall( img, c, (dsize*3/5)/2 );
+
   LabelImage labelImage( dom );  
   Domain::ConstIterator cIt = dom.begin(), cItEnd = dom.end(); 
   for ( ; cIt != cItEnd; ++cIt)
@@ -152,15 +167,6 @@ int main(int argc, char** argv)
   if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
   k = vm["balloonForce"].as<double>(); 
 
-  //width of the flipping band
-  double w = 1.0; 
-  if (!(vm.count("bandWidth"))) trace.info() << "band width default value: 1" << std::endl; 
-  w = vm["bandWidth"].as<double>(); 
-  if( (w < 0) || (w > 1) ) 
-    {
-      trace.info() << "The band width should be between 0 and 1 " << std::endl; 
-      return 0; 
-    }
 
   //space
   KSpace ks;
@@ -196,43 +202,31 @@ int main(int argc, char** argv)
 
 
   //functor
-
-  // balloon force test
-  // typedef LocalBalloonForce<DistanceImage, 
-  //  ImageContainerBySTLVector<Domain,double> > Functor; 
-  // Functor functor(distanceImage, g, k); 
-
-  // local MCM test
-  // does not work at all
-  // typedef LocalMCMforDT<DistanceImage> Functor; 
-  // Functor functor(distanceImage); 
-
   // local MCM a la Weickert
   typedef LocalMCM<DistanceImage, 
    DistanceImage > Functor; 
   Functor functor(distanceImage, g, g); 
 
   // topological predicate
-   typedef TrueBinaryPredicate Predicate; 
-   Predicate predicate; 
-  // typedef SimplePointHelper<LabelImage> Predicate; 
-  // Predicate predicate(labelImage); 
+   // typedef TrueBinaryPredicate Predicate; 
+   // Predicate predicate; 
+  typedef SimplePointHelper<LabelImage> Predicate; 
+  Predicate predicate(labelImage); 
 
  
   //frontier evolver
   FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
-    e(ks, labelImage, distanceImage, bel, functor, predicate, w ); 
+    e(ks, labelImage, distanceImage, bel, functor, predicate, 0.5 ); 
 
   trace.beginBlock( "Deformation" );
-  double deltat = 1.0; 
-  double sumt = 0.0; 
-  for (unsigned int i = 1; ( (sumt <= tmax)&&(deltat > 0.01) ); ++i) 
+  double sumt = 0.0;
+  for (unsigned int i = 1; i <= max; ++i) 
     {
       trace.info() << "# iteration # " << i << " " << std::endl;  
 
       //update
-      deltat = e.update();
-      sumt += deltat; 
+      e.update(tstep);
+      sumt += tstep; 
 
       if ((i%step)==0) 
 	{
@@ -244,6 +238,7 @@ int main(int argc, char** argv)
 
       std::cout << "# time computed area " << std::endl; 
       std::cout << sumt << " " << setSize(labelImage, 0) << std::endl; 
+
     }
   trace.endBlock();   
  

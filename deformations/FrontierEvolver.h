@@ -243,6 +243,15 @@ struct SetFromImageSelector
     double update();
 
      /**
+     * Deform the image of labels during @a aT
+     *
+     * @param aT time step
+     * @return time spent during the deformation 
+     * (equal to aT). 
+     */
+    double update(const double& aT);
+
+     /**
      * Return through @a out the points
      * for which the distance value has been
      * computed and stored in @a myDImage ,
