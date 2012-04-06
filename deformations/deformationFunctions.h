@@ -3,7 +3,7 @@
 
 /////////////////////////// useful functions
 template< typename TImage >
-int setSize(TImage& img, const double& threshold = 0)
+int getSize(TImage& img, const double& threshold = 0)
 {
  
   int c = 0; //counter

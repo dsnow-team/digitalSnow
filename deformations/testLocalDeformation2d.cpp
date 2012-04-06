@@ -237,7 +237,7 @@ int main(int argc, char** argv)
 	}
 
       std::cout << "# time computed area " << std::endl; 
-      std::cout << sumt << " " << setSize(labelImage, 0) << std::endl; 
+      std::cout << sumt << " " << getSize(labelImage, 0) << std::endl; 
 
     }
   trace.endBlock();   

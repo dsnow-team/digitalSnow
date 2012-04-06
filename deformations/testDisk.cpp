@@ -36,7 +36,7 @@ void evolution (TEvolver& e, TImage& img,
 {
 
   int i = 0; 
-  int area = setSize( img, threshold ); 
+  int area = getSize( img, threshold ); 
   while ( area > 0 && (i < n) ) 
     {
       ++i; 
@@ -48,7 +48,7 @@ void evolution (TEvolver& e, TImage& img,
 
       DGtal::trace.endBlock(); 
 
-      area = setSize( img, threshold ); 
+      area = getSize( img, threshold ); 
       std::cout << "# time   expected area   computed area" << std::endl; 
       double t = i*tstep; 
       double Rt = std::sqrt(R0*R0 - (2*t)); 

@@ -25,6 +25,9 @@ using namespace Z2i;
 #include "ExactReactionEvolver.h"
 #include "LieSplittingEvolver.h"
 
+//local level set
+#include "SimplePointHelper.h"
+#include "PartitionEvolver.h"
 
 /////////////////////////// useful functions
 #include "deformationFunctions.h"
@@ -43,12 +46,14 @@ int main(int argc, char** argv)
   general_opt.add_options()
     ("help,h", "display this message")
     ("inputImage,i",  po::value<string>(), "Binary image to initialize the starting interface (.pgm)" )
-    ("domainSize,s",  po::value<int>()->default_value(64), "Domain size (if default starting interface)" )
-    ("timeStep,t",  po::value<double>()->default_value(1.0), "Time step for the evolution" )
-    ("displayStep,d",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
+    ("domainSize,d",  po::value<int>()->default_value(64), "Domain size (if default starting interface)" )
+    ("shape,s", po::value<string>()->default_value("ball"), 
+     "Generated shape: either <ball> (default) or <flower> " )
+    ("timeStep,t",  po::value<double>()->default_value(0.25), "Time step for the evolution" )
+    ("displayStep",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
-"can be: \n <levelSet>  \n or <phaseField> " )
+     "can be: \n <levelSet>  \n or <phaseField> \n or <localLevelSet>" )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("withCstVol", "with volume conservation (only for phase fields)" )
@@ -106,35 +111,43 @@ int main(int argc, char** argv)
     return 0; 
     }
 
-  //balloon force
-  double k; 
-  if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-  k = vm["balloonForce"].as<double>(); 
-
-
   //image and implicit function
-  Point p(0,0);
-  Point q(dsize,dsize); 
-  Point c(dsize/2,dsize/2); 
-  ImageContainerBySTLVector<Domain,double> implicitFunction( Domain(p,q) ); 
-  //initWithBall( implicitFunction, c, (dsize*3/5)/2 ); 
-  initWithFlower( implicitFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
-  if (!(vm.count("inputImage"))) 
-    trace.info() << "starting interface initialized with a flower shape" << std::endl;
-  else
+  typedef ImageContainerBySTLVector<Domain,short int> LabelImage;
+  LabelImage* labelImage = NULL; 
+ 
+  if (vm.count("inputImage")) 
     { 
       string imageFileName = vm["inputImage"].as<std::string>();
       trace.emphase() << imageFileName <<std::endl; 
-      typedef ImageContainerBySTLVector<Domain,unsigned char> BinaryImage; 
-      BinaryImage img = PNMReader<BinaryImage>::importPGM( imageFileName ); 
-      Domain d = img.domain(); 
-      implicitFunction = ImageContainerBySTLVector<Domain,double>( d ); 
-      initWithDT( img, implicitFunction );
+      DGtal::trace.beginBlock("image reading..."); 
+      LabelImage tmp = PNMReader<LabelImage>::importPGM( imageFileName ); 
+      labelImage = new LabelImage( tmp ); 
+      DGtal::trace.endBlock(); 
+    }
+  else
+    {
+      DGtal::trace.beginBlock("image reading..."); 
+      Point p(0,0);
+      Point q(dsize,dsize); 
+      Point c(dsize/2,dsize/2); 
+      labelImage = new LabelImage( Domain(p,q) ); 
+      if (vm.count("shape"))
+        {
+          if ( (vm["shape"].as<std::string>()) == "flower" )
+	    initWithFlowerPredicate( *labelImage, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
+          else 
+	    initWithBallPredicate( *labelImage, c, (dsize*3/5)/2 );
+        } 
+      else 
+        initWithBallPredicate( *labelImage, c, (dsize*3/5)/2 );
+      trace.info() << "starting interface initialized with a " 
+		   << (vm["shape"].as<std::string>()) << std::endl;
+      DGtal::trace.endBlock(); 
     }
 
-  //area
-  double area = (double) setSize( implicitFunction ); 
-  trace.info() << "# area: " << area << std::endl; 
+  //domain
+  Domain d = Domain( labelImage->domain().lowerBound(), labelImage->domain().upperBound() );
+
   
   //algo
   std::string algo; 
@@ -144,6 +157,14 @@ int main(int argc, char** argv)
   if (algo.compare("levelSet")==0)
   {
 
+    //balloon force
+    double k; 
+    if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
+    k = vm["balloonForce"].as<double>(); 
+
+      ImageContainerBySTLVector<Domain,double> implicitFunction( d ); 
+      initWithDT( *labelImage, implicitFunction );
+
     if (vm.count("withFunction")) 
       drawFunction( implicitFunction, vm["withFunction"].as<string>() ); 
 
@@ -152,21 +173,22 @@ int main(int argc, char** argv)
     drawContour(implicitFunction, ss.str(), format); 
 
     //data functions
-    ImageContainerBySTLVector<Domain,double> a( Domain(p,q) ); 
+    ImageContainerBySTLVector<Domain,double> a( d ); 
     std::fill(a.begin(),a.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> b( Domain(p,q) ); 
+    ImageContainerBySTLVector<Domain,double> b( d ); 
     std::fill(b.begin(),b.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> g( Domain(p,q) ); 
+    ImageContainerBySTLVector<Domain,double> g( d ); 
     std::fill(g.begin(),g.end(), 1.0 );  
 
     //evolution
     WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,k,1); 
+
+      DGtal::trace.beginBlock( "Deformation (Weickert level set method)" );
+
     for (unsigned int i = 1; i <= max; ++i) 
     {
 
-      std::stringstream s0; 
-      s0 << "iteration # " << i; 
-      DGtal::trace.beginBlock( s0.str() );
+      DGtal::trace.info() << "iteration # " << i << std::endl;
 
       e.update( implicitFunction, tstep); 
 
@@ -177,11 +199,11 @@ int main(int argc, char** argv)
         drawContour(implicitFunction, s.str(), format); 
       }
 
-      DGtal::trace.endBlock(); 
-
       //area
-      trace.info() << "# area: " << setSize( implicitFunction ) << std::endl; 
+      trace.info() << "# area: " << getSize( implicitFunction ) << std::endl; 
     }
+
+      DGtal::trace.endBlock(); 
 
   } else if (algo.compare("phaseField")==0)
   {
@@ -199,6 +221,9 @@ int main(int argc, char** argv)
     if (vm.count("withCstVol")) 
       flagWithCstVol = true; 
 
+      ImageContainerBySTLVector<Domain,double> implicitFunction( d ); 
+      initWithDT( *labelImage, implicitFunction );
+
     //computing the profile from the signed distance
     Profile p(epsilon); 
     std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
@@ -210,8 +235,7 @@ int main(int argc, char** argv)
     ss << outputFiles << "0001"; 
     drawContour(implicitFunction, ss.str(), format, 0.5); 
 
-    ImageContainerBySTLVector<Domain,double> a( implicitFunction.domain() ); 
-    std::fill(a.begin(),a.end(), 1 );  
+
 
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
       typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
@@ -219,32 +243,38 @@ int main(int argc, char** argv)
       Reaction reaction( epsilon );
     // typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
     //   ImageContainerBySTLVector<Domain,double> > Reaction; 
+    // ImageContainerBySTLVector<Domain,double> a( implicitFunction.domain() ); 
+    // std::fill(a.begin(),a.end(), 1 );  
     // Diffusion diffusion; 
     // Reaction reaction( epsilon, a, k, flagWithCstVol );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
+      DGtal::trace.beginBlock( "Deformation (phase field)" );
+
     for (unsigned int i = step; i <= max; i += step) 
     {
 
-      std::stringstream s0; 
-      s0 << "iteration # " << i; 
-      DGtal::trace.beginBlock( s0.str() );
+      DGtal::trace.info() << "iteration # " << i << std::endl;
 
-      e.update( implicitFunction, (tstep*step) ); 
+      e.update( implicitFunction, tstep); 
 
-      std::stringstream s; 
-      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-      drawContour(implicitFunction, s.str(), format, 0.5); 
-
-      DGtal::trace.endBlock(); 
+      if ((i%step)==0) 
+      {
+        std::stringstream s; 
+        s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+        drawContour(implicitFunction, s.str(), format, 0.5); 
+      }
 
       //area
-      trace.info() << "# area: " << setSize( implicitFunction, 0.5 ) << std::endl; 
+      trace.info() << "# area: " << getSize( implicitFunction, 0.5 ) << std::endl; 
 
     }
 
+      DGtal::trace.endBlock();
   } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
 
+  //free
+  delete( labelImage ); 
   
   return 1;
 }
