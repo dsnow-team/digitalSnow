@@ -63,6 +63,27 @@ void initWithBall(TImage& img, const typename TImage::Point& c, const double& r)
 
 }
 
+template< typename TImage >
+void initWithBallPredicate(TImage& img, const typename TImage::Point& c, const double& r)
+{
+ 
+  typename TImage::Domain d = img.domain(); 
+  typename TImage::Domain::ConstIterator cIt = d.begin(); 
+  typename TImage::Domain::ConstIterator cItEnd = d.end(); 
+  for ( ; cIt != cItEnd; ++cIt)
+  { //for each domain point
+
+    typedef typename TImage::Point Point; 
+    Point p( *cIt ); //point p
+
+    double dist = (p-c).norm(Point::L_2); 
+    dist = dist-r;
+
+    img.setValue(p, (typename TImage::Value)( dist <= 0 ) );  
+  }
+
+}
+
 
 template< typename TImage >
 void initWithFlower(TImage& img, const typename TImage::Point& c, double r, double v, double k)
@@ -97,6 +118,40 @@ void initWithFlower(TImage& img, const typename TImage::Point& c, double r, doub
     img.setValue(p, (typename TImage::Value) dist);  
   }
 }
+
+template< typename TImage >
+void initWithFlowerPredicate(TImage& img, const typename TImage::Point& c, double r, double v, double k)
+{
+ 
+  typename TImage::Domain d = img.domain(); 
+  
+  typename TImage::Domain::ConstIterator cIt = d.begin(); 
+  typename TImage::Domain::ConstIterator cItEnd = d.end(); 
+  for ( ; cIt != cItEnd; ++cIt)
+  { //for each domain point
+
+    typedef typename TImage::Point Point; 
+    Point p( *cIt ); //point p
+
+    //distance au centre calcule
+    double rho = r; 
+    double deviation = 0; 
+    typedef typename TImage::Dimension Dimension; 
+    for (Dimension i = 1; i < TImage::dimension; ++i)
+      {
+	double t = std::abs(std::atan2((p[i]-c[i]),(p[0]-c[0])));
+	deviation += std::cos(k*t);
+      }
+    rho += v*deviation; 
+
+    //distance au centre
+    double dist = (p-c).norm(Point::L_2); 
+    dist = dist - rho;
+
+    img.setValue(p, (typename TImage::Value)(dist <= 0) );  
+  }
+}
+
 
 #include "DGtal/geometry/volumes/distance/DistanceTransformation.h"
 

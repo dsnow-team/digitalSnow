@@ -11,7 +11,6 @@ namespace po = boost::program_options;
 /////////////////////
 #include <DGtal/base/Common.h>
 #include <DGtal/helpers/StdDefs.h>
-#include "DGtal/io/readers/VolReader.h"
 
 using namespace Z3i; 
 
@@ -28,7 +27,7 @@ using namespace Z3i;
 /////////////////////////// useful functions
 #include "deformationFunctions.h"
 #include "deformationDisplay3d.h"
-
+#include "DGtal/io/readers/VolReader.h"
 
 ///////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
@@ -44,9 +43,11 @@ int main(int argc, char** argv)
   general_opt.add_options()
     ("help,h", "display this message")
     ("inputImage,i",  po::value<string>(), "Binary image to initialize the starting interface (vol format)" )
-    ("domainSize,s",  po::value<int>()->default_value(32), "Domain size (if default starting interface)" )
-    ("timeStep,t",  po::value<double>()->default_value(1.0), "Time step for the evolution" )
-    ("displayStep,d",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
+    ("domainSize,d",  po::value<int>()->default_value(64), "Domain size (if default starting interface)" )
+    ("shape,s", po::value<string>()->default_value("ball"), 
+"Generated shape: either <ball> (default) or <flower> " )
+    ("timeStep,t",  po::value<double>()->default_value(0.25), "Time step for the evolution" )
+    ("displayStep",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
 "can be: \n <levelSet>  \n or <phaseField> " )
@@ -55,7 +56,7 @@ int main(int argc, char** argv)
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("png"), 
 "Output files format: either <png> (3d to 2d, default) or <vol> (3d)" )
-    ("withVisu", "Enables interactive 3d visualization before and after evolution" );
+    ("withVisu", "Enables interactive 3d visualization after evolution" );
 
   
   po::variables_map vm;
@@ -65,7 +66,7 @@ int main(int argc, char** argv)
     {
       trace.info()<< "Evolution of a 3d interface" << std::endl
       << "Basic usage: "<<std::endl
-      << argv[0] << " [other options] -t <time step> --withVisu" << std::endl
+      << argv[0] << " [other options] -t <time step> -n <number of steps> --withVisu" << std::endl
       << general_opt << "\n";
       return 0;
     }
@@ -109,44 +110,46 @@ int main(int argc, char** argv)
 
 
   //image and implicit function
-  Point p(0,0,0);
-  Point q(dsize,dsize,dsize); 
-  Point c(dsize/2,dsize/2,dsize/2); 
-  ImageContainerBySTLVector<Domain,double> implicitFunction( Domain(p,q) ); 
-
-  if (!(vm.count("inputImage"))) 
-    {
-      DGtal::trace.beginBlock("image reading..."); 
-      initWithFlower( implicitFunction, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 ); 
-      trace.info() << "starting interface initialized with a flower shape" << std::endl;
-      DGtal::trace.endBlock(); 
-    }
-  else
+  typedef ImageContainerBySTLVector<Domain,unsigned char> LabelImage;
+  LabelImage* labelImage = NULL; 
+ 
+  if (vm.count("inputImage")) 
     { 
       string imageFileName = vm["inputImage"].as<std::string>();
       trace.emphase() << imageFileName <<std::endl; 
       DGtal::trace.beginBlock("image reading..."); 
-      typedef ImageContainerBySTLVector<Domain,unsigned char> BinaryImage; 
-      BinaryImage img = VolReader<BinaryImage>::importVol( imageFileName);
-      Domain d = img.domain();
-      p = d.lowerBound(); q = d.upperBound(); 
-      implicitFunction = ImageContainerBySTLVector<Domain,double>( Domain(p,q) );  
+      LabelImage tmp = VolReader<LabelImage>::importVol( imageFileName );
+      labelImage = new LabelImage( tmp ); 
       DGtal::trace.endBlock(); 
-      initWithDT( img, implicitFunction );
+    }
+  else
+    {
+      DGtal::trace.beginBlock("image reading..."); 
+      Point p(0,0,0);
+      Point q(dsize,dsize,dsize); 
+      Point c(dsize/2,dsize/2,dsize/2); 
+      labelImage = new LabelImage( Domain(p,q) ); 
+      if (vm.count("shape"))
+        {
+          if ( (vm["shape"].as<std::string>()) == "flower" )
+	    initWithFlowerPredicate( *labelImage, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
+          else 
+	    initWithBallPredicate( *labelImage, c, (dsize*3/5)/2 );
+        } 
+      else 
+        initWithBallPredicate( *labelImage, c, (dsize*3/5)/2 );
+      trace.info() << "starting interface initialized with a " << (vm["shape"].as<std::string>()) << std::endl;
+      DGtal::trace.endBlock(); 
     }
 
-  //3d to 2d display
+  //domain
+  Domain d = Domain( labelImage->domain().lowerBound(), labelImage->domain().upperBound() );
+
+  //display
   std::stringstream ss; 
   ss << outputFiles << "0001"; 
-  writeImage( implicitFunction, ss.str(), format );
+  writeImage( *labelImage, ss.str(), format );
 
-  //interactive display before the evolution
-  if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
-
-  //balloon force
-  double k; 
-  if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
-  k = vm["balloonForce"].as<double>(); 
 
   //algo
   std::string algo; 
@@ -156,18 +159,26 @@ int main(int argc, char** argv)
   if (algo.compare("levelSet")==0)
   {
 
+    //balloon force
+    double k; 
+    if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
+    k = vm["balloonForce"].as<double>(); 
+
+    ImageContainerBySTLVector<Domain,double> implicitFunction( d ); 
+    initWithDT( *labelImage, implicitFunction );
+
     //data functions
-    ImageContainerBySTLVector<Domain,double> a( Domain(p,q) ); 
+    ImageContainerBySTLVector<Domain,double> a( d ); 
     std::fill(a.begin(),a.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> b( Domain(p,q) ); 
+    ImageContainerBySTLVector<Domain,double> b( d ); 
     std::fill(b.begin(),b.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> g( Domain(p,q) ); 
+    ImageContainerBySTLVector<Domain,double> g( d ); 
     std::fill(g.begin(),g.end(), 1.0 );  
 
     //interface evolver
     WeickertKuhneEvolver<ImageContainerBySTLVector<Domain,double> > e(a,b,g,k,1); 
 
-    DGtal::trace.beginBlock( "Deformation" );
+    DGtal::trace.beginBlock( "Deformation (Weickert's level set method)" );
 
     double sumt = 0; 
     for (unsigned int i = 1; i <= max; ++i) 
@@ -180,7 +191,7 @@ int main(int argc, char** argv)
       if ((i%step)==0) 
       {
 
-         //3d to 2d display
+         //display
          std::stringstream s; 
          s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
          writeImage( implicitFunction, s.str(), format );
@@ -193,7 +204,7 @@ int main(int argc, char** argv)
     DGtal::trace.endBlock();
 
     //interactive display after the evolution
-    if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction ); 
+    if (vm.count("withVisu")) displayImage2( argc, argv, implicitFunction, implicitFunction, a, b ); 
 
   } else if (algo.compare("phaseField")==0)
   {
@@ -207,12 +218,12 @@ int main(int argc, char** argv)
         return 0; 
       } 
 
+    ImageContainerBySTLVector<Domain,double> implicitFunction( d ); 
+    initWithDT( *labelImage, implicitFunction );
+
     //computing the profile from the signed distance
     Profile p(epsilon); 
     std::transform(implicitFunction.begin(), implicitFunction.end(), implicitFunction.begin(), p); 
-
-    ImageContainerBySTLVector<Domain,double> a( Domain( implicitFunction.domain() ) ); 
-    std::fill(a.begin(),a.end(), 1.0 );  
 
     typedef ExactDiffusionEvolver<ImageContainerBySTLVector<Domain,double> > Diffusion; 
       typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
@@ -221,10 +232,12 @@ int main(int argc, char** argv)
     // typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
     //   ImageContainerBySTLVector<Domain,double> > Reaction; 
     // Diffusion diffusion; 
+    // ImageContainerBySTLVector<Domain,double> a( Domain( implicitFunction.domain() ) ); 
+    // std::fill(a.begin(),a.end(), 1.0 );  
     // Reaction reaction( epsilon, a, k );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
-    DGtal::trace.beginBlock( "Deformation" );
+    DGtal::trace.beginBlock( "Deformation (phase field)" );
 
     double sumt = 0; 
     for (unsigned int i = 1; i <= max; ++i) 
@@ -237,7 +250,7 @@ int main(int argc, char** argv)
       if ((i%step)==0) 
       {
 
-         //3d to 2d display
+         //display
          std::stringstream s; 
          s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
          writeImage( implicitFunction, s.str(), format, 0.5 );
@@ -252,9 +265,70 @@ int main(int argc, char** argv)
     //interactive display after the evolution
     if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction, 0.5 ); 
 
+  } else if (algo.compare("localLevelSet")==0)
+  {
+      DGtal::trace.info() << "coming soon... " << std::endl;    
+
+/*
+    //space
+    KSpace ks;
+    ks.init( d.lowerBound(), d.upperBound(), true ); 
+   
+    //distance map
+    typedef ImageContainerBySTLVector<Domain,double> DistanceImage; 
+    DistanceImage distanceImage( d );
+
+    //data functions
+    DistanceImage g( d );
+    std::fill( g.begin(), g.end(), 1.0 ); 
+
+    // local MCM a la Weickert
+    typedef LocalMCM<DistanceImage, 
+     DistanceImage > Functor; 
+    Functor functor(distanceImage, g, g); 
+
+    // topological predicate
+    typedef SimplePointHelper<LabelImage> Predicate; 
+    Predicate predicate(*labelImage); 
+
+    //frontier evolver
+    PartitionEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
+      e(ks, *labelImage, functor, predicate); 
+
+    DGtal::trace.beginBlock( "Deformation" );
+
+    double sumt = 0; 
+    for (unsigned int i = 1; i <= max; ++i) 
+    {
+      DGtal::trace.info() << "iteration # " << i << std::endl; 
+
+      //update
+      e.update(tstep); 
+
+      if ((i%step)==0) 
+      {
+
+         //display
+         std::stringstream s; 
+         s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+         writeImage( *labelImage, s.str(), format );
+
+      }
+      sumt += tstep; 
+      DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
+    }
+
+    DGtal::trace.endBlock();
+
+    //interactive display after the evolution
+    if (vm.count("withVisu")) displayImage2( argc, argv, *labelImage, distanceImage, g, g ); 
+*/
+
   } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
 
-  
+  //free
+  delete( labelImage ); 
+
   return 0;
 }
 
