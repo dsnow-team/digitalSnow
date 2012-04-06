@@ -25,8 +25,8 @@ LINK_DIRECTORIES(/usr/lib/)
 ADD_EXECUTABLE(3dVolViewer 3dVolViewer)
 TARGET_LINK_LIBRARIES(3dVolViewer ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
 
-ADD_EXECUTABLE(testLocalDeformation testLocalDeformation)
-TARGET_LINK_LIBRARIES(testLocalDeformation ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
+ADD_EXECUTABLE(testLocalDeformation3d testLocalDeformation3d)
+TARGET_LINK_LIBRARIES(testLocalDeformation3d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
 
 ADD_EXECUTABLE(testLocalDeformation2d testLocalDeformation2d)
 TARGET_LINK_LIBRARIES(testLocalDeformation2d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
