@@ -7,7 +7,8 @@
 
 
 template< typename TImage >
-bool drawContour(const TImage& img, std::string filename, std::string format, const double& threshold = 0)
+bool drawContour(const TImage& img, std::string filename, std::string format, 
+		 const double& threshold = 0)
 {
 
   if (format.compare("vector")==0)
@@ -66,6 +67,51 @@ bool drawContour(const TImage& img, std::string filename, std::string format, co
     return true; 
  } else return false; 
 }
+
+template< typename TImage >
+bool drawContours(const TImage& img, std::string filename, std::string format, 
+		 const double& threshold = 0)
+{
+
+  if (format.compare("vector")==0)
+  {
+
+    typedef GradientColorMap<typename TImage::Value> ColorMap;
+    ColorMap colormap(0,255); 
+  
+    Board2D b; 
+    Z2i::Domain d(img.domain()); 
+    Z2i::Domain::ConstIterator cIt = d.begin(); 
+    Z2i::Domain::ConstIterator cItEnd = d.end(); 
+    for ( ; cIt != cItEnd; ++cIt)
+      { 
+	b << CustomStyle( (*cIt).className(), new CustomFillColor( colormap( img(*cIt) ) ) );
+      }
+
+#ifdef WITH_CAIRO
+    std::stringstream s; 
+    s << filename << ".png"; 
+    b.saveCairo(s.str().c_str(),Board2D::CairoPNG);
+#else
+    std::stringstream s; 
+    s << filename << ".eps"; 
+    b.saveEPS(s.str().c_str());
+#endif
+    return true; 
+
+  } else if (format.compare("raster")==0)
+  {
+
+    //write it into a pgm file
+    std::stringstream s; 
+    s << filename << ".pgm";
+    typedef GradientColorMap<typename TImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
+    PNMWriter<TImage,ColorMap>::exportPGM( s.str(), img, 0, 255, true );
+
+    return true; 
+ } else return false; 
+}
+
 
 template< typename TImage >
 void drawFunction( const TImage& img, std::string basename) 

@@ -276,7 +276,7 @@ int main(int argc, char** argv)
 
       std::stringstream ss; 
       ss << outputFiles << "0001"; 
-      drawContour(*labelImage, ss.str(), format);  
+      drawContours(*labelImage, ss.str(), format);  
 
       //space
       KSpace ks;
@@ -316,7 +316,7 @@ int main(int argc, char** argv)
 	      //display
 	      std::stringstream s; 
 	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-	      drawContour(*labelImage, s.str(), format); 
+	      drawContours(*labelImage, s.str(), format); 
 	    }
 	  sumt += tstep; 
 	}
