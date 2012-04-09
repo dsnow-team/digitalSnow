@@ -123,10 +123,12 @@ DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTop
 {
 
   /// update all frontiers (in arbitrary order)
+  unsigned int i = 0; 
   for (typename std::vector<FrontierEvolverPtr>::const_iterator 
 	 it = myEvolvers.begin(), 
-	 itEnd = myEvolvers.end(); it != itEnd; ++it)
+	 itEnd = myEvolvers.end(); it != itEnd; ++it, ++i)
     {
+      //trace.info() << "Frontier #" << i << std::endl; 
       (*it)->update( aT );   
     }
 

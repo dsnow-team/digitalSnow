@@ -123,6 +123,11 @@ int main(int argc, char** argv)
       LabelImage tmp = PNMReader<LabelImage>::importPGM( imageFileName ); 
       labelImage = new LabelImage( tmp ); 
       DGtal::trace.endBlock(); 
+
+      std::stringstream ss; 
+      ss << outputFiles << "0000"; 
+      drawContours(*labelImage, ss.str(), format);  
+
     }
   else
     {

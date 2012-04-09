@@ -505,20 +505,20 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
 	      std::pair<IteratorPointDistance, bool> rin 
 		= adjacentPoints.insert( PointDistance( in, ndin ) );
-	      if (rin.second == false) 
-		{//if the same point is already stored
-		  //take the minimal distance
-		  if (std::abs(ndin) < std::abs(rin.first->second))
-		    rin.first->second = ndin;
-		}
+	      // if (rin.second == false) 
+	      // 	{//if the same point is already stored
+	      // 	  //take the minimal distance
+	      // 	  if (std::abs(ndin) < std::abs(rin.first->second))
+	      // 	    rin.first->second = ndin;
+	      // 	}
 	      std::pair<IteratorPointDistance, bool> rout 
 		= adjacentPoints.insert( PointDistance( out, ndout ) );
-	      if (rout.second == false) 
-		{//if the same point is already stored
-		  //take the minimal distance
-		  if (std::abs(ndout) < std::abs(rout.first->second))
-		    rout.first->second = ndout;
-		}
+	      // if (rout.second == false) 
+	      // 	{//if the same point is already stored
+	      // 	  //take the minimal distance
+	      // 	  if (std::abs(ndout) < std::abs(rout.first->second))
+	      // 	    rout.first->second = ndout;
+	      // 	}
 	    }
 	  else
 	    {

@@ -76,7 +76,7 @@ bool drawContours(const TImage& img, std::string filename, std::string format,
   if (format.compare("vector")==0)
   {
 
-    typedef GradientColorMap<typename TImage::Value> ColorMap;
+    typedef GradientColorMap<typename TImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
     ColorMap colormap(0,255); 
   
     Board2D b; 
