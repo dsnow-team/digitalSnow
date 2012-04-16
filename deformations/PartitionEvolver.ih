@@ -97,8 +97,8 @@ DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTop
 							  *(*myFunctors.rbegin()), 
 							  myTopoPred) ) );  
 
-    ASSERT( myImage.size() == myFunctors.size() ); 
-    ASSERT( myImage.size() == myEvolvers.size() ); 
+    ASSERT( myImages.size() == myFunctors.size() ); 
+    ASSERT( myImages.size() == myEvolvers.size() ); 
   }
 
 }
