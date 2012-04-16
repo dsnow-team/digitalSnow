@@ -61,7 +61,7 @@
 #include "DGtal/images/ImageHelper.h"
 
 // FMM
-#include "DGtal/geometry/volumes/distance/FMM.h"
+#include "FMM.h"
 
 // frontier
 #include "DGtal/topology/SurfelAdjacency.h"

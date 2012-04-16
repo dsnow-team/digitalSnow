@@ -1,0 +1,459 @@
+/**
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
+/**
+ * @file DifferentialOperators.ih
+ * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
+ * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
+ *
+ * @date 2011/12/19
+ *
+ * @brief Implementation of inline methods defined in DifferentialOperators.h
+ *
+ * This file is part of the DGtal library.
+ */
+
+
+//////////////////////////////////////////////////////////////////////////////
+#include <cstdlib>
+//////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// --------------------One-dimensional differential operators -----------------
+
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::ForwardDifference<TImage, TOutputValue>
+::ForwardDifference( Image& aStartingImage, const OutputValue& aGridStep )
+  : myU( aStartingImage ), myH( aGridStep )
+{
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::ForwardDifference<TImage, TOutputValue>::OutputValue
+DGtal::ForwardDifference<TImage, TOutputValue>::
+operator() (const Point& aPoint, const Dimension& aDim) const
+{
+  ASSERT( (aDim >= 0) && (aDim < dimension) ); 
+
+  Point next = aPoint; 
+  next.at(aDim) += 1;
+  if ( myU.domain().isInside(next) )
+    return ( (myU(next) - myU(aPoint)) / myH ); 
+  else 
+    {
+      Point prev = aPoint; 
+      prev.at(aDim) -= 1;
+      if ( myU.domain().isInside(prev) )
+	return ( (myU(aPoint) - myU(prev)) / myH ); 
+      else 
+	ASSERT( false && "too small image" ) ; 
+    }
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::BackwardDifference<TImage, TOutputValue>
+::BackwardDifference( Image& aStartingImage, const OutputValue& aGridStep )
+  : myU( aStartingImage ), myH( aGridStep )
+{
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::BackwardDifference<TImage, TOutputValue>::OutputValue
+DGtal::BackwardDifference<TImage, TOutputValue>::
+operator() (const Point& aPoint, const Dimension& aDim) const
+{
+  ASSERT( (aDim >= 0) && (aDim < dimension) ); 
+
+  Point prev = aPoint; 
+  prev.at(aDim) -= 1;
+
+  if ( myU.domain().isInside(prev) )
+    return ( (myU(aPoint) - myU(prev)) / myH ); 
+  else 
+    {
+      Point next = aPoint; 
+      next.at(aDim) += 1;
+      if ( myU.domain().isInside(next) )
+	return ( (myU(next) - myU(aPoint)) / myH ); 
+      else 
+	ASSERT( false && "too small image" ) ; 
+    }
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::CentralDifference<TImage, TOutputValue>
+::CentralDifference( Image& aStartingImage, const OutputValue& aGridStep )
+  : myU( aStartingImage ), myH( aGridStep )
+{
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::CentralDifference<TImage, TOutputValue>::OutputValue
+DGtal::CentralDifference<TImage, TOutputValue>::
+operator() (const Point& aPoint, const Dimension& aDim) const
+{
+  ASSERT( (aDim >= 0) && (aDim < dimension) ); 
+
+  Domain d = myU.domain(); 
+  Point next = aPoint; 
+  next.at(aDim) += 1;
+  bool nextInside = d.isInside(next); 
+  Point prev = aPoint; 
+  prev.at(aDim) -= 1;
+  bool prevInside = d.isInside(prev);
+
+  if (nextInside && prevInside )
+    return ( (myU(next) - myU(prev)) / (2*myH) ); 
+  else if ( nextInside && (!prevInside) )
+    return ( (myU(next) - myU(aPoint)) / myH ); 
+  else if ( (!nextInside) && prevInside )
+    return ( (myU(aPoint) - myU(prev)) / myH ); 
+  else 
+    ASSERT( false && "too small image" ) ; 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::Difference2<TImage, TOutputValue>
+::Difference2( Image& aStartingImage, const OutputValue& aGridStep )
+  : myU( aStartingImage ), myH( aGridStep )
+{
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::Difference2<TImage, TOutputValue>::OutputValue
+DGtal::Difference2<TImage, TOutputValue>::
+operator() (const Point& aPoint, const Dimension& aDim) const
+{
+  ASSERT( (aDim >= 0) && (aDim < dimension) ); 
+
+  Domain d = myU.domain(); 
+  Point next = aPoint; 
+  next.at(aDim) += 1;
+  bool nextInside = d.isInside(next); 
+  Point previous = aPoint; 
+  previous.at(aDim) -= 1;
+  bool previousInside = d.isInside(previous);
+ 
+  if (nextInside && previousInside )
+    return ( (myU(next) - 2*myU(aPoint) + myU(previous) ) / (myH*myH) ); 
+  else 
+    return 0;   
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::NormalizedDifference2<TImage, TOutputValue>
+::NormalizedDifference2( Image& aStartingImage, const OutputValue& aGridStep )
+  : myU( aStartingImage ), myH( aGridStep )
+{
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::NormalizedDifference2<TImage, TOutputValue>::OutputValue
+DGtal::NormalizedDifference2<TImage, TOutputValue>::
+operator() (const Point& aPoint, const Dimension& aDim) const
+{
+  ASSERT( (aDim >= 0) && (aDim < dimension) ); 
+
+  Domain d = myU.domain(); 
+  Point next = aPoint; 
+  next.at(aDim) += 1;
+  bool nextInside = d.isInside(next); 
+  Point previous = aPoint; 
+  previous.at(aDim) -= 1;
+  bool previousInside = d.isInside(previous);
+
+  typedef Gradient<CentralDifference<Image,OutputValue > > Gradient; 
+  GradientModulus<Gradient> m( myU ); 
+  double mod = m(aPoint); 
+
+  if (nextInside && previousInside )
+    {
+      double nMod = m(next); 
+      double pMod = m(previous);   
+      return ( ( average(nMod,mod)*(myU(next) - myU(aPoint)) )
+	       - ( average(mod,pMod)*(myU(aPoint) - myU(previous)) ) 
+	       / NumberTraits<Value>::castToDouble(myH*myH) ); 
+    }
+  else if ( (!nextInside) && previousInside )
+    {
+      double pMod = m(previous); 
+      return ( ( ( 1 - average(pMod,mod) )
+		 *(myU(aPoint) - myU(previous)) ) 
+	     / NumberTraits<Value>::castToDouble(myH*myH) );
+    } 
+   else if ( (!previousInside) && nextInside )
+     {
+       double nMod = m(next); 
+       return ( ( ( average(nMod,mod) - 1 )
+		*(myU(next) - myU(aPoint)) ) 
+	      / NumberTraits<Value>::castToDouble(myH*myH) ); 
+     }
+  else 
+    ASSERT( false && "too small image" ) ; 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+double
+DGtal::NormalizedDifference2<TImage, TOutputValue>::
+average( const Value& aV1, const Value& aV2 ) const
+{
+  double som = NumberTraits<Value>::castToDouble(aV1 + aV2); 
+  if (som == 0) return 0; 
+  else return 2/som;   
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::WeightedDifference2<TImage, TOutputValue>
+::WeightedDifference2( Image& aImage, Image& aWImage, const OutputValue& aGridStep )
+  : myImage( aImage ), myWImage( aWImage), myH( aGridStep )
+{
+  ASSERT(aWImage.domain().lowerBound() == aImage.domain().lowerBound()); 
+  ASSERT(aWImage.domain().upperBound() == aImage.domain().upperBound()); 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::WeightedDifference2<TImage, TOutputValue>::OutputValue
+DGtal::WeightedDifference2<TImage, TOutputValue>::
+operator() (const Point& aPoint, const Dimension& aDim) const
+{
+  ASSERT( (aDim >= 0) && (aDim < dimension) ); 
+
+  Domain d = myImage.domain(); 
+  Point next = aPoint; 
+  next.at(aDim) += 1;
+  bool nextInside = d.isInside(next); 
+  Point previous = aPoint; 
+  previous.at(aDim) -= 1;
+  bool previousInside = d.isInside(previous);
+
+  typedef Gradient<CentralDifference<Image,OutputValue > > Gradient; 
+  GradientModulus<Gradient> m( myImage ); 
+  double mod = m(aPoint); 
+
+  if (nextInside && previousInside )
+    {
+      double nMod = m(next); 
+      double pMod = m(previous); 
+      return ( ( average(myWImage(next),nMod,myWImage(aPoint),mod)
+		 *(myImage(next) - myImage(aPoint)) )
+	       - ( average(myWImage(aPoint),mod,myWImage(previous),pMod)
+		   *(myImage(aPoint) - myImage(previous)) ) 
+	     / NumberTraits<Value>::castToDouble(myH*myH) ); 
+    }
+  else if ( (!nextInside) && previousInside )
+    {
+      double pMod = m(previous); 
+      return ( ( ( myWImage(aPoint) 
+		   - average(myWImage(previous),pMod,myWImage(aPoint),mod) )
+		 *(myImage(aPoint) - myImage(previous)) ) 
+	     / NumberTraits<Value>::castToDouble(myH*myH) );
+    } 
+   else if ( (!previousInside) && nextInside )
+     {
+       double nMod = m(next); 
+       return ( ( ( average(myWImage(next),nMod,myWImage(aPoint),mod) 
+		    - myWImage(aPoint) )
+		*(myImage(next) - myImage(aPoint)) ) 
+	      / NumberTraits<Value>::castToDouble(myH*myH) ); 
+     }
+  else 
+    ASSERT( false && "too small image" ) ; 
+
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+double
+DGtal::WeightedDifference2<TImage, TOutputValue>::
+average( const Value& aV1, const double& aN1, 
+	 const Value& aV2, const double& aN2 ) const
+{
+  ASSERT(aV1 != 0);
+  ASSERT(aV2 != 0);
+  double q1 = aN1 / NumberTraits<Value>::castToDouble(aV1);
+  double q2 = aN2 / NumberTraits<Value>::castToDouble(aV2); 
+  double sum = q1 + q2; 
+  if (sum == 0) return 0; 
+  else return 2/sum;   
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// -------------------- Gradient operators -----------------
+
+
+template <typename TDifference>
+inline
+DGtal::Gradient<TDifference>
+::Gradient( typename FiniteDifference::Image& aStartingImage, 
+	    const typename FiniteDifference::OutputValue& aGridStep )
+  : myD( FiniteDifference( aStartingImage, aGridStep ) )
+{
+}
+
+template <typename TDifference>
+inline
+typename DGtal::Gradient<TDifference>::OutputValue
+DGtal::Gradient<TDifference>::
+operator() (const Point& aPoint) const
+{
+  OutputValue g; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      g.at(k) = myD(aPoint,k); 
+    }
+  return g; 
+}
+
+
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::UpwindGradient<TImage, TOutputValue>
+::UpwindGradient( Image& aStartingImage, const TOutputValue& aGridStep )
+  : myF( ForwardDifference<Image, TOutputValue>( aStartingImage, aGridStep ) ),
+	 myB( BackwardDifference<Image, TOutputValue>( aStartingImage, aGridStep ) )
+{
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::UpwindGradient<TImage, TOutputValue>::OutputValue
+DGtal::UpwindGradient<TImage, TOutputValue>::
+	 operator() (const Point& aPoint, const Vector& aVector) const
+{
+  OutputValue g; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      if (aVector.at(k) > 0) 
+	g.at(k) = myB(aPoint,k); 
+      else if (aVector.at(k) < 0)
+	g.at(k) = myF(aPoint,k);
+      else //== 0
+	g.at(k) = 0; 
+    }
+  return g; 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+DGtal::GodunovGradient<TImage, TOutputValue>
+::GodunovGradient( Image& aStartingImage, bool isPositive, const TOutputValue& aGridStep )
+  : myF( ForwardDifference<Image, TOutputValue>( aStartingImage, aGridStep ) ),
+    myB( BackwardDifference<Image, TOutputValue>( aStartingImage, aGridStep ) ),
+    myIsPositive( isPositive )
+{
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::GodunovGradient<TImage, TOutputValue>::OutputValue
+DGtal::GodunovGradient<TImage, TOutputValue>::
+	 operator() (const Point& aPoint) const
+{
+  return operator() (aPoint,myIsPositive); 
+}
+
+template <typename TImage, typename TOutputValue>
+inline
+typename DGtal::GodunovGradient<TImage, TOutputValue>::OutputValue
+DGtal::GodunovGradient<TImage, TOutputValue>::
+operator() (const Point& aPoint, bool isPositive) const
+{
+  OutputValue g; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      if (isPositive)
+	{
+	  typename OutputValue::Coordinate a = myB(aPoint,k);
+	  if (a < 0) a = 0; 
+	  typename OutputValue::Coordinate b = myF(aPoint,k);
+	  if (b > 0) b = 0; 
+	  g.at(k) = std::sqrt( std::max(a*a,b*b) ); 
+	}
+      else 
+	{
+	  typename OutputValue::Coordinate a = myB(aPoint,k);
+	  if (a > 0) a = 0; 
+	  typename OutputValue::Coordinate b = myF(aPoint,k);
+	  if (b < 0) b = 0; 
+	  g.at(k) = std::sqrt( std::max(a*a,b*b) ); 
+	} 
+    }
+  return g; 
+}
+
+
+template <typename TGradient>
+inline
+DGtal::GradientModulus<TGradient>
+::GradientModulus( typename Gradient::Image& aStartingImage, 
+		   const typename Gradient::OutputValue::Component& aGridStep )
+  : myG( Gradient( aStartingImage, aGridStep ) )
+{
+}
+
+template <typename TGradient>
+inline
+typename DGtal::GradientModulus<TGradient>::OutputValue
+DGtal::GradientModulus<TGradient>::
+operator() (const Point& aPoint) const
+{
+  typename Gradient::OutputValue g = myG( aPoint ); 
+  return g.norm( Gradient::OutputValue::L_2 ); 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ----------------------- Divergence Operator ------------------------------
+
+
+template <typename TDifference>
+inline
+DGtal::Divergence<TDifference>
+::Divergence( typename FiniteDifference::Image& aStartingImage, 
+	    const typename FiniteDifference::OutputValue& aGridStep )
+  : myD( FiniteDifference( aStartingImage, aGridStep ) )
+{
+}
+
+template <typename TDifference>
+inline
+typename DGtal::Divergence<TDifference>::OutputValue
+DGtal::Divergence<TDifference>::
+operator() (const Point& aPoint) const
+{
+  OutputValue sum = 0; 
+  for (Dimension k = 0; k < dimension; ++k ) 
+    {
+      sum += myD(aPoint,k); 
+    }
+  return sum; 
+}

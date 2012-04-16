@@ -43,7 +43,7 @@
 // Inclusions
 #include "DGtal/kernel/CPointFunctor.h"
 
-#include "DGtal/images/DifferentialOperators.h"
+#include "DifferentialOperators.h"
 //////////////////////////////////////////////////////////////////////////////
 
 namespace DGtal

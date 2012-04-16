@@ -444,33 +444,27 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
   TOutputIterator res = out; 
 
+  //predicate and FMM definitions
+  typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
+  typedef CascadingPointPredicate< typename Domain::Predicate, 
+    LabelPredicate > PointPredicate4FMM; 
+  LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
+  PointPredicate4FMM pred( myLImage.domain().predicate(), predOnLabels );   
+  typedef FMM<DImage, PointSet, PointPredicate4FMM > FMM;
+
   /// initialization of the band from the 
   /// points adjacent to the frontier   
-  unsigned int nbsurfels = 0;
   if (myPointSet.size() == 0)
     {//first step
-      for ( SurfelIterator it = myFrontier->begin(), 
-	      itEnd = myFrontier->end();
-	    it != itEnd; ++it )
-	{
-	  Point in( getInnerPoint( *it ) ); 
-	  Point out( getOuterPoint( *it ) );
-	  if ( myDImage.domain().isInside( in ) ) 
-	    {
-	      ASSERT( myLImage(in) == myInnerLabel ); 
-	      insertAndAlwaysSetValue( myDImage, myPointSet, in, -0.5 );
-	    }
-	  if ( myDImage.domain().isInside( out ) )
-	    {
-	      ASSERT( myLImage(out) == myOuterLabel ); 
-	      insertAndAlwaysSetValue( myDImage, myPointSet, out, 0.5 );
-	    }
-	  ++nbsurfels;
-	}
+      FMM::initFromBelsRange(myKSpace, myFrontier->begin(), myFrontier->end(), 
+			myDImage, myPointSet, 0.5, true); 
     }
   else 
     {//next steps
 
+      //this renormalization doesn ot work at all
+      // FMM::initFromBelsRange(myKSpace, myFrontier->begin(), myFrontier->end(), 
+      // 			     myDImage, myDImage, myPointSet, true); 
       //TODO think about the best way of dealing with adjacentPoints
       //and copying it in the band
       typedef std::pair<const Point, Distance> PointDistance; 
@@ -478,72 +472,47 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       typedef typename std::map<Point, Distance>::iterator IteratorPointDistance; 
 
       for ( SurfelIterator it = myFrontier->begin(), 
-	      itEnd = myFrontier->end();
-	    it != itEnd; ++it )
-	{
-	  Point in( getInnerPoint( *it ) ); 
-	  Point out( getOuterPoint( *it ) );
+      	      itEnd = myFrontier->end();
+      	    it != itEnd; ++it )
+      	{
+      	  Point in( getInnerPoint( *it ) ); 
+      	  Point out( getOuterPoint( *it ) );
 
-	  bool flagIn = ( myDImage.domain().isInside( in ) ); 
-	  bool flagOut = ( myDImage.domain().isInside( out ) ); 
-	  if (flagIn && flagOut)
-	    {
-	      ASSERT( myLImage(in) == myInnerLabel ); 
-	      Distance din = myDImage( in ); 
-	      ASSERT( din <= 0 ); 
+      	  bool flagIn = ( myDImage.domain().isInside( in ) ); 
+      	  bool flagOut = ( myDImage.domain().isInside( out ) ); 
+      	  if (flagIn && flagOut)
+      	    {
+      	      ASSERT( myLImage(in) == myInnerLabel ); 
+      	      Distance din = myDImage( in ); 
+      	      ASSERT( din <= 0 ); 
 
-	      ASSERT( myLImage(out) == myOuterLabel ); 
-	      Distance dout = myDImage( out );
-	      ASSERT( dout > 0 );
- 
-	      //renormalize distance values
-	      // Distance e = std::abs(din)+std::abs(dout);
-	      // Distance ndin = din/e; 
-	      // Distance ndout = dout/e; 
-	      Distance ndin = din; 
-	      Distance ndout = dout; 
+      	      ASSERT( myLImage(out) == myOuterLabel ); 
+      	      Distance dout = myDImage( out );
+      	      ASSERT( dout > 0 );
 
-	      std::pair<IteratorPointDistance, bool> rin 
-		= adjacentPoints.insert( PointDistance( in, ndin ) );
-	      // if (rin.second == false) 
-	      // 	{//if the same point is already stored
-	      // 	  //take the minimal distance
-	      // 	  if (std::abs(ndin) < std::abs(rin.first->second))
-	      // 	    rin.first->second = ndin;
-	      // 	}
-	      std::pair<IteratorPointDistance, bool> rout 
-		= adjacentPoints.insert( PointDistance( out, ndout ) );
-	      // if (rout.second == false) 
-	      // 	{//if the same point is already stored
-	      // 	  //take the minimal distance
-	      // 	  if (std::abs(ndout) < std::abs(rout.first->second))
-	      // 	    rout.first->second = ndout;
-	      // 	}
-	    }
-	  else
-	    {
-	      if (flagIn)
-	        {ASSERT(false && "not implemented yet");}
-	      if (flagOut)
-		{ASSERT(false && "not implemented yet");}
-	    }
-	  ++nbsurfels;
-	}
+      	      std::pair<IteratorPointDistance, bool> rin 
+      		= adjacentPoints.insert( PointDistance( in, din ) );
+
+      	      std::pair<IteratorPointDistance, bool> rout 
+      		= adjacentPoints.insert( PointDistance( out, dout ) );
+      	    }
+      	  else
+      	    {
+      	       ASSERT(false && "impossible");
+      	    }
+      	}
 
       myPointSet.clear();
       for ( IteratorPointDistance 
-	      it = adjacentPoints.begin(), 
-	      itEnd = adjacentPoints.end();
-	    it != itEnd; ++it )
-	{
-	  PointDistance pair( *it ); 
-	  insertAndSetValue( myDImage, myPointSet, pair.first, pair.second );
-	}
+      	      it = adjacentPoints.begin(), 
+      	      itEnd = adjacentPoints.end();
+      	    it != itEnd; ++it )
+      	{
+      	  PointDistance pair( *it ); 
+      	  insertAndSetValue( myDImage, myPointSet, pair.first, pair.second );
+      	}
     }
 
-  #ifdef WITHINFO
-  trace.info() << nbsurfels << " surfels found." << std::endl;  
-  #endif
 
   std::copy( myPointSet.begin(), myPointSet.end(), res ); 
 
@@ -551,90 +520,8 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   trace.info() << myPointSet.size() << " distinct adjacent points." << std::endl;  
   #endif
 
-  ///////////// debug
-  // for (typename PointSet::Iterator it = points.begin(), 
-  // 	 itEnd = points.end(); it != itEnd; ++it)
-  //   {
-  //     Point neighbor = *it; 
-  //     for (Dimension k = 0; k < Point::dimension; ++k)
-  // 	{
-  // 	  typename Point::Coordinate c = neighbor.at(k); 
-  // 	  neighbor.at(k) = (c+1); 
-  // 	  if ( points.find(neighbor) == points.end() ) 
-  // 	    {
-  // 	      unsigned int nb = 0, nbPos = 0; 
-  // 	      Point neighbor2 = neighbor; 
-  // 	      for (Dimension l = 0; l < Point::dimension; ++l)
-  // 		{
-  // 		  typename Point::Coordinate c = neighbor2.at(l); 
-  // 		  neighbor2.at(l) = (c+1); 
-  // 		  if ( points.find(neighbor2) != points.end() ) 
-  // 		    {
-  // 		      nb++; 
-  // 		      std::cout << neighbor2 << myDImage( neighbor2 ) << std::endl; 
-  // 		      if ( myDImage( neighbor2 )>=0 ) nbPos++; 
-  // 		    } 
-  // 		  neighbor2.at(l) = (c-1); 
-  // 		  if ( points.find(neighbor2) != points.end() ) 
-  // 		    {
-  // 		      nb++; 
-  // 		      std::cout << neighbor2 << myDImage( neighbor2 ) << std::endl; 
-  // 		      if ( myDImage( neighbor2 )>=0 ) nbPos++; 
-  // 		    } 
-  // 		  neighbor2.at(l) = c; 
-  // 		}
-  // 	      std::cout << nbPos << " / " << nb << " / 6 " << std::endl;
-  // 	      ASSERT( (nbPos == nb)||(nbPos == 0) ); 
-  // 	    } 
-  // 	  neighbor.at(k) = (c-1); 
-  // 	  if ( points.find(neighbor) == points.end() ) 
-  // 	    {
-  // 	      unsigned int nb = 0, nbPos = 0; 
-  // 	      Point neighbor2 = neighbor; 
-  // 	      for (Dimension l = 0; l < Point::dimension; ++l)
-  // 		{
-  // 		  typename Point::Coordinate c = neighbor2.at(l); 
-  // 		  neighbor2.at(l) = (c+1); 
-  // 		  if ( points.find(neighbor2) != points.end() ) 
-  // 		    {
-  // 		      nb++; 
-  // 		      std::cout << neighbor2 << myDImage( neighbor2 ) << std::endl; 
-  // 		      if ( myDImage( neighbor2 )>=0 ) nbPos++; 
-  // 		    } 
-  // 		  neighbor2.at(l) = (c-1); 
-  // 		  if ( points.find(neighbor2) != points.end() ) 
-  // 		    {
-  // 		      nb++; 
-  // 		      std::cout << neighbor2 << myDImage( neighbor2 ) << std::endl; 
-  // 		      if ( myDImage( neighbor2 )>=0 ) nbPos++; 
-  // 		    } 
-  // 		  neighbor2.at(l) = c; 
-  // 		}
-  // 	      std::cout << nbPos << " / " << nb << " / 6 " << std::endl;
-  // 	      ASSERT( (nbPos == nb)||(nbPos == 0) ); 
-  // 	    } 
- 
-  // 	  neighbor.at(k) = c; 
-  // 	}
-  //   }
-  // trace.info() << "DT..." << std::endl;  
-  ///////// end debug
 
-  /// FMM 
-  
-  //predicate definition
-  typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
-  typedef CascadingPointPredicate< typename Domain::Predicate, 
-    LabelPredicate > FMMPointPredicate; 
-  LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
-  FMMPointPredicate pred( myLImage.domain().predicate(), predOnLabels );   
-
-  // typedef typename Domain::Predicate FMMPointPredicate; 
-  // FMMPointPredicate pred = myLImage.domain().predicate();   
-  
-
-  //FMM definition
-  typedef FMM<DImage, PointSet, FMMPointPredicate > FMM;
+  /// FMM computation
   FMM fmm( myDImage, myPointSet, pred );
   #ifdef WITHINFO
   trace.info() << fmm << std::endl;  
@@ -645,7 +532,8 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   //first pass
   {
     //    double threshold = myW + 1;  // distance threshold
-    double threshold = fmm.getMax() + 1;  // distance threshold
+    double threshold = std::max( std::abs(fmm.max()),std::abs(fmm.min()) ) 
+      + 1.5;  // distance threshold
     while ( (fmm.computeOneStep( p, d )) 
 	    && (std::abs(d) < threshold) )
       {
@@ -662,7 +550,8 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   //second pass
   {
     //    double threshold = myW + 2;  // distance threshold
-    double threshold = fmm.getMax() + 1;  // distance threshold
+    double threshold = std::max( std::abs(fmm.max()),std::abs(fmm.min()) ) 
+      + 1.5;  // distance threshold
     while ( (fmm.computeOneStep( p, d )) 
 	    && (std::abs(d) < threshold) )
       { }
