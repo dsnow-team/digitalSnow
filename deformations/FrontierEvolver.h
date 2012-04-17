@@ -67,6 +67,10 @@
 #include "DGtal/topology/SurfelAdjacency.h"
 #include "DGtal/topology/helpers/FrontierPredicate.h"
 #include "DGtal/topology/LightExplicitDigitalSurface.h"
+
+//partition
+#include "PartitionEvolver.h"
+
 //////////////////////////////////////////////////////////////////////////////
 
 namespace DGtal
@@ -130,6 +134,8 @@ struct SetFromImageSelector
     };
 
   }
+
+
   /////////////////////////////////////////////////////////////////////////////
   // template class FrontierEvolver
   /**
@@ -214,6 +220,11 @@ struct SetFromImageSelector
     typedef TPredicate Predicate;
  
 
+    /// Partition
+    typedef PartitionEvolver<KSpace, LImage, DImage, 
+			     typename Functor::ExternField, 
+			     Predicate> Partition; 
+
     // ----------------------- Standard services ------------------------------
   public:
 
@@ -228,7 +239,8 @@ struct SetFromImageSelector
      * @param aW maximal width of the deformation band (1.0 by default)
      */
     FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, Surfel& aS, 
-		    const Functor& aF, const Predicate& aP, const double& aW = 1.0);
+		    const Functor& aF, const Predicate& aP, 
+		    Partition* aPartitionPtr = NULL, const double& aW = 1.0);
 
     /**
      * Destructor. Does nothing.
@@ -251,25 +263,32 @@ struct SetFromImageSelector
      */
     double update(const double& aT);
 
-     /**
-     * Return through @a out the points
-     * for which the distance value has been
-     * computed and stored in @a myDImage ,
-     * which are candidate to the flip
-     *
-     * @tparam TOutputIterator a model of output iterator
-     *
-     * @param out an output iterator
+
+    /**
+     * @return starting surfel of the digital frontier.
      */
-    template <typename TOutputIterator>
-    void init(const TOutputIterator& out);
+    Surfel surfel() const;
+
+    /**
+     * @param aSurfel new starting surfel of the digital frontier.
+     */
+    void setSurfel(const Surfel& aSurfel);
+
+    /**
+     * @return begin iterator on the surfels of the digital frontier.
+     */
+    SurfelIterator begin() const;
+
+    /**
+     * @return end iterator on the surfels of the digital frontier.
+     */
+    SurfelIterator end() const;
 
     /**
      * Checks the validity/consistency of the object.
      * @return 'true' if the object is valid, 'false' otherwise.
      */
     bool isValid() const;
-
 
     /**
      * Writes/Displays the object on an output stream.
@@ -334,6 +353,10 @@ struct SetFromImageSelector
      * (implicit) digital frontier
      */
     const Frontier* myFrontier; 
+    /**
+     * Aliasing pointer on the partition the frontier belongs to
+     */
+    Partition* myPartitionPtr; 
 
     // ------------------------- Hidden services ------------------------------
   protected:
@@ -361,6 +384,33 @@ struct SetFromImageSelector
     // ------------------------- Internals ------------------------------------
   private:
 
+     /**
+     * Return through @a out the points
+     * of the narrow band
+     * for which the distance value has been
+     * computed and stored in @a myDImage
+     *
+     * @tparam TOutputIterator a model of output iterator
+     *
+     * @param out an output iterator
+     */
+    template <typename TOutputIterator>
+    void init(const TOutputIterator& out);
+
+    /**
+     * Checks whether the other frontiers (if any)
+     * can be modified by the flip of @a aPoint
+      * @param aPoint any (digital) point
+     */
+    void checkPartition ( const Point& aPoint );
+
+    /**
+     * Update the starting surfel @a mySurfel
+     * of the digital frontier from point @a p
+     * @param p any (digital) point
+     */
+    void updateFrontier ( const Point& p );
+
     /**
      * Get inner point.
      * @param s a surfel
@@ -375,12 +425,6 @@ struct SetFromImageSelector
      */
     Point getOuterPoint ( const Surfel& s ) const ;
 
-    /**
-     * Update the starting surfel @a mySurfel
-     * of the digital frontier from point @a p
-     * @param p any (digital) point
-     */
-    void updateFrontier ( const Point& p );
 
   }; // end of class FrontierEvolver
 

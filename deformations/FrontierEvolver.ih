@@ -44,10 +44,12 @@ template <typename TKSpace, typename TLabelImage, typename TDistanceImage,
 inline
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, Surfel& aS, 
- const Functor& aF, const Predicate& aP, const double& aW)
+		  const Functor& aF, const Predicate& aP, Partition* aPartitionPtr, 
+		  const double& aW)
   : myKSpace( aK ), myLImage( aI ), myDImage( aD ), 
     myPointSet( SetFromImageSelector<DImage>::get( myDImage ) ), 
-    mySurfel( aS ), myFunctor( aF ), myPointPred( aP ), myW( aW ),
+    mySurfel( aS ), myFunctor( aF ), myPointPred( aP ), 
+    myPartitionPtr( aPartitionPtr), myW( aW ),
     myInnerLabel( myLImage( getInnerPoint( mySurfel ) ) ), 
     myOuterLabel( myLImage( getOuterPoint( mySurfel ) ) ), 
     mySurfelPred( myKSpace, myLImage, myInnerLabel, myOuterLabel ), 
@@ -267,6 +269,8 @@ double
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::update(const double& aT)
 {
+  ASSERT( myKSpace.sIsSurfel( mySurfel ) ); 
+  ASSERT( mySurfelPred( mySurfel ) ); 
   ASSERT( myInnerLabel == myLImage( getInnerPoint( mySurfel ) ) );
   ASSERT( myOuterLabel == myLImage( getOuterPoint( mySurfel ) ) );  
 
@@ -378,7 +382,8 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 		(label == myInnerLabel)?myOuterLabel:myInnerLabel; 
 	      if ( myPointPred( p, oppositeLabel ) )
 		{ /// flip
-		  nbFlips++; 
+		  nbFlips++;
+		  checkPartition( p ); 
 		  myLImage.setValue( p, oppositeLabel ); 
 		}
 	      else 
@@ -418,7 +423,8 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  //label 
 	  const Label pLabel = myLImage( *it ); 
 
-	  const Distance eps = std::numeric_limits<Distance>::epsilon(); 
+	  const Distance eps = std::numeric_limits<Distance>::epsilon();
+	  //const Distance eps = 0.00001; 
 	  // correction due to the approximation error
 	  if ( ( (newDist < 0.0001)&&(newDist > -0.0001) )
 	  //correction due to the non simplicity
@@ -552,8 +558,8 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	    && (std::abs(d) < threshold) )
       {
 	ASSERT( myDImage(p) == d ); 
-	ASSERT( ((myLImage(p) == myInnerLabel)&&(d<0))
-		|| ((myLImage(p) == myOuterLabel)&&(d>0)) 
+	ASSERT( ((myLImage(p) == myInnerLabel)&&(d<0.0001))
+		|| ((myLImage(p) == myOuterLabel)&&(d>-0.0001)) 
 		|| ( (myLImage(p) != myInnerLabel)&&(myLImage(p) != myOuterLabel) ) ); 
 	*res++ = p; 
       }
@@ -577,6 +583,73 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TPredicate>
+inline
+typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>::Surfel
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::surfel() const
+{
+  return mySurfel;
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TPredicate>
+inline
+void
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::setSurfel(const Surfel& aSurfel)
+{
+  /// update surfel
+  mySurfel = aSurfel;
+
+  ASSERT( myKSpace.sIsSurfel( mySurfel ) ); 
+  ASSERT( mySurfelPred( mySurfel ) ); 
+  ASSERT( myInnerLabel == myLImage( getInnerPoint( mySurfel ) ) );
+  ASSERT( myOuterLabel == myLImage( getOuterPoint( mySurfel ) ) );  
+
+  /// update frontier
+  delete ( myFrontier ); 
+  myFrontier = new Frontier ( myKSpace, mySurfelPred, 
+			      SurfelAdjacency<KSpace::dimension>( true ), 
+			      mySurfel ); 
+  
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TPredicate>
+inline
+typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::SurfelIterator
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::begin() const
+{
+  return myFrontier->begin();
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TPredicate>
+inline
+typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::SurfelIterator
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::end() const
+{
+  return myFrontier->end();
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TPredicate>
+inline
+bool
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::isValid() const
+{
+  return ( ( myInnerLabel == myLImage( getInnerPoint( mySurfel ) ) )
+	   && ( myOuterLabel == myLImage( getOuterPoint( mySurfel ) ) ) );   
+}
+
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
 typename TFunctor, typename TPredicate>
 inline
 void
@@ -587,15 +660,6 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   out << "\n";
 }
 
-template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
-inline
-bool
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
-::isValid() const
-{
-    return true;
-}
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
 	  typename TFunctor, typename TPredicate>
@@ -624,24 +688,21 @@ template <typename TKSpace, typename TLabelImage, typename TDistanceImage,
 inline
 void
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::checkPartition(const Point& aPoint)
+{
+  if (myPartitionPtr != NULL)
+    {
+      myPartitionPtr->checkFrontiers( this, aPoint ); 
+    }
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TPredicate>
+inline
+void
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::updateFrontier(const Point& p)
 {
-  /// update mySurfel
-  //neigbors
-  // std::cout << p << myLImage(p) << " "; 
-  // Point neighbor = p; 
-  // for (Dimension k = 0; k < Point::dimension; ++k)
-  //   {
-  //     typename Point::Coordinate c = neighbor.at(k); 
-  //     neighbor.at(k) = (c+1); 
-  //     std::cout << neighbor << myLImage(neighbor) << " "; 
-  //     neighbor.at(k) = (c-1); 
-  //     std::cout << neighbor << myLImage(neighbor) << " "; 
-  //     neighbor.at(k) = c; 
-  //   }
-  // std::cout << std::endl; 
-
-
   /// spel creation
   typename KSpace::SCell spel; 
   const Label pLabel = myLImage(p); 
@@ -659,6 +720,7 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
     ASSERT( false && "impossible label in updateFrontier method" ); 
 
   /// for each direction 
+  Surfel newSurfel; 
   bool flag = false; 
   for ( typename KSpace::DirIterator q = myKSpace.sDirs( spel ); 
   	( (q != 0)&&(!flag) ); ++q ) 
@@ -669,33 +731,25 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       typename KSpace::SCell surfel 
   	= myKSpace.sDirectIncident( spel, dir );
       ASSERT( myKSpace.sIsSurfel( surfel ) ); 
-      //      std::cerr << getInnerPoint( surfel ) << getOuterPoint( surfel ) << std::endl;   
       if ( mySurfelPred( surfel ) )
   	{
-  	  mySurfel = surfel; 
+  	  newSurfel = surfel; 
   	  flag = true; 
   	}
       if (!flag)
   	{
-  	  /// for the indirect orientation
   	  surfel = myKSpace.sIndirectIncident( spel, dir ); 
   	  ASSERT( myKSpace.sIsSurfel( surfel ) ); 
-	  //	  std::cerr << getInnerPoint( surfel ) << getOuterPoint( surfel ) << std::endl;   
   	  if ( mySurfelPred( surfel ) )
   	    {
-  	      mySurfel = surfel; 
+  	      newSurfel = surfel; 
   	      flag = true; 
   	    }
   	}
     } 
-  //std::cerr << std::endl; 
   ASSERT( flag && "last flipped point must be a border point in updateFrontier method" ); 
 
-  /// update frontier
-  delete ( myFrontier ); 
-  myFrontier = new Frontier ( myKSpace, mySurfelPred, 
-			      SurfelAdjacency<KSpace::dimension>( true ), 
-			      mySurfel ); 
+  this->setSurfel( newSurfel ); 
 
 }
 

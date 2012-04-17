@@ -51,12 +51,17 @@
 #include "DGtal/base/CountedPtr.h"
 
 #include "LocalMCM.h"
-#include "FrontierEvolver.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
 namespace DGtal
 {
+
+  //Forward declaration
+  template <typename TKSpace, 
+	    typename TLabelImage, typename TDistanceImage, 
+	    typename TFunctor, typename TPredicate>
+  class FrontierEvolver; 
 
   /////////////////////////////////////////////////////////////////////////////
   // template class PartitionEvolver
@@ -159,6 +164,17 @@ namespace DGtal
      * (equal to aT). 
      */
     double update(const double& aT);
+
+    /**
+     * Check the validity of the different frontiers
+     * of the partition
+     *
+     * @param aPtrToCaller pointer on the frontier evolver
+     * that called the checking procedure
+     * @param aPoint any point
+     * @pre must lie in the domain of the image of labels
+     */
+    void checkFrontiers(const Evolver* aPtrToCaller, const Point& aPoint);
 
     /**
      * Checks the validity/consistency of the object.
@@ -279,6 +295,7 @@ namespace DGtal
 
 ///////////////////////////////////////////////////////////////////////////////
 // Includes inline functions.
+#include "FrontierEvolver.h"
 #include "PartitionEvolver.ih"
 
 //                                                                           //

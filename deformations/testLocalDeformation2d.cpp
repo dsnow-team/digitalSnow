@@ -216,7 +216,7 @@ int main(int argc, char** argv)
  
   //frontier evolver
   FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
-    e(ks, labelImage, distanceImage, bel, functor, predicate, 0.5 ); 
+    e(ks, labelImage, distanceImage, bel, functor, predicate, NULL, 0.5 ); 
 
   trace.beginBlock( "Deformation" );
   double sumt = 0.0;
