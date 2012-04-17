@@ -206,7 +206,7 @@ int main(int argc, char** argv)
       trace.info() << "iteration # " << i << std::endl; 
 
       //update
-      deltat = e.update();
+      deltat = e.update(w);
       sumt += deltat; 
 
       if ((i%step)==0) 

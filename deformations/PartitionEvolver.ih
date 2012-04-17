@@ -83,7 +83,7 @@ DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTop
     for ( SurfelIterator it = frontier.begin(), 
 	    itEnd = frontier.end();
 	  it != itEnd; ++it )
-      bels.erase( myKSpace.uCell( myKSpace.sKCoords( *it ) ) );
+      bels.erase( myKSpace.unsigns( *it ) );
     
     /// new frontier evolver (with its image and differential estimators)
     myImages.push_back( DistanceImagePtr( new DistanceImage( myLabelImage.domain() ) ) );

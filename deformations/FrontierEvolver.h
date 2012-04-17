@@ -235,12 +235,12 @@ struct SetFromImageSelector
      */
     ~FrontierEvolver();
 
-     /**
-     * Deform the image of labels around the digital frontier
-     *
-     * @return time spent during the deformation. 
-     */
-    double update();
+    //  /**
+    //  * Deform the image of labels around the digital frontier
+    //  *
+    //  * @return time spent during the deformation. 
+    //  */
+    // double update();
 
      /**
      * Deform the image of labels during @a aT

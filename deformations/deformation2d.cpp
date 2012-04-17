@@ -26,6 +26,7 @@ using namespace Z2i;
 #include "LieSplittingEvolver.h"
 
 //local level set
+#include "BinaryPredicates.h"
 #include "SimplePointHelper.h"
 #include "PartitionEvolver.h"
 
@@ -294,6 +295,8 @@ int main(int argc, char** argv)
       std::fill(g.begin(), g.end(), 1.0); 
 
       // topological predicate
+      // typedef TrueBinaryPredicate TopologicalPredicate; 
+      // TopologicalPredicate topologicalPredicate; 
       typedef SimplePointHelper<LabelImage> TopologicalPredicate; 
       TopologicalPredicate topologicalPredicate(*labelImage); 
       
