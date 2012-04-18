@@ -121,7 +121,7 @@ namespace DGtal
 
     /// Images of distance values
     typedef TDistanceImage DistanceImage;
-    typedef CountedPtr<DistanceImage> DistanceImagePtr;
+    typedef CountedPtr<DistanceImage> DistanceImagePtr; 
 
     /// Extern image
     typedef TExternImage ExternImage;
@@ -135,7 +135,7 @@ namespace DGtal
 
     /// Frontier evolver
     typedef FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, TopoPredicate > Evolver; 
-    typedef CountedPtr<Evolver> FrontierEvolverPtr; 
+    typedef CountedPtr<Evolver> EvolverPtr; 
  
 
     // ----------------------- Standard services ------------------------------
@@ -229,7 +229,7 @@ namespace DGtal
     /**
      * Set of smart owning pointers on frontier evolvers
      */
-    std::vector<FrontierEvolverPtr> myEvolvers; 
+    std::vector<EvolverPtr> myEvolvers; 
 
     // ------------------------- Hidden services ------------------------------
   protected:

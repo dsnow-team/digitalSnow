@@ -55,7 +55,8 @@
 #include "DGtal/kernel/sets/SetPredicate.h"
 #include "DGtal/kernel/CPointPredicate.h"
 #include "DGtal/kernel/CPointFunctor.h"
-#include "DGtal/geometry/volumes/distance/FMMPointFunctors.h"
+
+#include "FMMPointFunctors.h"
 
 //////////////////////////////////////////////////////////////////////////////
 

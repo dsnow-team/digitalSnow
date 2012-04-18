@@ -50,6 +50,15 @@ DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTop
 ::PartitionEvolver(const KSpace& aK, LabelImage& aI, const ExternImage& aF, const TopoPredicate& aP)
   : myKSpace( aK ), myLabelImage( aI ), myExternImage( aF ), myTopoPred( aP )
 { 
+  //maximal number of frontiers expected
+  const unsigned int nb = 100; 
+  myImages.reserve(nb); 
+  myFunctors.reserve(nb); 
+  myEvolvers.reserve(nb);
+ 
+  //domain
+  Domain d = Domain( myLabelImage.domain().lowerBound(), myLabelImage.domain().upperBound() ); 
+  ASSERT( d == myExternImage.domain() ); 
 
   /// retrieve bels
   std::set<Cell> bels;
@@ -86,20 +95,20 @@ DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTop
       bels.erase( myKSpace.unsigns( *it ) );
     
     /// new frontier evolver (with its image and differential estimators)
-    myImages.push_back( DistanceImagePtr( new DistanceImage( myLabelImage.domain() ) ) );
+    myImages.push_back( DistanceImagePtr( new DistanceImage( d ) ) );
     myFunctors.push_back( FunctorPtr( new Functor( *(*myImages.rbegin()), 
 						   myExternImage, 
 						   myExternImage ) ) ); 
-    myEvolvers.push_back( FrontierEvolverPtr( new Evolver(myKSpace, 
-							  myLabelImage, 
-							  *(*myImages.rbegin()), 
-							  sbel, 
-							  *(*myFunctors.rbegin()), 
-							  myTopoPred, this) ) );  
-
-    ASSERT( myImages.size() == myFunctors.size() ); 
-    ASSERT( myImages.size() == myEvolvers.size() ); 
+    myEvolvers.push_back( EvolverPtr( new Evolver(myKSpace, 
+						  myLabelImage, 
+						  *(*myImages.rbegin()), 
+						  sbel, 
+						  *(*myFunctors.rbegin()), 
+						  myTopoPred, this) ) );  
   }
+
+  ASSERT( myImages.size() == myFunctors.size() ); 
+  ASSERT( myImages.size() == myEvolvers.size() ); 
 
 }
 
@@ -109,7 +118,30 @@ inline
 DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
 ::~PartitionEvolver()
 {
+  /// images
+  for (typename std::vector<DistanceImagePtr>::const_iterator 
+	 it = myImages.begin(), 
+	 itEnd = myImages.end(); it != itEnd; ++it)
+    {
+      trace.info() << "distance image " << it->get() << std::endl;   
+    }
 
+  /// functors
+  for (typename std::vector<FunctorPtr>::const_iterator 
+	 it = myFunctors.begin(), 
+	 itEnd = myFunctors.end(); it != itEnd; ++it)
+    {
+      trace.info() << "moving functor " << it->get() << std::endl;   
+    }
+
+  /// frontiers
+  for (typename std::vector<EvolverPtr>::const_iterator 
+	 it = myEvolvers.begin(), 
+	 itEnd = myEvolvers.end(); it != itEnd; ++it)
+    {
+      trace.info() << "frontier evolver " << it->get() << std::endl;   
+    }
+ 
 }
 
 
@@ -123,7 +155,7 @@ DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTop
 {
 
   /// update all frontiers (in arbitrary order)
-  for (typename std::vector<FrontierEvolverPtr>::const_iterator 
+  for (typename std::vector<EvolverPtr>::const_iterator 
 	 it = myEvolvers.begin(), 
 	 itEnd = myEvolvers.end(); it != itEnd; ++it)
     {
@@ -142,7 +174,7 @@ DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTop
 {
   trace.info() << " checking frontiers... " << std::endl; 
 
-  for (typename std::vector<FrontierEvolverPtr>::const_iterator 
+  for (typename std::vector<EvolverPtr>::const_iterator 
   	 it = myEvolvers.begin(), 
   	 itEnd = myEvolvers.end(); it != itEnd; ++it)
     { /// for each frontier (except aPtrToCaller) 

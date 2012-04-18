@@ -798,7 +798,7 @@ namespace DGtal
 
 ///////////////////////////////////////////////////////////////////////////////
 // Includes inline functions.
-#include "DGtal/geometry/volumes/distance/FMMPointFunctors.ih"
+#include "FMMPointFunctors.ih"
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////

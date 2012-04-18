@@ -150,7 +150,7 @@ DGtal::L2FirstOrderLocalDistance<TImage, TSet>::compute
   if ( nb == 1 )
     {
       Value d = aValueList.back();
-      if (d >= 0) return d + 1.0; 
+      if (d > 0) return d + 1.0; 
       else return d - 1.0; 
     } 
   else 
@@ -183,12 +183,10 @@ DGtal::L2FirstOrderLocalDistance<TImage, TSet>::compute
 	  double disc = b*b - 4*a*c;
 	  ASSERT(disc >= 0); 
 
-	  double dres1 = ( ( -b + std::sqrt(disc) ) / (2*a) );
-	  double dres2 = ( ( -b - std::sqrt(disc) ) / (2*a) );
-	  if ( std::abs(dres1) > std::abs(dres2) )
-	      return static_cast<Value>(dres1);
+	  if ( b < 0 )
+	      return static_cast<Value>( ( -b + std::sqrt(disc) ) / (2*a) );
 	  else 
-	      return static_cast<Value>(dres2); 
+	      return static_cast<Value>( ( -b - std::sqrt(disc) ) / (2*a) ); 
 	}
     }
 
@@ -205,7 +203,7 @@ DGtal::L2FirstOrderLocalDistance<TImage, TSet>
   for (typename Values::const_iterator it = aValueList.begin(); 
        it != aValueList.end(); ++it)
     {
-      Value d = std::abs(aValue - *it); 
+      Value d = (aValue - *it); 
       sum += (d*d); 
     }
   return sum; 
@@ -377,7 +375,7 @@ DGtal::L2SecondOrderLocalDistance<TImage, TSet>::compute
   if ( nb == 1 )
     {
       CoeffValue pair = aList.back();
-      if (pair.second >= 0) 
+      if (pair.second > 0) 
 	return ( (pair.second + 1.0)/(pair.first) ); 
       else 
 	return ( (pair.second - 1.0)/(pair.first) ); 
@@ -414,12 +412,10 @@ DGtal::L2SecondOrderLocalDistance<TImage, TSet>::compute
 	  double disc = b*b - 4*a*c;
 	  ASSERT(disc >= 0); 
 
-	  double dres1 = ( ( -b + std::sqrt(disc) ) / (2*a) );
-	  double dres2 = ( ( -b - std::sqrt(disc) ) / (2*a) );
-	  if ( std::abs(dres1) > std::abs(dres2) )
-	      return static_cast<Value>(dres1);
+	  if ( b < 0 )
+	      return static_cast<Value>( ( -b + std::sqrt(disc) ) / (2*a) );
 	  else 
-	      return static_cast<Value>(dres2); 
+	      return static_cast<Value>( ( -b - std::sqrt(disc) ) / (2*a) ); 
 	}
     }
 }

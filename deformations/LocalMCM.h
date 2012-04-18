@@ -87,6 +87,14 @@ namespace DGtal
     LocalMCM(PointFunctor& aF1, const ExternField& aA, const ExternField& aB);
 
     /**
+     * Constructor
+     */
+    ~LocalMCM()
+  {
+    trace.info() << "LocalMCM" << this << std::endl; 
+  }
+
+    /**
      * Main operator
      * @param aPoint any point.
      * @tparam TInputPoint type of point

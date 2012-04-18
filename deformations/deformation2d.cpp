@@ -13,6 +13,10 @@ namespace po = boost::program_options;
 #include <DGtal/helpers/StdDefs.h>
 #include "DGtal/io/readers/PNMReader.h"
 
+
+
+#include "ImageContainer.h"
+
 using namespace Z2i;
 
 //evolvers
@@ -29,6 +33,8 @@ using namespace Z2i;
 #include "BinaryPredicates.h"
 #include "SimplePointHelper.h"
 #include "PartitionEvolver.h"
+
+
 
 /////////////////////////// useful functions
 #include "deformationFunctions.h"
@@ -289,7 +295,7 @@ int main(int argc, char** argv)
       ks.init( d.lowerBound(), d.upperBound(), true ); 
    
       //distance image...
-      typedef ImageContainerBySTLVector<Domain,double> DistanceImage; 
+      typedef ImageContainer<Domain,double> DistanceImage; 
       //and extern data...
       DistanceImage g( d );
       std::fill(g.begin(), g.end(), 1.0); 
@@ -333,6 +339,8 @@ int main(int argc, char** argv)
 
     } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
 
+
+	  DGtal::trace.info() << "end" << std::endl; 
   //free
   delete( labelImage ); 
   
