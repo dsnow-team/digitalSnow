@@ -76,6 +76,7 @@
 namespace DGtal
 {
 
+
   //------------------------------------------------------------------------------
   template<typename I, typename D, typename V>
 struct SetFromImageDomainValueTraits
@@ -142,26 +143,27 @@ struct SetFromImageSelector
    * Description of template class 'FrontierEvolver' <p>
    * \brief Aim: This class is a way of deforming an image of labels
    * around a connected contact surface between two regions, 
-   * according to a velocity field, whose computation is 
+   * according to a speed field, whose computation is 
    * delegated to a point functor. 
    *   
-   * At each step, a signed distance function is built. 
-   * The points are sorted according to their time of zero-crossing
-   * (ie. their distance to the interface divided by their velocity)
-   * so that they are flipped from a region to another, one by one and 
-   * in order, until a time greater than a threshold is reached or 
-   * until a point predicate (possibly based on topological properties)
-   * returns false. 
+   * At each step, a implicit function is extended from the known
+   * values at the boundary points adjacent to the contact surface. 
+   * The points lying around the interface are sorted according to
+   * their time of zero-crossing (ie. their distance to the interface 
+   * divided by their speed) so that they are flipped from one region
+   * to another, one by one and in order, until a time greater than 
+   * a given threshold is reached, but only if a given predicate 
+   * based on topological properties returns true. 
    *
    * @tparam TKSpace a model of CCellularGridSpaceND
    * @tparam TLabelImage a model of CImage (storing labels)
    * @tparam TDistanceImage a model of CImage (storing distance values)
    * @tparam TFunctor a model of CPointFunctor
-   * @tparam TPredicate a model of CPointPredicate
+   * @tparam TTopoPredicate a model of topological predicate
    */
   template <typename TKSpace, 
 	    typename TLabelImage, typename TDistanceImage, 
-	    typename TFunctor, typename TPredicate>
+	    typename TFunctor, typename TTopoPredicate>
   class FrontierEvolver
   {
 
@@ -180,11 +182,11 @@ struct SetFromImageSelector
     (( ConceptUtils::SameType< typename TKSpace::Point,
        typename TFunctor::Point>::value ));
 
-    // BOOST_CONCEPT_ASSERT(( CPointPredicate<TPredicate> )); 
+    // BOOST_CONCEPT_ASSERT(( CPointPredicate<TTopoPredicate> )); 
     // BOOST_STATIC_ASSERT
     // (( ConceptUtils::SameType< typename TKSpace::Point,
-    //    typename TPredicate::Point>::value ));
-    //TODO testing TPredicate as a binary predicate on points and labels
+    //    typename TTopoPredicate::Point>::value ));
+    //TODO testing TTopoPredicate as a binary predicate on points and labels
 
     // ----------------------- Types ------------------------------
   public:
@@ -206,7 +208,7 @@ struct SetFromImageSelector
     typedef std::pair<Point,double> PointTime; 
 
     /// Topological predicate 
-    typedef TPredicate Predicate;
+    typedef TTopoPredicate TopoPredicate;
 
     /// Set of points where the distance values are known
     typedef typename SetFromImageSelector<DImage>::Set PointSet; 
@@ -225,7 +227,7 @@ struct SetFromImageSelector
     /// Partition
     typedef PartitionEvolver<KSpace, LImage, DImage, 
 			     typename Functor::ExternField, 
-			     Predicate> Partition; 
+			     TopoPredicate> Partition; 
 
     // ----------------------- Standard services ------------------------------
   public:
@@ -237,10 +239,10 @@ struct SetFromImageSelector
      * @param aD an image of distance values
      * @param aS a surfel lying between two regions of @a aI
      * @param aF a point functor mapping a speed to points 
-     * @param aP any point predicate
+     * @param aP any topological predicate
      */
     FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, const Surfel& aS, 
-		    const Functor& aF, const Predicate& aP, 
+		    const Functor& aF, const TopoPredicate& aP, 
 		    Partition* aPartitionPtr = NULL);
 
     /**
@@ -321,10 +323,9 @@ struct SetFromImageSelector
      */
     const Functor& myFunctor; 
     /**
-     * Constant reference on the predicate
-     * TODO: rename it into myTopoPred
+     * Constant reference on the topological predicate
      */
-    const Predicate& myPointPred; 
+    const TopoPredicate& myTopoPred; 
     /**
      * Label of the inner region 
      */
@@ -495,11 +496,11 @@ struct SetFromImageSelector
    * @return the output stream after the writing.
    */
   template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	    typename TFunctor, typename TPredicate>
+	    typename TFunctor, typename TTopoPredicate>
   std::ostream&
   operator<< ( std::ostream & out, 
 	       const FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, 
-	       TFunctor, TPredicate> & object );
+	       TFunctor, TTopoPredicate> & object );
 
 
 } // namespace DGtal

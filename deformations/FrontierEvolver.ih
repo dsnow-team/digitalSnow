@@ -40,14 +40,14 @@
 
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, const Surfel& aS, 
-		  const Functor& aF, const Predicate& aP, Partition* aPartitionPtr )
+		  const Functor& aF, const TopoPredicate& aP, Partition* aPartitionPtr )
   : myKSpace( aK ), myLImage( aI ), myDImage( aD ), 
     myPointSet( SetFromImageSelector<DImage>::get( myDImage ) ), 
-    mySurfel( aS ), myFunctor( aF ), myPointPred( aP ), 
+    mySurfel( aS ), myFunctor( aF ), myTopoPred( aP ), 
     myPartitionPtr( aPartitionPtr),
     myInnerLabel( myLImage( getInnerPoint( mySurfel ) ) ), 
     myOuterLabel( myLImage( getOuterPoint( mySurfel ) ) ), 
@@ -69,29 +69,29 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::~FrontierEvolver()
 {
   delete( myFrontier ); 
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
-typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>::Surfel
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>::Surfel
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::surfel() const
 {
   return mySurfel;
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
 void
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::setSurfel(const Surfel& aSurfel)
 {
   /// update surfel
@@ -111,32 +111,32 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
-typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::SurfelIterator
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::begin() const
 {
   return myFrontier->begin();
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
-typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::SurfelIterator
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::end() const
 {
   return myFrontier->end();
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
 bool
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::isValid() const
 {
   return ( ( myInnerLabel == myLImage( getInnerPoint( mySurfel ) ) )
@@ -145,10 +145,10 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-typename TFunctor, typename TPredicate>
+typename TFunctor, typename TTopoPredicate>
 inline
 void
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::selfDisplay ( std::ostream & out ) const
 {
   out << "[FrontierEvolver]\n";
@@ -161,10 +161,10 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
 double
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::update(const double& aT)
 {
   ASSERT( myKSpace.sIsSurfel( mySurfel ) ); 
@@ -253,21 +253,15 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 template <typename TOutputIterator>
 inline
 void
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::initNarrowBand( TOutputIterator res )
 {
 
   //predicate and FMM definitions
-  // typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
-  // typedef CascadingPointPredicate< typename Domain::Predicate, 
-  //   LabelPredicate > PointPredicate4FMM; 
-  // LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
-  // PointPredicate4FMM pointPredicate( myLImage.domain().predicate(), predOnLabels );   
-  // typedef FMM<DImage, PointSet, PointPredicate4FMM > FMM;
   typename Domain::Predicate pointPredicate = myDImage.domain().predicate(); 
   typedef FMM<DImage, PointSet, typename Domain::Predicate> FMM; 
 
@@ -382,11 +376,11 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 template <typename TInputIterator, typename TOutputIterator1, typename TOutputIterator2>
 inline
 void
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::initCandidates( const TInputIterator& itb, const TInputIterator& ite, 
 		  TOutputIterator1 aDistanceSpeedIto, TOutputIterator2 aCandidateIto )
 {
@@ -419,11 +413,11 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 template <typename TInputIterator, typename TOutputIterator>
 inline
 int
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::updateLabelImage( const TInputIterator& itb, const TInputIterator& ite, TOutputIterator ito, 
 		    Point& aP, double& aT, const double&  aTMax )
 {
@@ -439,7 +433,7 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       const Label oppositeLabel = 
 	(label == myInnerLabel)?myOuterLabel:myInnerLabel;
  
-      if ( myPointPred( aP, oppositeLabel ) )
+      if ( myTopoPred( aP, oppositeLabel ) )
 	{ /// flip
 	  checkPartition( aP ); 
         #ifdef WITHINFO
@@ -462,10 +456,10 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
 void
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::updateFrontier(const Point& p)
 {
   /// spel creation
@@ -520,11 +514,11 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 template <typename TInputIterator1, typename TInputIterator2, typename TSet>
 inline
 void
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::updateDistanceImage( const TInputIterator1& itb, const TInputIterator1& ite,
 		       TInputIterator2 aDistanceSpeedIt, 
 		       const TSet& aSet, const double& t )
@@ -577,10 +571,10 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 ///////////////////////////////////////////////////////////////////////////////
 // ----------------------- Small Helpers ------------------------------
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
 void
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::checkPartition(const Point& aPoint)
 {
   if (myPartitionPtr != NULL)
@@ -591,22 +585,22 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
 typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, 
-				TFunctor, TPredicate>::Point
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+				TFunctor, TTopoPredicate>::Point
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::getInnerPoint(const Surfel& s) const
 {
   return myKSpace.sCoords( myKSpace.sDirectIncident( s, *myKSpace.sOrthDirs( s ) ) );
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
 typename DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, 
-				TFunctor, TPredicate>::Point
-DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+				TFunctor, TTopoPredicate>::Point
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
 ::getOuterPoint(const Surfel& s) const
 {
   return myKSpace.sCoords( myKSpace.sIndirectIncident( s, *myKSpace.sOrthDirs( s ) ) ); 
@@ -617,12 +611,12 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 // Implementation of inline functions                                        //
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
-	  typename TFunctor, typename TPredicate>
+	  typename TFunctor, typename TTopoPredicate>
 inline
 std::ostream&
 DGtal::operator<< ( std::ostream & out, 
 		    const FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, 
-		    TFunctor, TPredicate> & object )
+		    TFunctor, TTopoPredicate> & object )
 {
   object.selfDisplay( out );
   return out;
