@@ -415,6 +415,31 @@ struct SetFromImageSelector
     void checkPartition ( const Point& aPoint );
 
      /**
+     * Update @a myLImage for each candidates of the 
+     * range [@a itb , @a ite ) 
+     *
+     * The points that are not allowed to flip
+     * (because of the topological predicate) 
+     * are stored through @a ito into a container
+     *
+     * @param itb begin iterator on candidates
+     * @param ite end iterator on candidates
+     * @param ito output iterator on points
+     * @param aP (returned) last point
+     * @param aT (returned) zero-crossing time of the last point
+     * @param aTMax maximal accepted time (equal to the evolution time step)
+     *
+     * @tparam TInputIterator a model of input iterator on candidates
+     * @tparam TOutputIterator a model of input iterator on points
+     *
+     * @return number of flipped points
+     */
+    template <typename TInputIterator, typename TOutputIterator>
+    int updateLabelImage( const TInputIterator& itb, const TInputIterator& ite,
+			  TOutputIterator ito, 
+			  Point& aP, double &aT, const double& aTMax );
+
+     /**
      * Update @a myDImage at each point of the 
      * range [@a itb , @a ite ) knowing their
      * distance and speed returning by @a aDistanceSpeedIt
