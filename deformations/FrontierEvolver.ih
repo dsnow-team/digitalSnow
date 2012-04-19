@@ -43,7 +43,7 @@ template <typename TKSpace, typename TLabelImage, typename TDistanceImage,
 	  typename TFunctor, typename TPredicate>
 inline
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
-::FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, Surfel& aS, 
+::FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, const Surfel& aS, 
 		  const Functor& aF, const Predicate& aP, Partition* aPartitionPtr, 
 		  const double& aW)
   : myKSpace( aK ), myLImage( aI ), myDImage( aD ), 
@@ -78,9 +78,6 @@ inline
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::~FrontierEvolver()
 {
-  #ifdef WITHINFO
-  trace.info() << "FrontierEvolver " << this << std::endl; 
-  #endif
   delete( myFrontier ); 
 }
 

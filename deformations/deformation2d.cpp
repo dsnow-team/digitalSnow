@@ -13,10 +13,6 @@ namespace po = boost::program_options;
 #include <DGtal/helpers/StdDefs.h>
 #include "DGtal/io/readers/PNMReader.h"
 
-
-
-#include "ImageContainer.h"
-
 using namespace Z2i;
 
 //evolvers
@@ -295,7 +291,7 @@ int main(int argc, char** argv)
       ks.init( d.lowerBound(), d.upperBound(), true ); 
    
       //distance image...
-      typedef ImageContainer<Domain,double> DistanceImage; 
+      typedef ImageContainerBySTLVector<Domain,double> DistanceImage; 
       //and extern data...
       DistanceImage g( d );
       std::fill(g.begin(), g.end(), 1.0); 

@@ -238,7 +238,7 @@ struct SetFromImageSelector
      * @param aP any point predicate
      * @param aW maximal width of the deformation band (1.0 by default)
      */
-    FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, Surfel& aS, 
+    FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, const Surfel& aS, 
 		    const Functor& aF, const Predicate& aP, 
 		    Partition* aPartitionPtr = NULL, const double& aW = 1.0);
 

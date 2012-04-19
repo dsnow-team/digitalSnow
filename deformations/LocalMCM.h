@@ -91,7 +91,6 @@ namespace DGtal
      */
     ~LocalMCM()
   {
-    trace.info() << "LocalMCM" << this << std::endl; 
   }
 
     /**

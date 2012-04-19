@@ -58,7 +58,7 @@ DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTop
  
   //domain
   Domain d = Domain( myLabelImage.domain().lowerBound(), myLabelImage.domain().upperBound() ); 
-  ASSERT( d == myExternImage.domain() ); 
+  //ASSERT( d == myExternImage.domain() ); operator == does not exist in HyperRectDomain
 
   /// retrieve bels
   std::set<Cell> bels;
@@ -70,7 +70,7 @@ DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTop
     //unsigned bel
     Cell ubel = *(bels.begin());
     //signed version (arbitrary choice) 
-    SCell sbel = myKSpace.sCell( myKSpace.uKCoords( ubel ), true ); 
+    SCell sbel = myKSpace.signs( ubel, true ); 
     //incident points
     SCellToIncidentPoints<KSpace> func( myKSpace ); 
     typename SCellToIncidentPoints<KSpace>::Output points = func( sbel ); 
@@ -117,31 +117,7 @@ template <typename TKSpace, typename TLabelImage, typename TDistanceImage,
 inline
 DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
 ::~PartitionEvolver()
-{
-  /// images
-  for (typename std::vector<DistanceImagePtr>::const_iterator 
-	 it = myImages.begin(), 
-	 itEnd = myImages.end(); it != itEnd; ++it)
-    {
-      trace.info() << "distance image " << it->get() << std::endl;   
-    }
-
-  /// functors
-  for (typename std::vector<FunctorPtr>::const_iterator 
-	 it = myFunctors.begin(), 
-	 itEnd = myFunctors.end(); it != itEnd; ++it)
-    {
-      trace.info() << "moving functor " << it->get() << std::endl;   
-    }
-
-  /// frontiers
-  for (typename std::vector<EvolverPtr>::const_iterator 
-	 it = myEvolvers.begin(), 
-	 itEnd = myEvolvers.end(); it != itEnd; ++it)
-    {
-      trace.info() << "frontier evolver " << it->get() << std::endl;   
-    }
- 
+{ 
 }
 
 
