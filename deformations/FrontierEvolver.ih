@@ -109,52 +109,18 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   /// speed and zero-crossing time computation
   typedef std::vector<DistanceSpeed> DistanceSpeedVector;
   DistanceSpeedVector buffer; 
-
   /// candidates to flip
   typedef std::vector<PointTime> CandidateVector; 
   CandidateVector candidates; 
   initCandidates( narrowBand.begin(), narrowBand.end(), 
 		  std::back_inserter( buffer ), 
 		  std::back_inserter( candidates ) ); 
-
-  // for ( BandIterator 
-  // 	 it = narrowBand.begin(), 
-  // 	 itEnd = narrowBand.end(); 
-  //      it != itEnd; ++it)
-  //   {
-  //     //point
-  //     Point p = *it; 
-  //     // distance
-  //     Distance d = myDImage( p );
-  //     // speed
-  //     Speed v = myFunctor( p );
-  //     // storing distance and speed
-  //     buffer.push_back( DistanceSpeed( d, v ) ); 
-  //     // new candidate with its zero-crossing time
-  //     if ( ( myLImage( p ) == myInnerLabel ) 
-  // 	   || (myLImage( p ) == myOuterLabel ) )
-  // 	{
-  // 	  if ( ( (d>0) && (v<0) ) 
-  // 	       || ( (d<=0) && (v>0) ) )
-  // 	    { //if opposite signs (and v != 0)
-  // 	      double t = - static_cast<double>( d ) / v;
-  // 	      ASSERT( t >= 0 ); 
-  // 	      candidates.push_back( PointTime( p, t ) ); 
-  // 	    }
-  // 	}
-  //   }
   #ifdef WITHINFO
   trace.info() << candidates.size() << " candidates " << std::endl; 
   #endif
 
-  /// time threshold
-  double tmax = aT; 
-  #ifdef WITHINFO
-  trace.info() << "Time threshold: " << tmax << std::endl; 
-  #endif
-
   if (candidates.begin() != candidates.end())
-    { //if they are candidates
+    { //if there are candidates
 
       /// ordering of the points according 
       /// to their zero-crossing time
@@ -190,7 +156,7 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	  p = it->first;
 	  tlast = t; 
 	  t = it->second; 
-	  if (t <= tmax)
+	  if (t <= aT)
 	    { 
 	      const Label label = myLImage(p); 
 	      const Label oppositeLabel = 
@@ -225,60 +191,71 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       #ifdef WITHINFO
       trace.info() << "updating signed distance function..." << std::endl; 
       #endif
-
-      if (tlast == 0.0) 
-	tlast = tmax; 
-
-      typename DistanceSpeedVector::const_iterator itBuffer = buffer.begin(); 
-      for (typename Band::const_iterator 
-	     it = narrowBand.begin(), 
-	     itEnd = narrowBand.end(); 
-	   it != itEnd; ++it, ++itBuffer)
-	{
-	  // speed
-	  DistanceSpeed pair( *itBuffer );  
-	  Distance newDist = pair.first + tlast*pair.second; 
-
-	  //label 
-	  const Label pLabel = myLImage( *it ); 
-
-	  const Distance eps = std::numeric_limits<Distance>::epsilon();
-	  //const Distance eps = 0.00001; 
-	  // correction due to the approximation error
-	  if ( ( (newDist < 0.0001)&&(newDist > -0.0001) )
-	  //correction due to the non simplicity
-	       || ( notSimplePoints.find( *it ) != notSimplePoints.end() ) )
-	    {
-	      if (pLabel == myInnerLabel) newDist = -eps; 
-	      else newDist = eps; 
-	    }
-
-	  #ifdef WITHINFO
-	  if ( !( ( (newDist <= 0)&&(myLImage( *it ) == myInnerLabel) ) 
-		  || ( (newDist > 0)&&(myLImage( *it ) == myOuterLabel) ) 
-		  || ( (myLImage( *it ) != myInnerLabel)&&(myLImage( *it ) != myOuterLabel) ) ) )
-	    {
-	      trace.info() << *it << " in " << myLImage( *it ) 
-			   << " at " << newDist << std::endl; 
-	    }
-	  #endif
-	  ASSERT( ( (newDist <= 0)&&(myLImage( *it ) == myInnerLabel) ) 
-		  || ( (newDist > 0)&&(myLImage( *it ) == myOuterLabel) ) 
-		  || ( (myLImage( *it ) != myInnerLabel)&&(myLImage( *it ) != myOuterLabel) ) );
-
-	  // set value
-	  myDImage.setValue( *it, newDist );
-
-	}
+      updateDistanceImage( narrowBand.begin(), narrowBand.end(), 
+			   buffer.begin(), notSimplePoints, aT ); 
 
       /// update frontier if needed
       if (nbFlips > 0) 
 	updateFrontier( plast ); 
 
-      return tmax; 
+      return aT; 
     }
   else 
     return 0.0; 
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TPredicate>
+    template <typename TInputIterator1, typename TInputIterator2, typename TSet>
+inline
+void
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::updateDistanceImage( const TInputIterator1& itb, const TInputIterator1& ite,
+		       TInputIterator2 aDistanceSpeedIt, 
+		       const TSet& aSet, const double& t )
+{
+  for (TInputIterator1 it = itb; 
+       it != ite; ++it, ++aDistanceSpeedIt)
+    {
+      // point
+      const Point p = *it; 
+      // distance and speed
+      const DistanceSpeed pair( *aDistanceSpeedIt );  
+      Distance newDist = pair.first + t * pair.second; 
+
+      //label 
+      const Label pLabel = myLImage( p ); 
+
+      const Distance eps = std::numeric_limits<Distance>::epsilon();
+      // correction due to the approximation error
+      if ( ( (newDist < 0.0001)&&(newDist > -0.0001) )
+	   //correction due to the non simplicity
+	   || ( aSet.find( p ) != aSet.end() ) )
+	{
+	  if (pLabel == myInnerLabel) newDist = -eps; 
+	  else newDist = eps; 
+	}
+
+    #ifdef WITHINFO
+      if ( !( ( (newDist <= 0)&&(myLImage( p ) == myInnerLabel) ) 
+	      || ( (newDist > 0)&&(myLImage( p ) == myOuterLabel) ) 
+	      || ( (myLImage( p ) != myInnerLabel)&&(myLImage( p ) != myOuterLabel) ) ) )
+	{
+	  trace.info() << p << " in " << myLImage( p ) 
+		       << " at " << newDist << std::endl; 
+	}
+    #endif
+
+      ASSERT( ( (newDist <= 0)&&(myLImage( p ) == myInnerLabel) ) 
+	      || ( (newDist > 0)&&(myLImage( p ) == myOuterLabel) ) 
+	      || ( (myLImage( p ) != myInnerLabel)&&(myLImage( p ) != myOuterLabel) ) );
+
+
+      // set value
+      myDImage.setValue( p, newDist );
+
+    }
+
 }
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 

@@ -406,12 +406,37 @@ struct SetFromImageSelector
     void initCandidates( const TInputIterator& itb, const TInputIterator& ite, 
 			 TOutputIterator1 aDistanceSpeedIto, TOutputIterator2 aCandidateIto );
 
+
     /**
      * Checks whether the other frontiers (if any)
      * can be modified by the flip of @a aPoint
       * @param aPoint any (digital) point
      */
     void checkPartition ( const Point& aPoint );
+
+     /**
+     * Update @a myDImage at each point of the 
+     * range [@a itb , @a ite ) knowing their
+     * distance and speed returning by @a aDistanceSpeedIt
+     *
+     * The points that belongs to @a aSet are not allowed to flip. 
+     *
+     * @param itb begin iterator on points
+     * @param ite end iterator on points
+     * @param aDistanceSpeedIt an input iterator on DistanceSpeed pairs
+     * @param aSet any set of points
+     * @param t evolution time step
+     *
+     * @tparam TInputIterator1 a model of input iterator on points
+     * @tparam TInputIterator2 a model of input iterator on DistanceSpeed pairs
+     * @tparam TSet STL set like type 
+     *
+     */
+    template <typename TInputIterator1, typename TInputIterator2, typename TSet>
+    void updateDistanceImage( const TInputIterator1& itb, const TInputIterator1& ite,
+			      TInputIterator2 aDistanceSpeedIt, 
+			      const TSet& aSet, const double& t );
+
 
     /**
      * Update the starting surfel @a mySurfel
