@@ -61,7 +61,7 @@ namespace DGtal
   template <typename TKSpace, 
 	    typename TLabelImage, typename TDistanceImage, 
 	    typename TFunctor, typename TPredicate>
-  class FrontierEvolver; 
+  class FrontierEvolver2; 
 
   /////////////////////////////////////////////////////////////////////////////
   // template class PartitionEvolver
@@ -134,7 +134,7 @@ namespace DGtal
     typedef TTopoPredicate TopoPredicate;
 
     /// Frontier evolver
-    typedef FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, TopoPredicate > Evolver; 
+    typedef FrontierEvolver2<KSpace, LabelImage, DistanceImage, Functor, TopoPredicate > Evolver; 
     typedef CountedPtr<Evolver> EvolverPtr; 
  
 
@@ -296,6 +296,7 @@ namespace DGtal
 ///////////////////////////////////////////////////////////////////////////////
 // Includes inline functions.
 #include "FrontierEvolver.h"
+#include "FrontierEvolver2.h"
 #include "PartitionEvolver.ih"
 
 //                                                                           //

@@ -17,26 +17,26 @@
 #pragma once
 
 /**
- * @file FrontierEvolver.h
+ * @file FrontierEvolver2.h
  * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
  * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
  *
  * @date 2012/03/01
  *
- * Header file for module FrontierEvolver.cpp
+ * Header file for module FrontierEvolver2.cpp
  *
  * This file is part of the DGtal library.
  */
 
-#if defined(FrontierEvolver_RECURSES)
-#error Recursive header files inclusion detected in FrontierEvolver.h
-#else // defined(FrontierEvolver_RECURSES)
+#if defined(FrontierEvolver2_RECURSES)
+#error Recursive header files inclusion detected in FrontierEvolver2.h
+#else // defined(FrontierEvolver2_RECURSES)
 /** Prevents recursive inclusion of headers. */
-#define FrontierEvolver_RECURSES
+#define FrontierEvolver2_RECURSES
 
-#if !defined FrontierEvolver_h
+#if !defined FrontierEvolver2_h
 /** Prevents repeated inclusion of headers. */
-#define FrontierEvolver_h
+#define FrontierEvolver2_h
 
 //////////////////////////////////////////////////////////////////////////////
 // Inclusions
@@ -55,6 +55,7 @@
 
 
 // set
+#include "DGtal/images/ImageContainerBySTLMap.h"
 #include "DGtal/kernel/sets/DigitalSetFromMap.h"
 #include "DGtal/kernel/sets/DigitalSetBySTLSet.h"
 #include "DGtal/kernel/sets/DigitalSetInserter.h"
@@ -78,17 +79,20 @@ namespace DGtal
 
 
   /////////////////////////////////////////////////////////////////////////////
-  // template class FrontierEvolver
+  // template class FrontierEvolver2
   /**
-   * Description of template class 'FrontierEvolver' <p>
+   * Description of template class 'FrontierEvolver2' <p>
    * \brief Aim: This class is a way of deforming an image of labels
-   * around a connected contact surface between two regions, 
-   * according to a speed field, whose computation is 
-   * delegated to a point functor. 
+   * around a digital frontier (ie. connected contact surface) 
+   * between two adjacent regions according to a speed field. 
+   * The speed field is only computed around the interface  
+   * (this task is delegated to a point functor) and is then 
+   * extended outward the interface in the normal direction.
    *   
-   * At each step, a implicit function is extended from the known
-   * values at the boundary points adjacent to the contact surface. 
-   * The points lying around the interface are sorted according to
+   * At each step, a signed distance function is updated and extended 
+   * within a narrow band of width 4 (2 on each side) 
+   * from the values known at the points adjacent to the digital frontier. 
+   * The points lying in the narrow band are sorted according to
    * their time of zero-crossing (ie. their distance to the interface 
    * divided by their speed) so that they are flipped from one region
    * to another, one by one and in order, until a time greater than 
@@ -104,7 +108,7 @@ namespace DGtal
   template <typename TKSpace, 
 	    typename TLabelImage, typename TDistanceImage, 
 	    typename TFunctor, typename TTopoPredicate>
-  class FrontierEvolver
+  class FrontierEvolver2
   {
 
 
@@ -181,14 +185,14 @@ namespace DGtal
      * @param aF a point functor mapping a speed to points 
      * @param aP any topological predicate
      */
-    FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, const Surfel& aS, 
+    FrontierEvolver2(const KSpace& aK, LImage& aI, DImage& aD, const Surfel& aS, 
 		    const Functor& aF, const TopoPredicate& aP, 
 		    Partition* aPartitionPtr = NULL);
 
     /**
      * Destructor. Does nothing.
      */
-    ~FrontierEvolver();
+    ~FrontierEvolver2();
 
      /**
      * Deform the image of labels during @a aT
@@ -297,7 +301,7 @@ namespace DGtal
      * @param other the object to clone.
      * Forbidden by default.
      */
-    FrontierEvolver ( const FrontierEvolver & other );
+    FrontierEvolver2 ( const FrontierEvolver2 & other );
 
     /**
      * Assignment.
@@ -305,7 +309,7 @@ namespace DGtal
      * @return a reference on 'this'.
      * Forbidden by default.
      */
-    FrontierEvolver & operator= ( const FrontierEvolver & other );
+    FrontierEvolver2 & operator= ( const FrontierEvolver2 & other );
 
   private:
 
@@ -426,20 +430,20 @@ namespace DGtal
     Point getOuterPoint ( const Surfel& s ) const ;
 
 
-  }; // end of class FrontierEvolver
+  }; // end of class FrontierEvolver2
 
 
   /**
-   * Overloads 'operator<<' for displaying objects of class 'FrontierEvolver'.
+   * Overloads 'operator<<' for displaying objects of class 'FrontierEvolver2'.
    * @param out the output stream where the object is written.
-   * @param object the object of class 'FrontierEvolver' to write.
+   * @param object the object of class 'FrontierEvolver2' to write.
    * @return the output stream after the writing.
    */
   template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
 	    typename TFunctor, typename TTopoPredicate>
   std::ostream&
   operator<< ( std::ostream & out, 
-	       const FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, 
+	       const FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, 
 	       TFunctor, TTopoPredicate> & object );
 
 
@@ -448,12 +452,12 @@ namespace DGtal
 
 ///////////////////////////////////////////////////////////////////////////////
 // Includes inline functions.
-#include "FrontierEvolver.ih"
+#include "FrontierEvolver2.ih"
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-#endif // !defined FrontierEvolver_h
+#endif // !defined FrontierEvolver2_h
 
-#undef FrontierEvolver_RECURSES
-#endif // else defined(FrontierEvolver_RECURSES)
+#undef FrontierEvolver2_RECURSES
+#endif // else defined(FrontierEvolver2_RECURSES)

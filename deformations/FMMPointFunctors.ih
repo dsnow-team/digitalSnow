@@ -178,7 +178,7 @@ DGtal::L2FirstOrderLocalDistance<TImage, TSet>::compute
 	      b -= static_cast<double>(2*d);
 	      c += static_cast<double>(d*d); 
 	    }
- 
+
 	  //discriminant
 	  double disc = b*b - 4*a*c;
 	  ASSERT(disc >= 0); 
