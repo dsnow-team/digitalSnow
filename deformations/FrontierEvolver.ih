@@ -44,12 +44,11 @@ template <typename TKSpace, typename TLabelImage, typename TDistanceImage,
 inline
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
 ::FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, const Surfel& aS, 
-		  const Functor& aF, const Predicate& aP, Partition* aPartitionPtr, 
-		  const double& aW)
+		  const Functor& aF, const Predicate& aP, Partition* aPartitionPtr )
   : myKSpace( aK ), myLImage( aI ), myDImage( aD ), 
     myPointSet( SetFromImageSelector<DImage>::get( myDImage ) ), 
     mySurfel( aS ), myFunctor( aF ), myPointPred( aP ), 
-    myPartitionPtr( aPartitionPtr), myW( aW ),
+    myPartitionPtr( aPartitionPtr),
     myInnerLabel( myLImage( getInnerPoint( mySurfel ) ) ), 
     myOuterLabel( myLImage( getOuterPoint( mySurfel ) ) ), 
     mySurfelPred( myKSpace, myLImage, myInnerLabel, myOuterLabel ), 
@@ -58,9 +57,6 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 			       mySurfel ) )
 { 
   ASSERT( myFrontier ); 
-
-  ASSERT( myW > 0 );   
-  ASSERT( myW <= 1.0 ); 
 
   #ifdef WITHINFO
   trace.info() << "Labels: " << myInnerLabel << " (inner region)" 

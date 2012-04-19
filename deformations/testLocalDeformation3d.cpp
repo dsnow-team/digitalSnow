@@ -50,10 +50,13 @@ int main(int argc, char** argv)
   po::options_description general_opt("Allowed options are");
   general_opt.add_options()
     ("help,h", "display this message")
-    ("inputImage,i",  po::value<string>(), "Binary image to initialize the starting interface (vol format)" )
-    ("timeBound,t",  po::value<double>()->default_value(1.0), "Maximum time for the evolution" )
-    ("displayStep,d",  po::value<int>()->default_value(1), "Number of iterations between 2 drawings" )
-    ("bandWidth,w",  po::value<double>()->default_value(1.0), "Width of the flipping band" )
+    ("inputImage,i",  po::value<string>(), "Binary image to initialize the starting interface (pgm format)" )
+    ("domainSize,d",  po::value<int>()->default_value(64), "Domain size (if default starting interface)" )
+    ("shape,s", po::value<string>()->default_value("disk"), 
+"Generated shape: either <disk> (default) or <flower> " )
+    ("timeStep,t",  po::value<double>()->default_value(0.25), "Time step for the evolution" )
+    ("displayStep",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
+    ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("png"), 
@@ -74,17 +77,23 @@ int main(int argc, char** argv)
     }
   
   //Parse options
+  //domain size
+  int dsize; 
+  if (!(vm.count("domainSize"))) trace.info() << "Domain size default value: 64" << std::endl; 
+  dsize = vm["domainSize"].as<int>(); 
 
   //time step
-  double tmax; 
-  if (!(vm.count("timeBound"))) trace.info() << "stopping time default value: 1.0" << std::endl; 
-  tmax = vm["timeBound"].as<double>(); 
+  double tstep; 
+  if (!(vm.count("timeStep"))) trace.info() << "time step default value: 1.0" << std::endl; 
+  tstep = vm["timeStep"].as<double>(); 
     
   //iterations
   int step; 
-  if (!(vm.count("displayStep"))) 
-    trace.info() << "number of iterations between two drawings: 1 by default" << std::endl; 
+  if (!(vm.count("displayStep"))) trace.info() << "number of steps between two drawings: 1 by default" << std::endl; 
   step = vm["displayStep"].as<int>(); 
+  int max; 
+  if (!(vm.count("stepsNumber"))) trace.info() << "maximal number of steps: 1 by default" << std::endl; 
+  max = vm["stepsNumber"].as<int>(); 
 
   //files
   std::string outputFiles; 
@@ -107,15 +116,48 @@ int main(int argc, char** argv)
   //image of labels
   typedef short int Label; 
   typedef ImageContainerBySTLVector<Domain, Label> LabelImage; 
+
+
+  typedef ImageContainerBySTLVector<Domain, double> Image; 
+  Point p = Point::diagonal(0);
+  Point q = Point::diagonal(dsize); 
+  Point c = Point::diagonal(dsize/2); 
+  Domain dom(p,q);
+  Image img( dom ); 
+
+  //generated shape
+  if (vm.count("shape"))
+    {
+      if ( (vm["shape"].as<std::string>()) == "flower" )
+	initWithFlower( img, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
+      else 
+	initWithBall( img, c, (dsize*3/5)/2 );
+    } 
+  else 
+    initWithBall( img, c, (dsize*3/5)/2 );
+
+  LabelImage labelImage( dom );  
+  Domain::ConstIterator cIt = dom.begin(), cItEnd = dom.end(); 
+  for ( ; cIt != cItEnd; ++cIt)
+  { //for each domain point
+    if (img(*cIt) <= 0) labelImage.setValue(*cIt, 0); 
+    else labelImage.setValue(*cIt, 1); 
+  }
+
+
   if (!(vm.count("inputImage"))) 
     {
-    trace.info() << "you must use --inputImage option" << std::endl;
-    return 0; 
-    }
+    trace.info() << "starting interface initialized with a ball shape" << std::endl;
+    }    
+  else
+    { 
   string imageFileName = vm["inputImage"].as<std::string>();
   trace.emphase() << imageFileName <<std::endl; 
   LabelImage labelImage = VolReader<LabelImage>::importVol( imageFileName);
   inv(labelImage); 
+    }
+
+  /////////////////////////////////////////
 
   //3d to 2d display
   std::stringstream ss; 
@@ -126,16 +168,6 @@ int main(int argc, char** argv)
   double k = 0.0; 
   if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
   k = vm["balloonForce"].as<double>(); 
-
-  //width of the flipping band
-  double w = 1.0; 
-  if (!(vm.count("bandWidth"))) trace.info() << "band width default value: 1" << std::endl; 
-  w = vm["bandWidth"].as<double>(); 
-  if( (w < 0) || (w > 1) ) 
-    {
-      trace.info() << "The band width should be between 0 and 1 " << std::endl; 
-      return 0; 
-    }
 
   //space
   KSpace ks;
@@ -196,18 +228,17 @@ int main(int argc, char** argv)
  
   //frontier evolver
   FrontierEvolver<KSpace, LabelImage, DistanceImage, Functor, Predicate> 
-    e(ks, labelImage, distanceImage, bel, functor, predicate, NULL, w ); 
+    e(ks, labelImage, distanceImage, bel, functor, predicate, NULL); 
 
   trace.beginBlock( "Deformation" );
-  double deltat = 1.0; 
-  double sumt = 0.0; 
-  for (unsigned int i = 1; ( (sumt <= tmax)&&(deltat > 0.001) ); ++i) 
+  double sumt = 0.0;
+  for (unsigned int i = 1; i <= max; ++i) 
     {
-      trace.info() << "iteration # " << i << std::endl; 
+      trace.info() << "# iteration # " << i << " " << std::endl;  
 
       //update
-      deltat = e.update(w);
-      sumt += deltat; 
+      e.update(tstep);
+      sumt += tstep; 
 
       if ((i%step)==0) 
 	{
@@ -217,7 +248,9 @@ int main(int argc, char** argv)
 	  writeImage( labelImage, s.str(), format );
 	}
 
-      trace.info() << "time spent: " << sumt << std::endl; 
+      std::cout << "# time " << std::endl; 
+      std::cout << sumt << std::endl; 
+
     }
   trace.endBlock();   
 

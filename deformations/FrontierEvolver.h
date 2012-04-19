@@ -236,11 +236,10 @@ struct SetFromImageSelector
      * @param aS a surfel lying between two regions of @a aI
      * @param aF a point functor mapping a velocity to points 
      * @param aP any point predicate
-     * @param aW maximal width of the deformation band (1.0 by default)
      */
     FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, const Surfel& aS, 
 		    const Functor& aF, const Predicate& aP, 
-		    Partition* aPartitionPtr = NULL, const double& aW = 1.0);
+		    Partition* aPartitionPtr = NULL);
 
     /**
      * Destructor. Does nothing.
@@ -324,11 +323,6 @@ struct SetFromImageSelector
      * TODO: rename it into myTopoPred
      */
     const Predicate& myPointPred; 
-    /**
-     * Maximal width of the band whithin which
-     * the frontier is moving
-     */
-    double myW; 
     /**
      * Label of the inner region 
      */
