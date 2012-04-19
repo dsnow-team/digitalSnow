@@ -98,52 +98,51 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 	       << std::endl;  
   #endif
 
-  /// set of points that are candidate to the flip
+  /// narrow band
   typedef std::vector<Point> Band;
-  typedef typename Band::const_iterator BandIterator; 
   Band narrowBand; 
-  init ( std::back_inserter( narrowBand ) ); 
+  initNarrowBand ( std::back_inserter( narrowBand ) ); 
   #ifdef WITHINFO
   trace.info() << narrowBand.size() << " closest points" << std::endl; 
   #endif
 
-  /// velocity and zero-crossing time computation
-  typedef std::pair<Point,double> PointTime; 
-  typedef std::vector<PointTime> CandidateVector; 
-  typedef typename CandidateVector::const_iterator CandidateIterator; 
-  CandidateVector candidates; 
-  
-  typedef std::pair<Distance, Velocity> DistanceVelocity; 
-  typedef std::vector<DistanceVelocity> DistanceVelocityVector;
-  typedef typename DistanceVelocityVector::const_iterator DistanceVelocityIterator; 
-  DistanceVelocityVector buffer; 
+  /// speed and zero-crossing time computation
+  typedef std::vector<DistanceSpeed> DistanceSpeedVector;
+  DistanceSpeedVector buffer; 
 
-  for ( BandIterator 
-	 it = narrowBand.begin(), 
-	 itEnd = narrowBand.end(); 
-       it != itEnd; ++it)
-    {
-      //point
-      Point p = *it; 
-      // distance
-      Distance d = myDImage( p );
-      // velocity
-      Velocity v = myFunctor( p );
-      // storing distance and velocity
-      buffer.push_back( DistanceVelocity( d, v ) ); 
-      // new candidate with its zero-crossing time
-      if ( ( myLImage( p ) == myInnerLabel ) 
-	   || (myLImage( p ) == myOuterLabel ) )
-	{
-	  if ( ( (d>0) && (v<0) ) 
-	       || ( (d<=0) && (v>0) ) )
-	    { //if opposite signs (and v != 0)
-	      double t = - static_cast<double>( d ) / v;
-	      ASSERT( t >= 0 ); 
-	      candidates.push_back( PointTime( p, t ) ); 
-	    }
-	}
-    }
+  /// candidates to flip
+  typedef std::vector<PointTime> CandidateVector; 
+  CandidateVector candidates; 
+  initCandidates( narrowBand.begin(), narrowBand.end(), 
+		  std::back_inserter( buffer ), 
+		  std::back_inserter( candidates ) ); 
+
+  // for ( BandIterator 
+  // 	 it = narrowBand.begin(), 
+  // 	 itEnd = narrowBand.end(); 
+  //      it != itEnd; ++it)
+  //   {
+  //     //point
+  //     Point p = *it; 
+  //     // distance
+  //     Distance d = myDImage( p );
+  //     // speed
+  //     Speed v = myFunctor( p );
+  //     // storing distance and speed
+  //     buffer.push_back( DistanceSpeed( d, v ) ); 
+  //     // new candidate with its zero-crossing time
+  //     if ( ( myLImage( p ) == myInnerLabel ) 
+  // 	   || (myLImage( p ) == myOuterLabel ) )
+  // 	{
+  // 	  if ( ( (d>0) && (v<0) ) 
+  // 	       || ( (d<=0) && (v>0) ) )
+  // 	    { //if opposite signs (and v != 0)
+  // 	      double t = - static_cast<double>( d ) / v;
+  // 	      ASSERT( t >= 0 ); 
+  // 	      candidates.push_back( PointTime( p, t ) ); 
+  // 	    }
+  // 	}
+  //   }
   #ifdef WITHINFO
   trace.info() << candidates.size() << " candidates " << std::endl; 
   #endif
@@ -182,7 +181,7 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       Point p = Point::diagonal(0), plast = Point::diagonal(0);
       double t = 0.0, tlast = 0.0;
       bool go = true;
-      for (CandidateIterator 
+      for (typename CandidateVector::const_iterator 
 	     it = candidates.begin(), 
 	     itEnd = candidates.end(); 
 	   ( (it != itEnd)&&(go) ); ++it)
@@ -230,14 +229,14 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
       if (tlast == 0.0) 
 	tlast = tmax; 
 
-      DistanceVelocityIterator itBuffer = buffer.begin(); 
-      for (BandIterator 
+      typename DistanceSpeedVector::const_iterator itBuffer = buffer.begin(); 
+      for (typename Band::const_iterator 
 	     it = narrowBand.begin(), 
 	     itEnd = narrowBand.end(); 
 	   it != itEnd; ++it, ++itBuffer)
 	{
-	  // velocity
-	  DistanceVelocity pair( *itBuffer );  
+	  // speed
+	  DistanceSpeed pair( *itBuffer );  
 	  Distance newDist = pair.first + tlast*pair.second; 
 
 	  //label 
@@ -284,14 +283,48 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
 
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
 	  typename TFunctor, typename TPredicate>
+template <typename TInputIterator, typename TOutputIterator1, typename TOutputIterator2>
+inline
+void
+DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
+::initCandidates( const TInputIterator& itb, const TInputIterator& ite, 
+		  TOutputIterator1 aDistanceSpeedIto, TOutputIterator2 aCandidateIto )
+{
+  for ( TInputIterator it = itb; 
+       it != ite; ++it)
+    {
+      // point
+      Point p = *it; 
+      // distance
+      Distance d = myDImage( p );
+      // speed
+      Speed v = myFunctor( p );
+      // storing distance and speed
+      *aDistanceSpeedIto++ = DistanceSpeed( d, v ); 
+      // new candidate with its zero-crossing time
+      if ( ( myLImage( p ) == myInnerLabel ) 
+	   || (myLImage( p ) == myOuterLabel ) )
+	{
+	  if ( ( (d>0) && (v<0) ) 
+	       || ( (d<=0) && (v>0) ) )
+	    { // if opposite signs (and v != 0)
+	      double t = - static_cast<double>( d ) / v;
+	      ASSERT( t >= 0 ); 
+	      // storing candidate
+	      *aCandidateIto++ = PointTime( p, t ); 
+	    }
+	}
+    }
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TPredicate>
 template <typename TOutputIterator>
 inline
 void
 DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicate>
-::init( const TOutputIterator& out )
+::initNarrowBand( TOutputIterator res )
 {
-
-  TOutputIterator res = out; 
 
   //predicate and FMM definitions
   // typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 

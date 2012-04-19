@@ -199,6 +199,15 @@ struct SetFromImageSelector
     typedef TDistanceImage DImage;
     typedef typename DImage::Value Distance;
 
+    /// Point functor for the mapping points-speed
+    typedef TFunctor Functor; 
+    typedef typename Functor::Value Speed; 
+    typedef std::pair<Distance, Speed> DistanceSpeed; 
+    typedef std::pair<Point,double> PointTime; 
+
+    /// Topological predicate 
+    typedef TPredicate Predicate;
+
     /// Set of points where the distance values are known
     typedef typename SetFromImageSelector<DImage>::Set PointSet; 
 
@@ -212,13 +221,6 @@ struct SetFromImageSelector
     typedef typename Frontier::Surfel Surfel;
     typedef typename Frontier::SurfelConstIterator SurfelIterator;
 
-
-    /// Point functor for the mapping points-velocity
-    typedef TFunctor Functor; 
-    typedef typename Functor::Value Velocity; 
-    /// Topological predicate 
-    typedef TPredicate Predicate;
- 
 
     /// Partition
     typedef PartitionEvolver<KSpace, LImage, DImage, 
@@ -234,7 +236,7 @@ struct SetFromImageSelector
      * @param aI an image of labels
      * @param aD an image of distance values
      * @param aS a surfel lying between two regions of @a aI
-     * @param aF a point functor mapping a velocity to points 
+     * @param aF a point functor mapping a speed to points 
      * @param aP any point predicate
      */
     FrontierEvolver(const KSpace& aK, LImage& aI, DImage& aD, const Surfel& aS, 
@@ -372,17 +374,37 @@ struct SetFromImageSelector
   private:
 
      /**
-     * Return through @a out the points
+     * Return through @a res the points
      * of the narrow band
      * for which the distance value has been
      * computed and stored in @a myDImage
      *
      * @tparam TOutputIterator a model of output iterator
      *
-     * @param out an output iterator
+     * @param res an output iterator
      */
     template <typename TOutputIterator>
-    void init(const TOutputIterator& out);
+    void initNarrowBand(TOutputIterator res);
+
+     /**
+     * Return through @a res the points
+     * that can be flipped into the 
+     * adjacent region
+     *
+     * @param itb begin iterator on points
+     * @param ite end iterator on points
+     * @param aDistanceSpeedIto an output iterator on DistanceSpeed pairs
+     * @param aCandidateIto an output iterator on candidates
+     *
+     * @tparam TInputIterator a model of input iterator on points
+     * @tparam TOutputIterator1 a model of output iterator on DistanceSpeed pairs
+     * @tparam TOutputIterator2 a model of output iterator on candidates
+     *
+     */
+    template <typename TInputIterator, 
+	      typename TOutputIterator1, typename TOutputIterator2>
+    void initCandidates( const TInputIterator& itb, const TInputIterator& ite, 
+			 TOutputIterator1 aDistanceSpeedIto, TOutputIterator2 aCandidateIto );
 
     /**
      * Checks whether the other frontiers (if any)
