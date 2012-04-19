@@ -298,14 +298,14 @@ DGtal::FrontierEvolver<TKSpace, TLabelImage, TDistanceImage, TFunctor, TPredicat
   TOutputIterator res = out; 
 
   //predicate and FMM definitions
-  typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
-  typedef CascadingPointPredicate< typename Domain::Predicate, 
-    LabelPredicate > PointPredicate4FMM; 
-  LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
-  PointPredicate4FMM pointPredicate( myLImage.domain().predicate(), predOnLabels );   
-  typedef FMM<DImage, PointSet, PointPredicate4FMM > FMM;
-  // typename Domain::Predicate pointPredicate = myDImage.domain().predicate(); 
-  // typedef FMM<DImage, PointSet, typename Domain::Predicate> FMM; 
+  // typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
+  // typedef CascadingPointPredicate< typename Domain::Predicate, 
+  //   LabelPredicate > PointPredicate4FMM; 
+  // LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
+  // PointPredicate4FMM pointPredicate( myLImage.domain().predicate(), predOnLabels );   
+  // typedef FMM<DImage, PointSet, PointPredicate4FMM > FMM;
+  typename Domain::Predicate pointPredicate = myDImage.domain().predicate(); 
+  typedef FMM<DImage, PointSet, typename Domain::Predicate> FMM; 
 
   /// initialization of the band from the 
   /// points adjacent to the frontier   
