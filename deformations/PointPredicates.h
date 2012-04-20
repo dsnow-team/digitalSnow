@@ -150,6 +150,7 @@ DGtal::CascadingPointPredicate<TPointPredicate1,TPointPredicate2>
 {
   if ( myPred1->operator()( p ) ) 
 		return myPred2->operator()( p );
+  else return false; 
 }
 
 
