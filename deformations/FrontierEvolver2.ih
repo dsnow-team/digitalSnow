@@ -320,49 +320,49 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
       	}
     }
 
-
-  std::copy( myPointSet.begin(), myPointSet.end(), res ); 
-
   #ifdef WITHINFO
   trace.info() << myPointSet.size() << " distinct adjacent points." << std::endl;  
   #endif
 
 
   /// FMM computation
-  FMM fmm( myDImage, myPointSet, pointPredicate );
+  FMM fmm( myDImage, myPointSet, pointPredicate, 
+	   myDImage.domain().size(), 3.0 );
   #ifdef WITHINFO
   trace.info() << fmm << std::endl;  
   #endif
 
-  Point p = Point::diagonal(0);      //last point
-  Distance d = 0;                  //its distance
-  //first pass
-  {
-    double threshold = std::max( std::abs(fmm.max()),std::abs(fmm.min()) ) 
-      + 2.0;  // distance threshold
-    while ( (fmm.computeOneStep( p, d )) 
-	    && (std::abs(d) < threshold) )
-      {
-	ASSERT( myDImage(p) == d ); 
-        #ifdef WITHINFO
-	if (! ( ((myLImage(p) == myInnerLabel)&&(d<0.0001))
-		|| ((myLImage(p) == myOuterLabel)&&(d>-0.0001)) 
-		|| ( (myLImage(p) != myInnerLabel)&&(myLImage(p) != myOuterLabel) ) ) )
-	  {
-	    trace.info() << p << " in " << myLImage(p) << " at " << d << std::endl; 
-	  } 
-	#endif
+  fmm.compute(); 
 
-	ASSERT( ((myLImage(p) == myInnerLabel)&&(d<0.0001))
-		|| ((myLImage(p) == myOuterLabel)&&(d>-0.0001)) 
-		|| ( (myLImage(p) != myInnerLabel)&&(myLImage(p) != myOuterLabel) ) ); 
-	*res++ = p; 
-      }
-  }
+  // Point p = Point::diagonal(0);      //last point
+  // Distance d = 0;                  //its distance
+  // //first pass
+  // {
+  //   double threshold = 2.0;  // distance threshold
+  //   while ( (fmm.computeOneStep( p, d )) 
+  // 	    && (std::abs(d) < threshold) )
+  //     {
+  // 	ASSERT( myDImage(p) == d ); 
+  //       #ifdef WITHINFO
+  // 	if (! ( ((myLImage(p) == myInnerLabel)&&(d<0.0001))
+  // 		|| ((myLImage(p) == myOuterLabel)&&(d>-0.0001)) 
+  // 		|| ( (myLImage(p) != myInnerLabel)&&(myLImage(p) != myOuterLabel) ) ) )
+  // 	  {
+  // 	    trace.info() << p << " in " << myLImage(p) << " at " << d << std::endl; 
+  // 	  } 
+  // 	#endif
+
+  // 	ASSERT( ((myLImage(p) == myInnerLabel)&&(d<0.0001))
+  // 		|| ((myLImage(p) == myOuterLabel)&&(d>-0.0001)) 
+  // 		|| ( (myLImage(p) != myInnerLabel)&&(myLImage(p) != myOuterLabel) ) ); 
+  // 	*res++ = p; 
+  //     }
+  // }
   #ifdef WITHINFO
   trace.info() << fmm << std::endl;  
   #endif
 
+  std::copy( myPointSet.begin(), myPointSet.end(), res ); 
 }
 
 
