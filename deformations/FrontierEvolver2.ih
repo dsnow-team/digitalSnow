@@ -262,14 +262,14 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
 {
 
   //predicate and FMM definitions
-  // typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
-  // typedef CascadingPointPredicate< typename Domain::Predicate, 
-  //   LabelPredicate > PointPredicate4FMM; 
-  // LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
-  // PointPredicate4FMM pointPredicate( myLImage.domain().predicate(), predOnLabels );   
-  // typedef FMM<DImage, PointSet, PointPredicate4FMM > FMM;
-  typename Domain::Predicate pointPredicate = myDImage.domain().predicate(); 
-  typedef FMM<DImage, PointSet, typename Domain::Predicate> FMM; 
+   typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
+  typedef CascadingPointPredicate< typename Domain::Predicate, 
+     LabelPredicate > PointPredicate4FMM; 
+  LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
+   PointPredicate4FMM pointPredicate( myLImage.domain().predicate(), predOnLabels );   
+   typedef FMM<DImage, PointSet, PointPredicate4FMM > FMM;
+  // typename Domain::Predicate pointPredicate = myDImage.domain().predicate(); 
+  // typedef FMM<DImage, PointSet, typename Domain::Predicate> FMM; 
 
   /// initialization of the band from the 
   /// points adjacent to the digital frontier   
@@ -292,19 +292,20 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
       	    it != itEnd; ++it )
       	{
       	  Point in( getInnerPoint( *it ) ); 
-      	  Point out( getOuterPoint( *it ) );
-
 	  ASSERT( myLImage(in) == myInnerLabel ); 
-	  Distance din = myDImage( in ); 
-	  ASSERT( din <= 0 ); 
-
-	  ASSERT( myLImage(out) == myOuterLabel ); 
-	  Distance dout = myDImage( out );
-	  ASSERT( dout > 0 );
-
+	  Distance din = myDImage( in );
+	  //arbitrary correction
+	  if (din > 0) din = -0.5;
+	  ASSERT( din <= 0 );
 	  std::pair<IteratorPointDistance, bool> rin 
 	    = adjacentPoints.insert( PointDistance( in, din ) );
 
+      	  Point out( getOuterPoint( *it ) );
+	  ASSERT( myLImage(out) == myOuterLabel ); 
+	  Distance dout = myDImage( out );
+	  //arbitrary correction 
+	  	  if (dout <= 0) dout = 0.5; 
+	  ASSERT( dout > 0 );
 	  std::pair<IteratorPointDistance, bool> rout 
 	    = adjacentPoints.insert( PointDistance( out, dout ) );
       	}
