@@ -243,8 +243,8 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
 			   buffer.begin(), forbiddenPoints, aT ); 
  
       /// update frontier if needed
-      if (nbFlips > 0) 
-	updateFrontier( lastP ); 
+      // if (nbFlips > 0) 
+      // 	updateFrontier( lastP ); 
 
       return aT; 
     }
@@ -262,7 +262,7 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
 {
 
   //predicate and FMM definitions
-   typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
+  typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
   typedef CascadingPointPredicate< typename Domain::Predicate, 
      LabelPredicate > PointPredicate4FMM; 
   LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
@@ -323,6 +323,10 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
 
   #ifdef WITHINFO
   trace.info() << myPointSet.size() << " distinct adjacent points." << std::endl;  
+  if (myPointSet.size() <= 4) 
+{
+  std::copy( myPointSet.begin(), myPointSet.end(), ostream_iterator<Point>(std::cerr, ", ") ); 
+}
   #endif
 
 
@@ -407,17 +411,22 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
     SpeedExtrapolator<TmpDImage, TmpSet, SpeedImage> 
       speedFunctor( tmpDImage, tmpSet, speedImage ); 
 
-    typedef FMM<TmpDImage, TmpSet, typename Domain::Predicate > FMM;
+    typedef TwoLabelsPredicate<LImage, std::equal_to<Label> > LabelPredicate; 
+    typedef CascadingPointPredicate< typename Domain::Predicate, 
+      LabelPredicate > PointPredicate4FMM; 
+    LabelPredicate predOnLabels( myLImage, myInnerLabel, myOuterLabel );
+    PointPredicate4FMM pointPredicate( myLImage.domain().predicate(), predOnLabels );   
+    typedef FMM<TmpDImage, TmpSet,  PointPredicate4FMM > FMM;
     FMM::initFromBelsRange( myKSpace, 
 			    myFrontier->begin(), myFrontier->end(), 
 			    myDImage, tmpDImage, tmpSet ); 
 
-    const double maxWidth = 2.0; 
-    FMM fmm( tmpDImage, tmpSet, myDImage.domain().predicate() ); 
+    //TODO point predicate must be derived from the narrow band
+    FMM fmm( tmpDImage, tmpSet, pointPredicate, 
+	     myDImage.domain().size(), 3.0 ); 
     Point lastPt = Point::diagonal(0);      //last point
     double lastDist = 0.0;                  //its distance
-    while ( (fmm.computeOneStep( lastPt, lastDist )) 
-	    && (std::abs( lastDist ) < 2.0) )
+    while ( fmm.computeOneStep( lastPt, lastDist ) )
       { //new speed value
 	speedImage.setValue( lastPt, speedFunctor( lastPt ) ); 
       }
@@ -478,12 +487,19 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
  
       if ( myTopoPred( aP, oppositeLabel ) )
 	{ /// flip
-	  checkPartition( aP ); 
         #ifdef WITHINFO
 	  trace.emphase() << aP << " flipped into region " 
 			  << oppositeLabel << std::endl;
         #endif
-	  myLImage.setValue( aP, oppositeLabel ); 
+	  checkPartition( aP ); 
+	  bool flagBefore = updateFrontierBefore( aP );
+	  myLImage.setValue( aP, oppositeLabel );
+	  if (!flagBefore)
+	    {
+	      bool flagAfter = updateFrontierAfter( aP ); 
+	      ASSERT( flagAfter && 
+		      "flipped point must be a border point in updateFrontierAfter method" ); 
+	    }
 	  ++nbFlips;
 	}
       else 
@@ -501,25 +517,18 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
 template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
 	  typename TFunctor, typename TTopoPredicate>
 inline
-void
+bool
 DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
-::updateFrontier(const Point& p)
+::updateFrontierAfter(const Point& p)
 {
+
   /// spel creation
   typename KSpace::SCell spel; 
   const Label pLabel = myLImage(p); 
   if ( pLabel == myInnerLabel )
-    {
-      ASSERT( (myDImage(p) <= 0) ); 
       spel = myKSpace.sSpel( p, KSpace::POS ); 
-    }
-  else if ( pLabel == myOuterLabel )
-    {
-      ASSERT( (myDImage(p) > 0) ); 
-      spel = myKSpace.sSpel( p, KSpace::NEG );
-    }
   else 
-    ASSERT( false && "impossible label in updateFrontier method" ); 
+      spel = myKSpace.sSpel( p, KSpace::NEG );
 
   /// for each direction 
   Surfel newSurfel; 
@@ -549,9 +558,52 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
   	    }
   	}
     } 
-  ASSERT( flag && "last flipped point must be a border point in updateFrontier method" ); 
+  if (flag) 
+    {
+      this->setSurfel( newSurfel ); 
+      return true; 
+    }
+  else 
+    return false; 
+}
 
-  this->setSurfel( newSurfel ); 
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TFunctor, typename TTopoPredicate>
+inline
+bool
+DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
+::updateFrontierBefore(const Point& p)
+{
+
+  const Surfel s = mySurfel; 
+  if ( (getInnerPoint(s) == p)||(getOuterPoint(s) == p) )
+    { /// if s is adjacent to p
+      
+      #ifdef WITHINFO
+      trace.info() << "updating frontier..." << std::endl;
+      #endif
+      /// tracking until a new surfel is found
+      bool flag = true; 
+      for ( SurfelIterator it = myFrontier->begin(), 
+	      itEnd = myFrontier->end();
+	    ( (it != itEnd)&&(flag) ); ++it )
+	{
+	  SCell newS = *it; 
+	  if ( (getInnerPoint(newS) != p) && (getOuterPoint(newS) != p) )
+	    {/// if newS is not adjacent to aPoint
+		  
+	      /// update
+	      this->setSurfel( newS ); 
+	      flag = false; 
+              #ifdef WITHINFO
+	      trace.info() << s << " moved to " << newS << std::endl;
+              #endif
+	    }
+	}
+      return ( flag == false ); 
+    }
+  else 
+    return true; 
 
 }
 
@@ -598,9 +650,9 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
 	}
     #endif
 
-      ASSERT( ( (newDist <= 0)&&(myLImage( p ) == myInnerLabel) ) 
-	      || ( (newDist > 0)&&(myLImage( p ) == myOuterLabel) ) 
-	      || ( (myLImage( p ) != myInnerLabel)&&(myLImage( p ) != myOuterLabel) ) );
+      // ASSERT( ( (newDist <= 0)&&(myLImage( p ) == myInnerLabel) ) 
+      // 	      || ( (newDist > 0)&&(myLImage( p ) == myOuterLabel) ) 
+      // 	      || ( (myLImage( p ) != myInnerLabel)&&(myLImage( p ) != myOuterLabel) ) );
 
 
       // set value

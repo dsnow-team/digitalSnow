@@ -411,9 +411,28 @@ namespace DGtal
     /**
      * Update the starting surfel @a mySurfel
      * of the digital frontier from point @a p
+     * before the flip. The frontier is tracked
+     * until a surfel that is not adjacent to @a p
+     * is found. 
+     *
      * @param p any (digital) point
+     * @return 'true' if a new surfel has been found
+     * 'false' otherwise
      */
-    void updateFrontier ( const Point& p );
+    bool updateFrontierBefore ( const Point& p );
+
+    /**
+     * Update the starting surfel @a mySurfel
+     * of the digital frontier from point @a p
+     * after the flip. Among the surfels adjacent
+     * to @a p one surfel is chosen. 
+     *
+     * @param p any (digital) point
+     * @return 'true' if a new surfel has been found
+     * 'false' otherwise
+     */
+    bool updateFrontierAfter ( const Point& p );
+
 
     /**
      * Get inner point.
