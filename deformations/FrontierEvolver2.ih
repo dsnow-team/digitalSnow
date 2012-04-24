@@ -197,11 +197,13 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
   initCandidates( narrowBand.begin(), narrowBand.end(), 
 		  std::back_inserter( buffer ), 
 		  std::back_inserter( candidates ) ); 
+  ASSERT( narrowBand.size() == buffer.size() ); 
+  ASSERT( narrowBand.size() >= candidates.size() ); 
   #ifdef WITHINFO
   trace.info() << candidates.size() << " candidates " << std::endl; 
   #endif
 
-  if (candidates.begin() != candidates.end())
+  if ( (narrowBand.size() != 0)&&(candidates.size() != 0) )
     { //if there are candidates
 
       /// ordering of the points according 
@@ -242,10 +244,6 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
       updateDistanceImage( narrowBand.begin(), narrowBand.end(), 
 			   buffer.begin(), forbiddenPoints, aT ); 
  
-      /// update frontier if needed
-      // if (nbFlips > 0) 
-      // 	updateFrontier( lastP ); 
-
       return aT; 
     }
   else 
@@ -329,7 +327,7 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
 }
   #endif
 
-
+  
   /// FMM computation
   FMM fmm( myDImage, myPointSet, pointPredicate, 
 	   myDImage.domain().size(), 3.0 );
@@ -339,34 +337,10 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
 
   fmm.compute(); 
 
-  // Point p = Point::diagonal(0);      //last point
-  // Distance d = 0;                  //its distance
-  // //first pass
-  // {
-  //   double threshold = 2.0;  // distance threshold
-  //   while ( (fmm.computeOneStep( p, d )) 
-  // 	    && (std::abs(d) < threshold) )
-  //     {
-  // 	ASSERT( myDImage(p) == d ); 
-  //       #ifdef WITHINFO
-  // 	if (! ( ((myLImage(p) == myInnerLabel)&&(d<0.0001))
-  // 		|| ((myLImage(p) == myOuterLabel)&&(d>-0.0001)) 
-  // 		|| ( (myLImage(p) != myInnerLabel)&&(myLImage(p) != myOuterLabel) ) ) )
-  // 	  {
-  // 	    trace.info() << p << " in " << myLImage(p) << " at " << d << std::endl; 
-  // 	  } 
-  // 	#endif
-
-  // 	ASSERT( ((myLImage(p) == myInnerLabel)&&(d<0.0001))
-  // 		|| ((myLImage(p) == myOuterLabel)&&(d>-0.0001)) 
-  // 		|| ( (myLImage(p) != myInnerLabel)&&(myLImage(p) != myOuterLabel) ) ); 
-  // 	*res++ = p; 
-  //     }
-  // }
   #ifdef WITHINFO
   trace.info() << fmm << std::endl;  
   #endif
-
+  
   std::copy( myPointSet.begin(), myPointSet.end(), res ); 
 }
 
@@ -487,16 +461,16 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
  
       if ( myTopoPred( aP, oppositeLabel ) )
 	{ /// flip
+	  checkPartition( aP ); 
+	  bool flagBefore = updateFrontier( aP );
+	  myLImage.setValue( aP, oppositeLabel );
         #ifdef WITHINFO
 	  trace.emphase() << aP << " flipped into region " 
 			  << oppositeLabel << std::endl;
         #endif
-	  checkPartition( aP ); 
-	  bool flagBefore = updateFrontierBefore( aP );
-	  myLImage.setValue( aP, oppositeLabel );
 	  if (!flagBefore)
 	    {
-	      bool flagAfter = updateFrontierAfter( aP ); 
+	      bool flagAfter = retrieveFrontier( aP ); 
 	      ASSERT( flagAfter && 
 		      "flipped point must be a border point in updateFrontierAfter method" ); 
 	    }
@@ -519,8 +493,12 @@ template <typename TKSpace, typename TLabelImage, typename TDistanceImage,
 inline
 bool
 DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
-::updateFrontierAfter(const Point& p)
+::retrieveFrontier(const Point& p)
 {
+
+#ifdef WITHINFO
+  trace.info() << "updating frontier..." << std::endl;
+#endif
 
   /// spel creation
   typename KSpace::SCell spel; 
@@ -572,7 +550,7 @@ template <typename TKSpace, typename TLabelImage, typename TDistanceImage,
 inline
 bool
 DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPredicate>
-::updateFrontierBefore(const Point& p)
+::updateFrontier(const Point& p)
 {
 
   const Surfel s = mySurfel; 
@@ -583,24 +561,29 @@ DGtal::FrontierEvolver2<TKSpace, TLabelImage, TDistanceImage, TFunctor, TTopoPre
       trace.info() << "updating frontier..." << std::endl;
       #endif
       /// tracking until a new surfel is found
-      bool flag = true; 
-      for ( SurfelIterator it = myFrontier->begin(), 
-	      itEnd = myFrontier->end();
-	    ( (it != itEnd)&&(flag) ); ++it )
+      bool flag = true;
+      SurfelIterator it = myFrontier->begin(); 
+      SurfelIterator itEnd = myFrontier->end(); 
+      SCell newS;  
+      while ( (it != itEnd)&&(flag) )
 	{
-	  SCell newS = *it; 
+	  newS = *it; 
 	  if ( (getInnerPoint(newS) != p) && (getOuterPoint(newS) != p) )
-	    {/// if newS is not adjacent to aPoint
-		  
-	      /// update
-	      this->setSurfel( newS ); 
+	    {/// if newS is not adjacent to aPoint	  
 	      flag = false; 
-              #ifdef WITHINFO
-	      trace.info() << s << " moved to " << newS << std::endl;
-              #endif
 	    }
+	  ++it; 
 	}
-      return ( flag == false ); 
+      if (!flag) 
+	{
+	  setSurfel( newS );
+          #ifdef WITHINFO
+	  trace.info() << s << " moved to " << newS << std::endl;
+          #endif
+	  return true; 
+	}
+      else 
+	return false; 
     }
   else 
     return true; 

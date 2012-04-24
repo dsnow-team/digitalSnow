@@ -407,6 +407,7 @@ namespace DGtal
 			      TInputIterator2 aDistanceSpeedIt, 
 			      const TSet& aSet, const double& t );
 
+  public: 
 
     /**
      * Update the starting surfel @a mySurfel
@@ -419,7 +420,9 @@ namespace DGtal
      * @return 'true' if a new surfel has been found
      * 'false' otherwise
      */
-    bool updateFrontierBefore ( const Point& p );
+    bool updateFrontier ( const Point& p );
+
+  private: 
 
     /**
      * Update the starting surfel @a mySurfel
@@ -431,7 +434,7 @@ namespace DGtal
      * @return 'true' if a new surfel has been found
      * 'false' otherwise
      */
-    bool updateFrontierAfter ( const Point& p );
+    bool retrieveFrontier ( const Point& p );
 
 
     /**

@@ -148,42 +148,13 @@ void
 DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
 ::checkFrontiers(const Evolver* aPtrToCaller, const Point& aPoint)
 {
-  trace.info() << " checking frontiers... " << std::endl; 
-
   for (typename std::vector<EvolverPtr>::const_iterator 
   	 it = myEvolvers.begin(), 
   	 itEnd = myEvolvers.end(); it != itEnd; ++it)
     { /// for each frontier (except aPtrToCaller) 
       if ( it->get() != aPtrToCaller )
 	{
-	  SCell s = (*it)->surfel();
-
-	  SCellToIncidentPoints<KSpace> func( myKSpace ); 
-	  typename SCellToIncidentPoints<KSpace>::Output points = func( s ); 
-
-	  if ( (points.first == aPoint)||(points.second == aPoint) )
-	    { /// if s is adjacent to aPoint
-
-	      /// tracking until a new surfel is found
-	      bool flag = true; 
-	      typedef typename Evolver::SurfelIterator SurfelIterator;
-	      for ( SurfelIterator sit = (*it)->begin(), 
-		      sitEnd = (*it)->end();
-		    ( (sit != sitEnd)&&(flag) ); ++sit )
-		{
-		  SCell newS = *sit; 
-		  typename SCellToIncidentPoints<KSpace>::Output newPoints = func( newS ); 
-		  if ( (newPoints.first != aPoint) && (newPoints.second != aPoint) )
-		    {/// if newS is not adjacent to aPoint
-		  
-		      /// update
-		      (*it)->setSurfel( newS ); 
-		      flag = false; 
-		      trace.info() << s << " moved to " << newS << std::endl; 
-		    }
-		}
-	      ASSERT( flag == false ); 
-	    }
+	  (*it)->updateFrontier( aPoint ); 
 	}
     }
 }
