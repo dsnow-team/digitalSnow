@@ -349,7 +349,9 @@ bool displayPartition(int argc, char** argv, const TImage& img)
 
   }
 
+  viewer.setSnapshotFormat("PNG");  
   viewer << Viewer3D::updateDisplay;
+  viewer.saveSnapshot(true, true); 
 
   return application.exec();
 #else
