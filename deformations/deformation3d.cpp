@@ -58,8 +58,8 @@ int main(int argc, char** argv)
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
-    ("outputFormat,f",   po::value<string>()->default_value("png"), 
-     "Output files format: either <png> (3d to 2d, default) or <vol> (3d)" )
+    ("outputFormat,f",   po::value<string>()->default_value("vol"), 
+     "Output files format: either <png> (3d to 2d) or <vol> (3d, default)" )
     ("withVisu", "Enables interactive 3d visualization after evolution" );
 
   
@@ -151,12 +151,6 @@ int main(int argc, char** argv)
   //domain
   Domain d = Domain( labelImage->domain().lowerBound(), labelImage->domain().upperBound() );
 
-  //display
-  std::stringstream ss; 
-  ss << outputFiles << "0001"; 
-  writeImage( *labelImage, ss.str(), format );
-
-
   //algo
   std::string algo; 
   if (!(vm.count("algo"))) trace.info() << "default algorithm: levelSet" << std::endl; 
@@ -199,7 +193,7 @@ int main(int argc, char** argv)
 
 	      //display
 	      std::stringstream s; 
-	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+	      s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
 	      writeImage( implicitFunction, s.str(), format );
 
 	    }
@@ -258,7 +252,7 @@ int main(int argc, char** argv)
 
 	      //display
 	      std::stringstream s; 
-	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+	      s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
 	      writeImage( implicitFunction, s.str(), format, 0.5 );
 
 	    }
@@ -308,8 +302,10 @@ int main(int argc, char** argv)
 	    {
 	      //display
 	      std::stringstream s; 
-	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-	      writeImage( *labelImage, s.str(), format );
+	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)
+		<< ".vol"; 
+	      typedef GradientColorMap<LabelImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
+	      VolWriter<LabelImage,ColorMap>::exportVol( s.str(), *labelImage, 0, 255 );
 	    }
 	  sumt += tstep; 
 	  DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
@@ -318,7 +314,7 @@ int main(int argc, char** argv)
       DGtal::trace.endBlock();
 
       //interactive display after the evolution
-      if (vm.count("withVisu")) displayImage( argc, argv, *labelImage ); 
+      if (vm.count("withVisu")) displayPartition( argc, argv, *labelImage ); 
       
 
     } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;

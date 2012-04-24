@@ -267,3 +267,92 @@ bool displayImage2(int argc, char** argv, const TLabelImage limg,
 #endif
 }
 
+template< typename TImage >
+bool displayPartition(int argc, char** argv, const TImage& img)
+{
+
+  typedef typename TImage::Value Label; 
+
+  //KhalimskySpace
+  Domain d = img.domain();
+  Point aLowerBound = d.lowerBound(); 
+  Point aUpperBound = d.upperBound(); 
+  KSpace aKSpace;
+  aKSpace.init(aLowerBound, aUpperBound, true);
+
+  //container
+  std::set<Cell> aSet; 
+
+  //mark bels
+  for (DGtal::Dimension k = 0; k < KSpace::dimension; ++k )
+    {
+      Cell dir_low_uid = aKSpace.uSpel( aLowerBound );
+      Cell dir_up_uid = aKSpace.uGetDecr( aKSpace.uSpel( aUpperBound ), k);
+      Cell p = dir_low_uid;
+      do 
+        {
+          Label here = img( aKSpace.uCoords(p) );
+          Label next = img( aKSpace.uCoords(aKSpace.uGetIncr( p, k )) );
+          if ( here != next ) 
+            { // add new bel to the set.
+              aSet.insert( aKSpace.uIncident( p, k, true ));
+            }
+        }
+      while ( aKSpace.uNext( p, dir_low_uid, dir_up_uid ) );
+    }
+
+  #ifdef WITH_VISU3D_QGLVIEWER
+  QApplication application(argc,argv);
+  Viewer3D viewer;
+  viewer.show();
+
+  GradientColorMap<long> colorMap( 0, 510 );
+  colorMap.addColor(Color::Blue);
+  colorMap.addColor(Color::Yellow);
+  colorMap.addColor(Color::Red);
+  colorMap.addColor(Color::Green);
+
+  /// retrieve frontiers
+  unsigned int counter = 0; 
+  while(!aSet.empty()){
+ 
+    SCell sbel = aKSpace.signs( *(aSet.begin()), true ); 
+    //incident points
+    SCellToIncidentPoints<KSpace> func( aKSpace ); 
+    typename SCellToIncidentPoints<KSpace>::Output points = func( sbel ); 
+    Label iLabel( img( points.first ) ); 
+    Label oLabel( img( points.second ) ); 
+
+    /// frontier from sbel
+    typedef FrontierPredicate<KSpace, TImage> SurfelPredicate;
+    /// !!!!!! be careful oLabel and iLabel are swaped because func is wrong
+    SurfelPredicate surfelPred( aKSpace, img, oLabel, iLabel ); 
+    typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
+    Frontier frontier( aKSpace, 
+		       surfelPred, 
+		       SurfelAdjacency<KSpace::dimension>( true ), 
+		       sbel ); 
+
+    // tracking (and removing bels belonging to this frontier)
+    // and display
+    counter++; 
+    typedef typename Frontier::SurfelConstIterator SurfelIterator;
+    for ( SurfelIterator it = frontier.begin(), 
+	    itEnd = frontier.end();
+	  it != itEnd; ++it )
+      {
+	viewer << DGtal::CustomColors3D( colorMap( iLabel+oLabel ), 
+					 colorMap( iLabel+oLabel ) );
+	viewer << *it; 
+	aSet.erase( aKSpace.unsigns( *it ) );
+      }
+
+  }
+
+  viewer << Viewer3D::updateDisplay;
+
+  return application.exec();
+#else
+  return false; 
+#endif
+}
