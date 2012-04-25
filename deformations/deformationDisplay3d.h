@@ -230,7 +230,7 @@ bool writePartition(const TImage& img, string filename, string format)
 			<< std::endl;
       }
 
-    const int max = 20; 
+    const double max = 20; 
     viewer.camera()->setOrientation((QGLViewer::QGLViewerIndex(&viewer)/max)*2.0*M_PI, 0.0);
     viewer.showEntireScene(); //fit camera to scene
 
