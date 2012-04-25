@@ -208,9 +208,20 @@ bool writePartition(const TImage& img, string filename, string format)
     Viewer3D viewer;
     viewer.show();
 
+    //display
     displayPartition(viewer, img); 
 
-    //viewer.setStateFileName(".qglviewer.xml"); 
+    if (QGLViewer::QGLViewerIndex(&viewer) > 0)
+      {//rename state file
+	string oldf = ".qglviewer.xml";
+	std::stringstream news; 
+	news << ".qglviewer" << (QGLViewer::QGLViewerIndex(&viewer)) << ".xml";
+	string newf = news.str();  
+	if (!rename (oldf.c_str(), newf.c_str())) 
+	  trace.info() << "renaming " << oldf << " into " 
+		       << newf << " failed " << std::endl; 
+      }
+
     if (!viewer.restoreStateFromFile())
       {
 	string s = viewer.stateFileName().toStdString(); 
@@ -219,20 +230,41 @@ bool writePartition(const TImage& img, string filename, string format)
 			<< std::endl;
       }
 
+    const int max = 20; 
+    viewer.camera()->setOrientation((QGLViewer::QGLViewerIndex(&viewer)/max)*2.0*M_PI, 0.0);
+    viewer.showEntireScene(); //fit camera to scene
+
     viewer.setSnapshotFileName(filename.c_str());  
     viewer.setSnapshotFormat("PNG");  
+
     viewer << Viewer3D::updateDisplay;
     viewer.saveSnapshot(true, true); 
 
-    //renommage du fichier
+    {//rename snapshot
+    std::stringstream olds;
+    olds << viewer.snapshotFileName().toStdString()
+	 << "-" << setfill('0') << std::setw(4) 
+	 << (viewer.snapshotCounter()-1) << ".png"; 
+    string oldf = olds.str(); 
+    std::stringstream news; 
+    news << filename << ".png";
+    string newf = news.str();  
+    if (!rename (oldf.c_str(), newf.c_str())) 
+      trace.info() << "renaming " << oldf << " into " 
+		   << newf << " failed " << std::endl; 
+    }
+    
+    {//rename state file
     string oldf = viewer.stateFileName().toStdString();
     std::stringstream news; 
     news << ".qglviewer" << (QGLViewer::QGLViewerIndex(&viewer)+1) << ".xml";
     string newf = news.str();  
-    rename (oldf.c_str(), newf.c_str()); 
+    if (!rename (oldf.c_str(), newf.c_str())) 
+      trace.info() << "renaming " << oldf << " into " 
+		   << newf << " failed " << std::endl; 
+    }
 
-    //viewer.saveStateToFile();
- 
+    viewer.setStateFileName(QString::null);  
     application.exit(); 
     }
   else if (format.compare("vol")==0)
@@ -387,7 +419,6 @@ bool displayPartition(int argc, char** argv, const TImage& img)
 
   viewer.setSnapshotFormat("PNG");  
   viewer << Viewer3D::updateDisplay;
-  viewer.saveSnapshot(true, true); 
 
   return application.exec();
 #else

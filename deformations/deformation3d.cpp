@@ -151,6 +151,9 @@ int main(int argc, char** argv)
   //domain
   Domain d = Domain( labelImage->domain().lowerBound(), labelImage->domain().upperBound() );
 
+  if (vm["outputFormat"].as<std::string>() == "png") //visu for choosing camera position
+    displayPartition( argc, argv, *labelImage );     
+
   //algo
   std::string algo; 
   if (!(vm.count("algo"))) trace.info() << "default algorithm: levelSet" << std::endl; 
