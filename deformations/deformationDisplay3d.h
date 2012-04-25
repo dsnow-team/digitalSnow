@@ -199,16 +199,41 @@ bool writePartition(const TImage& img, string filename, string format)
     {
     trace.emphase() << "snapshot with QGLViewer" << std::endl;
 
-    //QApplication application(1,"appli");
+    int argc = 1; 
+    string sargv1 = "QGLViewer"; 
+    char* argv1 = const_cast<char*>( sargv1.c_str() ); 
+    char* argv[1]; 
+    argv[0] = argv1; 
+    QApplication application(argc,argv);
     Viewer3D viewer;
     viewer.show();
 
     displayPartition(viewer, img); 
 
+    //viewer.setStateFileName(".qglviewer.xml"); 
+    if (!viewer.restoreStateFromFile())
+      {
+	string s = viewer.stateFileName().toStdString(); 
+	trace.emphase() << " file " << s 
+		      << " not found " 
+			<< std::endl;
+      }
+
+    viewer.setSnapshotFileName(filename.c_str());  
     viewer.setSnapshotFormat("PNG");  
     viewer << Viewer3D::updateDisplay;
     viewer.saveSnapshot(true, true); 
 
+    //renommage du fichier
+    string oldf = viewer.stateFileName().toStdString();
+    std::stringstream news; 
+    news << ".qglviewer" << (QGLViewer::QGLViewerIndex(&viewer)+1) << ".xml";
+    string newf = news.str();  
+    rename (oldf.c_str(), newf.c_str()); 
+
+    //viewer.saveStateToFile();
+ 
+    application.exit(); 
     }
   else if (format.compare("vol")==0)
   {

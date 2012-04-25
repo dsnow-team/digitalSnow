@@ -107,9 +107,9 @@ int main(int argc, char** argv)
   if (!(vm.count("outputFormat"))) 
     trace.info() << "output files format is png (3d to 2d) " << std::endl;
   format = vm["outputFormat"].as<std::string>();
-  if ((format != "png")&&(format != "vol")) 
+  if ((format != "png")&&(format != "vol")&&(format != "pngc")) 
     {
-      trace.info() << "format is expected to be either png or vol " << std::endl;
+      trace.info() << "format is expected to be either <png>, <pngc> or <vol> " << std::endl;
       return 0; 
     }
 
