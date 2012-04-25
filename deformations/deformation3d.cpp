@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("vol"), 
-     "Output files format: either <png> (3d to 2d) or <vol> (3d, default)" )
+     "Output files format: either <png> (3d to 2d with QGLViewer), <pngc> (3d to 2d with Cairo) or <vol> (3d, default)" )
     ("withVisu", "Enables interactive 3d visualization after evolution" );
 
   
@@ -193,8 +193,9 @@ int main(int argc, char** argv)
 
 	      //display
 	      std::stringstream s; 
-	      s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
-	      writeImage( implicitFunction, s.str(), format );
+	      s << outputFiles << setfill('0') << std::setw(4) << (i/step);
+	      updateLabelImage( *labelImage, implicitFunction ); 
+	      writePartition( *labelImage, s.str(), format );
 
 	    }
 	  sumt += tstep; 
@@ -204,7 +205,9 @@ int main(int argc, char** argv)
       DGtal::trace.endBlock();
 
       //interactive display after the evolution
-      if (vm.count("withVisu")) displayImage2( argc, argv, implicitFunction, implicitFunction, a, b ); 
+      updateLabelImage( *labelImage, implicitFunction, 0 ); 
+      if (vm.count("withVisu")) 
+	displayImageWithInfo( argc, argv, *labelImage, implicitFunction, a, b ); 
 
     } else if (algo.compare("phaseField")==0)
     {
@@ -253,7 +256,8 @@ int main(int argc, char** argv)
 	      //display
 	      std::stringstream s; 
 	      s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
-	      writeImage( implicitFunction, s.str(), format, 0.5 );
+	      updateLabelImage( *labelImage, implicitFunction, 0.5 ); 
+	      writePartition( *labelImage, s.str(), format );
 
 	    }
 	  sumt += tstep; 
@@ -263,7 +267,8 @@ int main(int argc, char** argv)
       DGtal::trace.endBlock();
 
       //interactive display after the evolution
-      if (vm.count("withVisu")) displayImage( argc, argv, implicitFunction, 0.5 ); 
+      updateLabelImage( *labelImage, implicitFunction, 0.5 ); 
+      if (vm.count("withVisu")) displayPartition( argc, argv, *labelImage ); 
 
     } else if (algo.compare("localLevelSet")==0)
     {
@@ -302,10 +307,8 @@ int main(int argc, char** argv)
 	    {
 	      //display
 	      std::stringstream s; 
-	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)
-		<< ".vol"; 
-	      typedef GradientColorMap<LabelImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
-	      VolWriter<LabelImage,ColorMap>::exportVol( s.str(), *labelImage, 0, 255 );
+	      s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
+	      writePartition( *labelImage, s.str(), format );
 	    }
 	  sumt += tstep; 
 	  DGtal::trace.info() << "Time spent: " << sumt << std::endl;    

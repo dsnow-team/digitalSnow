@@ -10,23 +10,116 @@
 #include "DGtal/io/colormaps/GradientColorMap.h"
 #include "DGtal/io/writers/VolWriter.h"
 
+#include "LocalMCM.h"
+
+#include "DGtal/topology/KhalimskySpaceND.h"
+#include "DGtal/topology/helpers/Surfaces.h"
+#include "DGtal/base/BasicFunctors.h"
+#include "DGtal/kernel/BasicPointPredicates.h"
+
+// interactive
+#include <QtGui/qapplication.h>
+#include "DGtal/io/viewers/Viewer3D.h"
+#include "DGtal/io/CDrawableWithDisplay3D.h"
+#include "DGtal/io/DrawWithDisplay3DModifier.h"
+
+
+template< typename TViewer, typename TImage >
+bool displayPartition(TViewer& viewer, const TImage& img)
+{
+  typedef typename TImage::Value Label; 
+
+  //KhalimskySpace
+  Domain d = img.domain();
+  Point aLowerBound = d.lowerBound(); 
+  Point aUpperBound = d.upperBound(); 
+  KSpace aKSpace;
+  aKSpace.init(aLowerBound, aUpperBound, true);
+
+  //container
+  std::set<Cell> aSet; 
+
+  //mark bels
+  for (DGtal::Dimension k = 0; k < KSpace::dimension; ++k )
+    {
+      Cell dir_low_uid = aKSpace.uSpel( aLowerBound );
+      Cell dir_up_uid = aKSpace.uGetDecr( aKSpace.uSpel( aUpperBound ), k);
+      Cell p = dir_low_uid;
+      do 
+        {
+          Label here = img( aKSpace.uCoords(p) );
+          Label next = img( aKSpace.uCoords(aKSpace.uGetIncr( p, k )) );
+          if ( here != next ) 
+            { // add new bel to the set.
+              aSet.insert( aKSpace.uIncident( p, k, true ));
+            }
+        }
+      while ( aKSpace.uNext( p, dir_low_uid, dir_up_uid ) );
+    }
+
+  GradientColorMap<long> colorMap( 0, 510 );
+  colorMap.addColor(Color::Blue);
+  colorMap.addColor(Color::Yellow);
+  colorMap.addColor(Color::Red);
+  colorMap.addColor(Color::Green);
+
+  /// retrieve frontiers
+  unsigned int counter = 0; 
+  while(!aSet.empty()){
+ 
+    SCell sbel = aKSpace.signs( *(aSet.begin()), true ); 
+    //incident points
+    SCellToIncidentPoints<KSpace> func( aKSpace ); 
+    typename SCellToIncidentPoints<KSpace>::Output points = func( sbel ); 
+    Label iLabel( img( points.first ) ); 
+    Label oLabel( img( points.second ) ); 
+
+    /// frontier from sbel
+    typedef FrontierPredicate<KSpace, TImage> SurfelPredicate;
+    /// !!!!!! be careful oLabel and iLabel are swaped because func is wrong
+    SurfelPredicate surfelPred( aKSpace, img, oLabel, iLabel ); 
+    typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
+    Frontier frontier( aKSpace, 
+		       surfelPred, 
+		       SurfelAdjacency<KSpace::dimension>( true ), 
+		       sbel ); 
+
+    // tracking (and removing bels belonging to this frontier)
+    // and display
+    counter++; 
+    typedef typename Frontier::SurfelConstIterator SurfelIterator;
+    for ( SurfelIterator it = frontier.begin(), 
+	    itEnd = frontier.end();
+	  it != itEnd; ++it )
+      {
+	viewer << DGtal::CustomColors3D( colorMap( iLabel+oLabel ), 
+					 colorMap( iLabel+oLabel ) );
+	viewer << *it; 
+	aSet.erase( aKSpace.unsigns( *it ) );
+      }
+  }
+  trace.info() << counter << " frontier(s) displayed" << std::endl; 
+
+}
+
 template< typename TImage >
-bool writeImage(const TImage& img, string filename, string format, const double& threshold = 0)
+bool writePartition(const TImage& img, string filename, string format)
 {
 
-  if (format.compare("png")==0)
+  if (format.compare("pngc")==0)
   {
   #ifdef WITH_CAIRO
     Board3DTo2D viewer;
     
-    Domain d = img.domain(); 
-    Domain::ConstIterator cIt = d.begin(); 
-    Domain::ConstIterator cItEnd = d.end(); 
-    for ( ; cIt != cItEnd; ++cIt)
-    { 
-      if (img(*cIt) <= threshold) 
-	      viewer << *cIt; 
-    }
+    displayPartition( viewer, img ); 
+    // Domain d = img.domain(); 
+    // Domain::ConstIterator cIt = d.begin(); 
+    // Domain::ConstIterator cItEnd = d.end(); 
+    // for ( ; cIt != cItEnd; ++cIt)
+    // { 
+    //   if (img(*cIt) <= threshold) 
+    // 	      viewer << *cIt; 
+    // }
 
   //reading camera configuration for the 3d to 2d projection
   std::ifstream file(".camera", ios::in); 
@@ -102,27 +195,29 @@ bool writeImage(const TImage& img, string filename, string format, const double&
     return false; 
   #endif
 
-  } else if (format.compare("vol")==0)
+  } else if (format.compare("png")==0)
+    {
+    trace.emphase() << "snapshot with QGLViewer" << std::endl;
+
+    //QApplication application(1,"appli");
+    Viewer3D viewer;
+    viewer.show();
+
+    displayPartition(viewer, img); 
+
+    viewer.setSnapshotFormat("PNG");  
+    viewer << Viewer3D::updateDisplay;
+    viewer.saveSnapshot(true, true); 
+
+    }
+  else if (format.compare("vol")==0)
   {
 
-    //create a label image from the implicit function
-    typedef ImageContainerBySTLVector<Domain,int> LabelImage; 
-    LabelImage labelImage( img.domain() ); 
-    Domain d(labelImage.domain()); 
-    Domain::ConstIterator cIt = d.begin(); 
-    Domain::ConstIterator cItEnd = d.end(); 
-    for ( ; cIt != cItEnd; ++cIt)
-    { 
-      if (img(*cIt) <= threshold) 
-	       labelImage.setValue(*cIt,255);
-      else  
-	       labelImage.setValue(*cIt,0);
-    }
     //write it into a vol file
     std::stringstream s; 
     s << filename << ".vol";
-    typedef GradientColorMap<typename LabelImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
-    VolWriter<LabelImage,ColorMap>::exportVol( s.str(), labelImage, 0, 255 );
+    typedef GradientColorMap<typename TImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
+    VolWriter<TImage,ColorMap>::exportVol( s.str(), img, 0, 255 );
 
     return true; 
 
@@ -131,61 +226,47 @@ bool writeImage(const TImage& img, string filename, string format, const double&
 }
 
 
-// interactive
-#include <QtGui/qapplication.h>
-#include "DGtal/io/viewers/Viewer3D.h"
-#include "DGtal/io/CDrawableWithDisplay3D.h"
 
-#include "DGtal/images/imagesSetsUtils/SimpleThresholdForegroundPredicate.h"
+// template< typename TImage >
+// bool displayImage(int argc, char** argv, const TImage& img, const double& threshold = 0)
+// {
 
-#include "DGtal/topology/KhalimskySpaceND.h"
-#include "DGtal/topology/helpers/Surfaces.h"
+//   //KhalimskySpace
+//   Domain d = img.domain(); 
+//   KSpace K;
+//   K.init(d.lowerBound(), d.upperBound(), true);
+//   //adjacency  
+//   SurfelAdjacency<3> SAdj( true );
+//   std::vector<std::vector<SCell> > vectConnectedSCell;
+//   //predicate
+//   typedef SimpleThresholdForegroundPredicate<TImage> PointPredicate; 
+//   PointPredicate predicate(img,threshold);
+//   //tracking 
+//   Surfaces<KSpace>::extractAllConnectedSCell(vectConnectedSCell,K, SAdj, predicate, true);
 
-template< typename TImage >
-bool displayImage(int argc, char** argv, const TImage& img, const double& threshold = 0)
-{
+//   #ifdef WITH_VISU3D_QGLVIEWER
+//   QApplication application(argc,argv);
+//   Viewer3D viewer;
+//   viewer.show();
 
-  //KhalimskySpace
-  Domain d = img.domain(); 
-  KSpace K;
-  K.init(d.lowerBound(), d.upperBound(), true);
-  //adjacency  
-  SurfelAdjacency<3> SAdj( true );
-  std::vector<std::vector<SCell> > vectConnectedSCell;
-  //predicate
-  typedef SimpleThresholdForegroundPredicate<TImage> PointPredicate; 
-  PointPredicate predicate(img,threshold);
-  //tracking 
-  Surfaces<KSpace>::extractAllConnectedSCell(vectConnectedSCell,K, SAdj, predicate, true);
+//   for(unsigned int i=0; i< vectConnectedSCell.size();i++){
+//     for(unsigned int j=0; j< vectConnectedSCell.at(i).size();j++){
+//       viewer << vectConnectedSCell.at(i).at(j);
+//     }    
+//   }
 
-  #ifdef WITH_VISU3D_QGLVIEWER
-  QApplication application(argc,argv);
-  Viewer3D viewer;
-  viewer.show();
+//   viewer << Viewer3D::updateDisplay;
 
-  for(unsigned int i=0; i< vectConnectedSCell.size();i++){
-    for(unsigned int j=0; j< vectConnectedSCell.at(i).size();j++){
-      viewer << vectConnectedSCell.at(i).at(j);
-    }    
-  }
-
-  viewer << Viewer3D::updateDisplay;
-
-  return application.exec();
-#else
-  return false; 
-#endif
-}
+//   return application.exec();
+// #else
+//   return false; 
+// #endif
+// }
 
 
-#include "LocalMCM.h"
-
-#include "DGtal/base/BasicFunctors.h"
-#include "DGtal/kernel/BasicPointPredicates.h"
-#include "DGtal/io/DrawWithDisplay3DModifier.h"
 
 template< typename TLabelImage, typename TDistanceImage, typename TExternImage >
-bool displayImage2(int argc, char** argv, const TLabelImage limg, 
+bool displayImageWithInfo(int argc, char** argv, const TLabelImage& limg, 
 		   TDistanceImage& img, 
 		  const TExternImage& ext1, const TExternImage& ext2, 
 		  const short int& threshold = 0)
@@ -267,87 +348,17 @@ bool displayImage2(int argc, char** argv, const TLabelImage limg,
 #endif
 }
 
+
 template< typename TImage >
 bool displayPartition(int argc, char** argv, const TImage& img)
 {
-
-  typedef typename TImage::Value Label; 
-
-  //KhalimskySpace
-  Domain d = img.domain();
-  Point aLowerBound = d.lowerBound(); 
-  Point aUpperBound = d.upperBound(); 
-  KSpace aKSpace;
-  aKSpace.init(aLowerBound, aUpperBound, true);
-
-  //container
-  std::set<Cell> aSet; 
-
-  //mark bels
-  for (DGtal::Dimension k = 0; k < KSpace::dimension; ++k )
-    {
-      Cell dir_low_uid = aKSpace.uSpel( aLowerBound );
-      Cell dir_up_uid = aKSpace.uGetDecr( aKSpace.uSpel( aUpperBound ), k);
-      Cell p = dir_low_uid;
-      do 
-        {
-          Label here = img( aKSpace.uCoords(p) );
-          Label next = img( aKSpace.uCoords(aKSpace.uGetIncr( p, k )) );
-          if ( here != next ) 
-            { // add new bel to the set.
-              aSet.insert( aKSpace.uIncident( p, k, true ));
-            }
-        }
-      while ( aKSpace.uNext( p, dir_low_uid, dir_up_uid ) );
-    }
 
   #ifdef WITH_VISU3D_QGLVIEWER
   QApplication application(argc,argv);
   Viewer3D viewer;
   viewer.show();
 
-  GradientColorMap<long> colorMap( 0, 510 );
-  colorMap.addColor(Color::Blue);
-  colorMap.addColor(Color::Yellow);
-  colorMap.addColor(Color::Red);
-  colorMap.addColor(Color::Green);
-
-  /// retrieve frontiers
-  unsigned int counter = 0; 
-  while(!aSet.empty()){
- 
-    SCell sbel = aKSpace.signs( *(aSet.begin()), true ); 
-    //incident points
-    SCellToIncidentPoints<KSpace> func( aKSpace ); 
-    typename SCellToIncidentPoints<KSpace>::Output points = func( sbel ); 
-    Label iLabel( img( points.first ) ); 
-    Label oLabel( img( points.second ) ); 
-
-    /// frontier from sbel
-    typedef FrontierPredicate<KSpace, TImage> SurfelPredicate;
-    /// !!!!!! be careful oLabel and iLabel are swaped because func is wrong
-    SurfelPredicate surfelPred( aKSpace, img, oLabel, iLabel ); 
-    typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
-    Frontier frontier( aKSpace, 
-		       surfelPred, 
-		       SurfelAdjacency<KSpace::dimension>( true ), 
-		       sbel ); 
-
-    // tracking (and removing bels belonging to this frontier)
-    // and display
-    counter++; 
-    typedef typename Frontier::SurfelConstIterator SurfelIterator;
-    for ( SurfelIterator it = frontier.begin(), 
-	    itEnd = frontier.end();
-	  it != itEnd; ++it )
-      {
-	viewer << DGtal::CustomColors3D( colorMap( iLabel+oLabel ), 
-					 colorMap( iLabel+oLabel ) );
-	viewer << *it; 
-	aSet.erase( aKSpace.unsigns( *it ) );
-      }
-
-  }
+  displayPartition(viewer, img); 
 
   viewer.setSnapshotFormat("PNG");  
   viewer << Viewer3D::updateDisplay;

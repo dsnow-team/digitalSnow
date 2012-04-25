@@ -23,20 +23,36 @@ int getSize(TImage& img, const double& threshold = 0)
   return c; 
 }
 
+template< typename TLabelImage, typename TDistanceImage >
+void updateLabelImage(TLabelImage& limg, const TDistanceImage& dimg, const double& threshold = 0)
+{
+ 
+  typename TLabelImage::Domain d = limg.domain(); 
+  typename TLabelImage::Domain::ConstIterator cIt = d.begin(); 
+  typename TLabelImage::Domain::ConstIterator cItEnd = d.end(); 
+  for ( ; cIt != cItEnd; ++cIt)
+  { //for each domain point
+    if (dimg(*cIt) <= threshold) 
+      limg.setValue(*cIt, 255);   
+    else 
+      limg.setValue(*cIt, 0);  
+  }
+
+}
+
 template< typename TImage >
 void inv(TImage& img, const double& threshold = 0)
 {
  
-  typename TImage::OutputIterator res = img.outputIterator(); 
-  typename TImage::ConstRange r = img.range(); 
-  typename TImage::ConstRange::ConstIterator cIt = r.begin(); 
-  typename TImage::ConstRange::ConstIterator cItEnd = r.end(); 
+  typename TImage::Domain d = img.domain(); 
+  typename TImage::Domain::ConstIterator cIt = d.begin(); 
+  typename TImage::Domain::ConstIterator cItEnd = d.end(); 
   for ( ; cIt != cItEnd; ++cIt)
-  { //for each
-    if (*cIt <= threshold) 
-      *res++ = 1;  
+  { //for each domain point
+    if (img(*cIt) <= threshold) 
+      img.setValue( *cIt, 1 );  
     else 
-      *res++ = 0;  
+      img.setValue( *cIt, 0 );   
   }
 
 }
