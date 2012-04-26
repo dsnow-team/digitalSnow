@@ -16,6 +16,12 @@
 #include "DGtal/topology/helpers/Surfaces.h"
 #include "DGtal/base/BasicFunctors.h"
 #include "DGtal/kernel/BasicPointPredicates.h"
+// frontier
+#include "DGtal/topology/SurfelAdjacency.h"
+#include "DGtal/topology/helpers/FrontierPredicate.h"
+#include "DGtal/topology/LightExplicitDigitalSurface.h"
+
+
 
 // interactive
 #include <QtGui/qapplication.h>
@@ -210,6 +216,7 @@ bool writePartition(const TImage& img, string filename, string format)
 
     //display
     displayPartition(viewer, img); 
+    viewer << Viewer3D::updateDisplay;
 
     if (QGLViewer::QGLViewerIndex(&viewer) > 0)
       {//rename state file
@@ -217,7 +224,7 @@ bool writePartition(const TImage& img, string filename, string format)
 	std::stringstream news; 
 	news << ".qglviewer" << (QGLViewer::QGLViewerIndex(&viewer)) << ".xml";
 	string newf = news.str();  
-	if (!rename (oldf.c_str(), newf.c_str())) 
+	if (rename (oldf.c_str(), newf.c_str()) == -1) 
 	  trace.info() << "renaming " << oldf << " into " 
 		       << newf << " failed " << std::endl; 
       }
@@ -229,15 +236,10 @@ bool writePartition(const TImage& img, string filename, string format)
 		      << " not found " 
 			<< std::endl;
       }
-
-    const double max = 20; 
-    viewer.camera()->setOrientation((QGLViewer::QGLViewerIndex(&viewer)/max)*2.0*M_PI, 0.0);
-    viewer.showEntireScene(); //fit camera to scene
+    viewer.updateGL(); 
 
     viewer.setSnapshotFileName(filename.c_str());  
     viewer.setSnapshotFormat("PNG");  
-
-    viewer << Viewer3D::updateDisplay;
     viewer.saveSnapshot(true, true); 
 
     {//rename snapshot
@@ -249,7 +251,7 @@ bool writePartition(const TImage& img, string filename, string format)
     std::stringstream news; 
     news << filename << ".png";
     string newf = news.str();  
-    if (!rename (oldf.c_str(), newf.c_str())) 
+    if (rename (oldf.c_str(), newf.c_str()) == -1) 
       trace.info() << "renaming " << oldf << " into " 
 		   << newf << " failed " << std::endl; 
     }
@@ -259,7 +261,7 @@ bool writePartition(const TImage& img, string filename, string format)
     std::stringstream news; 
     news << ".qglviewer" << (QGLViewer::QGLViewerIndex(&viewer)+1) << ".xml";
     string newf = news.str();  
-    if (!rename (oldf.c_str(), newf.c_str())) 
+    if (rename (oldf.c_str(), newf.c_str()) == -1) 
       trace.info() << "renaming " << oldf << " into " 
 		   << newf << " failed " << std::endl; 
     }
