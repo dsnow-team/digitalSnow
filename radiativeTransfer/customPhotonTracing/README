@@ -1,0 +1,12 @@
+T2)syntax : < command > filePhoton.pbrt [--lOnde int(nm)] [--dimImage int] [--resPixel float(micrometer)]
+	--lOnde : choosen wave length in nanometers between 700 nm and 2600nm (default 700)
+	--dimImage : dimension of image (eg "256" for 256*256*256) -> default 512
+	--resPixel : resolution of one pixel in micrometer -> default 8.59 micrometer
+
+Three files are generated : 
+	a file with general statistics "file_stat.txt" (number of launched photons, albedo ...)
+	a file with the absorption ("file_absorb.txt") with 2 columns : depth(m) || % of absorbed photon . For each depth, we have the purcentage of absorbed photons at this depth. If we sum all the purcentage, we may have the total absorption (between 0 and 1). To plot absorption as a function of depth, we just need to cumulate the purcentages; ie with gnuplot : plot "file_absorb.txt" using 1:2:(1.0) smooth cumulative.
+	a file "file_brdf.txt" that we can use to plot the brdf. There are 3 columns : theta || phi || numberOfPhoton. For each angle theta(azimuth) in degree and phi(elevation) in degre correspond the number of photons reflected at this angle. 
+
+The sample is duplicated so that almost zero photons are lost and the calculus are identical to an infinite sample. 
+
