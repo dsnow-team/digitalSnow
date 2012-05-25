@@ -1,0 +1,101 @@
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+
+template <typename TImage>
+inline
+DGtal::FFT<TImage>
+::FFT( const Image& anImage)
+: myImage( anImage )
+{
+}
+
+
+template <typename TImage>
+inline
+DGtal::FFT<TImage>::~FFT()
+{
+}
+
+
+template <typename TImage>
+inline
+void
+DGtal::FFT<TImage>::compute(ComplexImage& anImage)
+{
+  ASSERT( myImage.extent() == anImage.extent() );
+
+  //image size
+  Vector v = myImage.extent();  
+  int t[dimension];
+  int n = 1; 
+  for (unsigned int i= 0; i < dimension; ++i) 
+    {
+      t[i] = v.at(i);
+      n *= t[i];  
+    }
+
+//using fftw library
+  //input and output arrays
+   fftw_complex* spatial_repr;
+   fftw_complex* frequency_repr;
+   spatial_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
+   frequency_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
+
+  //fill the arrays
+  Domain d = myImage.domain();  
+  typename Domain::ConstIterator it = d.begin(); 
+  typename Domain::ConstIterator itEnd = d.end(); 
+   for(unsigned int i=0; it != itEnd; ++it, ++i)
+   {
+      spatial_repr[i][0] = (double) myImage(*it);
+      spatial_repr[i][1] = 0.0;
+   }
+
+  //plan
+   fftw_plan plan;
+  plan = fftw_plan_dft( dimension, t, spatial_repr, frequency_repr, FFTW_FORWARD, FFTW_ESTIMATE ); 
+
+  //computation
+   fftw_execute(plan);
+
+  //copy 
+  it = d.begin();
+  for(unsigned int i=0; (i < n); ++it, ++i)
+  {
+    Complex c(frequency_repr[i][0], frequency_repr[i][1]); 
+    anImage.setValue( *it, c ); 
+  }
+
+  //end
+   fftw_destroy_plan(plan);
+   fftw_free(spatial_repr);
+   fftw_free(frequency_repr);
+}
+
+
+template <typename TImage>
+inline
+void
+DGtal::FFT<TImage>::selfDisplay ( std::ostream & out ) const
+{
+  out << "[FFT] on " << myImage;
+  out << std::endl;
+}
+
+template <typename TImage>
+inline
+bool
+DGtal::FFT<TImage>::isValid() const
+{
+    return true;
+}
+
+
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+
