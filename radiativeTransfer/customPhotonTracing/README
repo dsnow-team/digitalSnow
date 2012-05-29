@@ -1,4 +1,6 @@
-T2)syntax : < command > filePhoton.pbrt [--lOnde int(nm)] [--dimImage int] [--resPixel float(micrometer)]
+This repository contains the custom photon tracker used with the digital snow project to study the radiative transfer of a snow sample.
+
+syntax : < command > filePhoton.pbrt [--lOnde int(nm)] [--dimImage int] [--resPixel float(micrometer)]
 	--lOnde : choosen wave length in nanometers between 700 nm and 2600nm (default 700)
 	--dimImage : dimension of image (eg "256" for 256*256*256) -> default 512
 	--resPixel : resolution of one pixel in micrometer -> default 8.59 micrometer

@@ -1,17 +1,18 @@
+The two functions presented here are used with the photon launcher : the first transform a file .off into a file readable by the photon launcher. The second transform a BRDF file (output of the photon launcher) into a file containing the DCRF that you can trace using gnuplot for example.
+
 	1) Noff2Pbrt
 	2) resizeDCRF
 
-WARNING : in order to use the functions Noff2Pbrt and resizeDCRF, you must be in the same repository as the image you are working on.
 
-1)syntax : < command > file.off
-	generate 3 files :  -a geometry file readable by pbrt (fileGeometry.pbrt)
-			    -a file (file.pbrt) that can be launched with the initial pbrt software 
+1)syntax : < command > -i file.off - o output
+	generate 3 files :  -a geometry file readable by pbrt (outputGeometry.pbrt)
+			    -a file (output.pbrt) that can be launched with the initial pbrt software 
 				(not our photon launcher) and that gives you a nice image.
-			    -a file (filePhoton.pbrt)that can be used by the photon launcher pbrt remade
+			    -a file (outputPhoton.pbrt)that can be used by the photon launcher pbrt remade
 
-	To modify the number of photons launched or the direction of the light, change the parameters in the filePhoton.pbrt.
+	To modify the number of photons launched or the direction of the light, change the parameters in the outputPhoton.pbrt.
 
 		
-2)syntax : < command > "file_brdf.txt" [--dAngle int(degree)]
+2)syntax : < command > -i input.txt -o output.txt [--dAngle int(degree)]
 	--dAngle : gives the precision on the angle : for example "--dAngle 20" will plot the DCRF with delta theta and delta phi of 20 degree -> default 15 degree.
-	A file is generated : "file_brdfResizeDCRF.txt" that you can use with gnuplot to plot the DCRF : splot "file_brdfResizeDCRF.txt" using 1:2:3:4 with pm3d.
+	A file is generated : "output.txt" that you can use with gnuplot to plot the DCRF : splot "file_brdfResizeDCRF.txt" using 1:2:3:4 with pm3d.

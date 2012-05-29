@@ -14,14 +14,21 @@ int main(int argc, char *argv[]){
 //deltaAngle est la precision que l'on aura sur theta et phi les coordonnees spheriques
 int i;
 float deltaAngle=15;
-string fichier_entree;
+string fichier_entree, fichier_sortie;
+bool entre(0), sortie(0);
 
-if (argc < 2) {cout <<" syntax is < command > filename.txt [--dAngle int]"; return 0;}
+if (argc < 2) {cout <<" syntax is < command > -i input.txt -o output.txt [--dAngle int]"; return 0;}
 
 for (i=1; i<argc;i++){
 	if (!strcmp(argv[i],"--dAngle")) deltaAngle=atof(argv[++i]);
 	else if (!strcmp(argv[i],"--help")){ cout <<" syntax is < command > filename.txt [--dAngle int]"; return 0;}
-	else fichier_entree=argv[i];
+	else if (!strcmp(argv[i],"--input") || !strcmp(argv[i],"-i")) {fichier_entree=argv[++i]; entre=true;}
+	else if (!strcmp(argv[i],"--output") || !strcmp(argv[i],"-o")) {fichier_sortie=argv[++i]; sortie=true;}
+}
+
+if (!entre || ! sortie)
+{	
+	cout <<" syntax is < command > - i input.txt -o output.txt [--dAngle int]\n"; return 1;
 }
 
 deltaAngle=floor(deltaAngle);
@@ -36,15 +43,8 @@ else if (deltaAngle > 90)
 	cout <<"la precision sur l'angle est de 90 degre\n";
 }
 
-string fichier_sortie;
 int j;
 
-//on initialise les fichiers entree et sortie
-size_t pos=fichier_entree.find(".");
-if (pos!=string::npos)
-fichier_sortie=fichier_entree.substr(0,pos);
-else fichier_sortie=fichier_entree;
-fichier_sortie+="ResizeDCRF.txt";
 
 ifstream fichierEntree(fichier_entree.c_str());
 ofstream fichierSortie(fichier_sortie.c_str());

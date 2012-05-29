@@ -19,42 +19,41 @@ void ecritFichierPhoton(string fichierPhoton, string fichierGeomPbrt);
 
 int main(int argc, char *argv[]){
 
-if (!strcmp(argv[1],"--help")){cout << "syntax : <command> file.noff\n"; return 0;}
 
 cout << "Careful !! the file provided must be noff without blank lines and with commentary only at the top !\nThe normals provided MUST be inwarded"<< endl; 
-if (argc!=2) {
-	cout<< "bad syntax. The syntax is : <command> file.noff";
+if (argc < 2) {
+	cout<< "bad syntax. The syntax is : <command> -i input.off -o output";
 	exit(2);
 }
 
+string fichierNoff, fichier_sortie;
+bool entre(false), sortie(false);
+
+
+for (int i=1; i<argc;i++){
+	if (!strcmp(argv[i],"--help") || !strcmp(argv[i],"--help")){cout << "syntax : <command> -i input.noff -o output\n"; return 0;}
+	else if (!strcmp(argv[i],"--input") || !strcmp(argv[i],"-i")) {fichierNoff=argv[++i]; entre=true;}
+	else if (!strcmp(argv[i],"--output") || !strcmp(argv[i],"-o")) {fichier_sortie=argv[++i]; sortie=true;}
+}
+
+if (!entre || !sortie) 
+{
+	cout << "syntax : <command> -i input.noff -o output\n"; 
+	exit(1);
+}
 //on prend en entrée un fichier noff et on sort 2 fichier : un de geometrie et le corps du fichier .pbrt
-string fichierNoff;
-fichierNoff=argv[1];
+
 
 string fichierGeomPbrt,fichierPbrt,fichierPhoton, fichierEXR;
 
-size_t pos;
-pos=fichierNoff.find(".");
-if (pos!=string::npos){
-fichierGeomPbrt=fichierNoff.substr(0,pos);
+fichierGeomPbrt=fichier_sortie;
 fichierGeomPbrt+="Geometry.pbrt";
-fichierPhoton=fichierNoff.substr(0,pos);
+fichierPhoton=fichier_sortie;
 fichierPhoton+="Photon.pbrt";
-fichierPbrt=fichierNoff.substr(0,pos);
+fichierPbrt=fichier_sortie;
 fichierPbrt+=".pbrt";
-fichierEXR=fichierNoff.substr(0,pos);
+fichierEXR=fichier_sortie;
 fichierEXR+=".exr";
-
-}
-else {
-fichierGeomPbrt=fichierNoff;
-fichierGeomPbrt+="Geometry.pbrt";
-fichierPhoton=fichierNoff;
-fichierPhoton+="Photon.pbrt";
-fichierPbrt=fichierNoff;
-fichierPbrt+=".pbrt";
-fichierEXR=fichierNoff;
-fichierEXR+=".exr";}
 
 
 ecritFichierGeometrie(fichierNoff, fichierGeomPbrt);
