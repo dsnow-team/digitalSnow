@@ -42,7 +42,8 @@ int main(int argc, char *argv[]) {
 
 	//[DGtal on met que un coeur pour avoir tous les calculs séquentiels et les résultats dans un seul fichier
 	options.nCores=1;
-
+	bool wavelength(false), resPix(false), dimensionX(false),dimensionY(false),dimensionZ(false);
+		
 
     // Process command-line arguments
     for (int i = 1; i < argc; ++i) {
@@ -53,13 +54,15 @@ int main(int argc, char *argv[]) {
         else if (!strcmp(argv[i], "--verbose")) options.verbose = true;
         else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
             printf("usage: pbrt  "
-                   "[--help] [--lOnde wavelength(nm)] [--dimImage ImageDimension(256eg)] [--resPixel PixelResolution(micrometer)] [ <filename.pbrt> ...\n");
+                   "[--help] [--wavelength wavelength(nm) || -w wavelength(nm)] [-x dimImageX] [-y dimImageY] [-z dimImageZ] [--resPixel PixelResolution(micrometer) || -r PixelResolution(micrometer)] [ <filename.pbrt> ...\n");
            return 0;
         }
 	//[DGtal ajout option pour faire de l'absorption]
-	else if (!strcmp(argv[i],"--lOnde")) options.lOnde=atof(argv[++i]);
-	else if (!strcmp(argv[i],"--dimImage")) options.dimImage=atoi(argv[++i]);
-	else if (!strcmp(argv[i],"--resPixel")) options.resolPixel=atof(argv[++i]);
+	else if (!strcmp(argv[i],"--wavelength") || !strcmp(argv[i],"-w")) { options.lOnde=atof(argv[++i]); wavelength=true;}
+	else if (!strcmp(argv[i],"-x")) { options.dimx=atoi(argv[++i]); dimensionX=true; }
+	else if (!strcmp(argv[i],"-y")) { options.dimy=atoi(argv[++i]); dimensionY=true; }
+	else if (!strcmp(argv[i],"-z")) { options.dimz=atoi(argv[++i]); dimensionZ=true; }
+	else if ((!strcmp(argv[i],"--resPixel")) || (!strcmp(argv[i],"-r"))) { options.resolPixel=atof(argv[++i]); resPix=true; }
 		
 
 
@@ -69,7 +72,14 @@ int main(int argc, char *argv[]) {
 		}
     }
 
+	//[DGtal : test arguments]
 
+	if ((!wavelength) || (!dimensionX) || (!dimensionY) || (!dimensionZ) || (!resPix))
+	{
+            printf("usage: pbrt  "
+                   "[--help] [--wavelength wavelength(nm) || -w wavelength(nm)] [-x dimImageX] [-y dimImageY] [-z dimImageZ] [--resPixel PixelResolution(micrometer) || -r PixelResolution(micrometer)] [ <filename.pbrt> ...\n");
+	exit(1);
+	}
 
 
     // Print welcome banner

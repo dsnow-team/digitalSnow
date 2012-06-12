@@ -1,9 +1,9 @@
 This repository contains the custom photon tracker used with the digital snow project to study the radiative transfer of a snow sample.
 
-syntax : < command > filePhoton.pbrt [--lOnde int(nm)] [--dimImage int] [--resPixel float(micrometer)]
-	--lOnde : choosen wave length in nanometers between 700 nm and 2600nm (default 700)
-	--dimImage : dimension of image (eg "256" for 256*256*256) -> default 512
-	--resPixel : resolution of one pixel in micrometer -> default 8.59 micrometer
+syntax : pbrt [--help] [--wavelength wavelength(nm) || -w wavelength(nm)] [-x dimImageX] [-y dimImageY] [-z dimImageZ] [--resPixel PixelResolution(micrometer) || -r PixelResolution(micrometer)] [ <filename.pbrt> ] 
+	-w : choosen wavelength in nanometers between 700 nm and 2600nm
+	-x : dimension of image in X direction (eg "256" for 256*302*247) 
+	-r : resolution of one pixel in micrometer 
 
 Three files are generated : 
 	a file with general statistics "file_stat.txt" (number of launched photons, albedo ...)

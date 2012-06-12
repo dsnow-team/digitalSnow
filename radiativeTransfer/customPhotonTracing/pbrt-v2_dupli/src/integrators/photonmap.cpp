@@ -43,7 +43,9 @@
 //[DGtal on recupere les variables globales pour l'absorption et la declaration de fichier]
 extern double M_Nt;
 extern double M_ABSORB;
-extern int dimensionImage;
+extern int dimensionImageX;
+extern int dimensionImageY;
+extern int dimensionImageZ;
 extern float resolutionPixel;
 extern string fileName;
 
@@ -607,7 +609,8 @@ std::map<float,int> stockePhoton;
 map<angles, int> energieBRDF;   
 int compteurPhotonPerdu(0), compteurAlbedo(0);
 int depasseDepth(0);
-
+double facteur(dimensionImageZ/256.0);
+double maxX(dimensionImageX*256/dimensionImageZ), maxY(dimensionImageY*256/dimensionImageZ);
 
     while (true) {
         // Follow photon paths for a block of samples
@@ -690,9 +693,9 @@ int depasseDepth(0);
 			
 			
 			//[DGtal on absorbe un peu du spectre si on est dans la matière]
-			if (dansMatiere)					 
-				spectre*=expf(-Distance(photonRay.o,photonIsect.dg.p) * M_ABSORB);
-			
+			if (dansMatiere){		
+				spectre*=expf(- Distance(photonRay.o,photonIsect.dg.p) * M_ABSORB);
+			}
 
 			Vector wo=photonRay.d;
 			wo/=wo.Length();
@@ -743,7 +746,14 @@ int depasseDepth(0);
 
 		//[DGtal ajout pour dupliquer l'echantillon]
 
-		if ((photonIsect.dg.p.x > 255.999) && (wo.x > 0)) { 
+		
+		if ((photonIsect.dg.p.y > (maxY-0.0001)) && (wo.y > 0)) {
+			duplicate=true;
+		}
+		if ((photonIsect.dg.p.y < 0.0001) && (wo.y< 0)) {
+			duplicate=true;
+		}
+		if ((photonIsect.dg.p.x > (maxX-0.0001)) && (wo.x > 0)) { 
 			duplicate=true;
 		}
 		if ((photonIsect.dg.p.x < 0.0001) && (wo.x < 0)) {
@@ -757,8 +767,7 @@ int depasseDepth(0);
 				}	
 			duplicate=true;		
 		}
-
-		if ((photonIsect.dg.p.z > 256.0005) && (wo.z > 0)) {
+		else if ((photonIsect.dg.p.z > 256.0005) && (wo.z > 0)) {
 			if (profondeur==0){
 				duplicate=false;
 				}				
@@ -771,13 +780,8 @@ int depasseDepth(0);
 				profondeur-=1;
 			}	
 		}
-		if ((photonIsect.dg.p.y > 255.999) && (wo.y > 0)) {
-			duplicate=true;
-		}
-		if ((photonIsect.dg.p.y < 0.0001) && (wo.y< 0)) {
-			duplicate=true;
-		}
 		
+
 		// [DGtal si on duplique : on se contente de réfléchir le vecteur de direction du rayon]
 		if (duplicate){
 			 duplicate=false;
@@ -950,7 +954,7 @@ fichierAbsorb << "#profondeur(m) || %% d'absorption \n#pour le tracer sous gnupl
 for(map<float, int >::iterator it=stockePhoton.begin(); it!=stockePhoton.end(); ++it)
     {	
 	if (it->first!=0)
-        	fichierAbsorb << -it->first*resolutionPixel*dimensionImage/256000000 << " " << (double)it->second/nombrePhotonTotal << std::endl;
+        	fichierAbsorb << -it->first*resolutionPixel*dimensionImageZ/256000000 << " " << (double)it->second/nombrePhotonTotal << std::endl;
 	else 
 		fichierAbsorb << "0 " << (double)it->second/nombrePhotonTotal << std::endl;
 	

@@ -28,6 +28,12 @@
 #include "paramset.h"
 #include "montecarlo.h"
 
+
+//[DGtal : ajout pour avoir la lumière sur l'échantillon]
+extern int dimensionImageX;
+extern int dimensionImageY;
+extern int dimensionImageZ;
+
 // DistantLight Method Definitions
 DistantLight::DistantLight(const Transform &light2world,
         const Spectrum &radiance, const Vector &dir)
@@ -82,7 +88,7 @@ Spectrum DistantLight::Sample_L(const Scene *scene,
 
 
 //AJOUT POUR QUE LA LUMIERE ARRIVE SUR LA FACE DU DESSUS DU CUBE
-	Vector	v1(256,0,0), v2(0,256,0);
+	Vector	v1(dimensionImageX*256/dimensionImageZ,0,0), v2(0,dimensionImageY*256/dimensionImageZ,0);
 	Point Pdisk (0,0,256);//+ ls.uPos[0]*v1 + ls.uPos[1]*v2); 	
 	Vector v3(ls.uPos[0]*v1 + ls.uPos[1]*v2);
 	Pdisk+=v3;	

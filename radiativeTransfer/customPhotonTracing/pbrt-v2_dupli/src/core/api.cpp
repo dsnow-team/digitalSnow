@@ -133,8 +133,8 @@ Options PbrtOptions;
 #ifndef GLOBAL_VARS_H
 #define GLOBAL_VARS_H
 double M_Nt=1.3069;
-double M_ABSORB=0.000008944;
-int dimensionImage=512;
+double M_ABSORB=0.000000029;
+int dimensionImageX=512, dimensionImageY=512,dimensionImageZ=512;
 float resolutionPixel=8.59;
 string fileName="fichierSortie";
 #endif
@@ -446,13 +446,15 @@ else if (opt.lOnde>2600)
 
 
 //[DGtal on intitialise les variables globales] 
-printf("longueur d'onde donnée par la table de Warren 2008 : %d nm \n", longChoisie);
-printf("dimensions de votre image : %d * %d * %d \n", opt.dimImage,opt.dimImage,opt.dimImage);
-printf("resolution d'un pixel : %f micrometer \n", opt.resolPixel);
+printf("wavelength given by Warren table 2008 : %d nm \n", longChoisie);
+printf("dimension of image: %d * %d * %d \n", opt.dimx,opt.dimy,opt.dimz);
+printf("resolution of a pixel : %f micrometer \n", opt.resolPixel);
 
 M_Nt=longOnde[longChoisie].indiceRe;
-M_ABSORB=longOnde[longChoisie].indiceIm*1000*4*M_PI*opt.resolPixel*(opt.dimImage/256)/longChoisie;
-dimensionImage=opt.dimImage;
+M_ABSORB=longOnde[longChoisie].indiceIm*1000*4*M_PI*opt.resolPixel*opt.dimz/256/longChoisie;
+dimensionImageX=opt.dimx;
+dimensionImageY=opt.dimy;
+dimensionImageZ=opt.dimz;
 resolutionPixel=opt.resolPixel;
 
 //[DGtal on initialise les noms de fichier]
