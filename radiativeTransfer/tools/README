@@ -9,8 +9,7 @@ The two functions presented here are used with the photon launcher : the first t
 
 1)syntax : < command > -i file.off - o output
 	generate 3 files :  -a geometry file readable by pbrt (outputGeometry.pbrt)
-			    -a file (output.pbrt) that can be launched with the initial pbrt software 
-				(not our photon launcher) and that gives you a nice image.
+			    -a file (outputImage.pbrt) that can be launched with the originale software pbrt and that gives you a nice 					image (with our photon launcher use >> pbrt -i fileImage.pbrt 
 			    -a file (outputPhoton.pbrt)that can be used by the photon launcher pbrt remade
 
 	To modify the number of photons launched or the direction of the light, change the parameters in the outputPhoton.pbrt.
