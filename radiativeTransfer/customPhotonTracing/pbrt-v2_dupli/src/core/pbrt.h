@@ -118,7 +118,7 @@ template <typename T> struct ParamSetItem;
 struct Options {
     Options() { nCores = 0;
                 quickRender = quiet = openWindow = verbose = false;
-                imageFile = ""; lOnde=700; dimx=512; dimy=512; dimz=512; resolPixel=8.59; }
+                imageFile = ""; lOnde=700; dimx=512; dimy=512; dimz=512; resolPixel=8.59; photon=false; }
     int nCores;
     bool quickRender;
     bool quiet, verbose;
@@ -129,6 +129,7 @@ struct Options {
 	int dimx, dimy, dimz;
 	float resolPixel;
 	string filename;
+	bool photon;
 };
 
 

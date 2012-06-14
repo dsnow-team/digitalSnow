@@ -34,6 +34,8 @@ extern int dimensionImageX;
 extern int dimensionImageY;
 extern int dimensionImageZ;
 
+extern bool PhotonImage;
+
 // DistantLight Method Definitions
 DistantLight::DistantLight(const Transform &light2world,
         const Spectrum &radiance, const Vector &dir)
@@ -85,20 +87,21 @@ Spectrum DistantLight::Sample_L(const Scene *scene,
     float worldRadius;
     scene->WorldBound().BoundingSphere(&worldCenter, &worldRadius);
 
-
+Point Pdisk (0,0,256);
 
 //AJOUT POUR QUE LA LUMIERE ARRIVE SUR LA FACE DU DESSUS DU CUBE
-	Vector	v1(dimensionImageX*256/dimensionImageZ,0,0), v2(0,dimensionImageY*256/dimensionImageZ,0);
-	Point Pdisk (0,0,256);//+ ls.uPos[0]*v1 + ls.uPos[1]*v2); 	
+if (PhotonImage){
+	Vector	v1(dimensionImageX*256/dimensionImageZ,0,0), v2(0,dimensionImageY*256/dimensionImageZ,0); 	
 	Vector v3(ls.uPos[0]*v1 + ls.uPos[1]*v2);
 	Pdisk+=v3;	
-
-//   Vector v1, v2;
-//   CoordinateSystem(lightDir, &v1, &v2);
-//    float d1, d2;
-//    ConcentricSampleDisk(ls.uPos[0], ls.uPos[1], &d1, &d2);
-//    Point Pdisk = worldCenter + worldRadius * (d1 * v1 + d2 * v2);
-
+}
+else {
+   Vector v1, v2;
+   CoordinateSystem(lightDir, &v1, &v2);
+    float d1, d2;
+    ConcentricSampleDisk(ls.uPos[0], ls.uPos[1], &d1, &d2);
+    Pdisk = worldCenter + worldRadius * (d1 * v1 + d2 * v2);
+}
     // Set ray origin and direction for infinite light ray
     *ray = Ray(Pdisk + worldRadius * lightDir, -lightDir, 0.f, INFINITY,
               time);

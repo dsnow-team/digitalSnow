@@ -34,6 +34,8 @@
 #include "camera.h"
 #include "intersection.h"
 
+extern bool PhotonImage;
+
 static uint32_t hash(char *key, uint32_t len)
 {
     uint32_t   hash, i;
@@ -177,15 +179,21 @@ SamplerRenderer::~SamplerRenderer() {
 
 
 void SamplerRenderer::Render(const Scene *scene) {
-    PBRT_FINISHED_PARSING();
+	    
+	PBRT_FINISHED_PARSING();
     // Allow integrators to do preprocessing for the scene
     PBRT_STARTED_PREPROCESSING();
+
     surfaceIntegrator->Preprocess(scene, camera, this);
     volumeIntegrator->Preprocess(scene, camera, this);
     PBRT_FINISHED_PREPROCESSING();
+
+
     PBRT_STARTED_RENDERING();
+
+if (!PhotonImage) {
     // Allocate and initialize _sample_
-/*    Sample *sample = new Sample(sampler, surfaceIntegrator,
+    Sample *sample = new Sample(sampler, surfaceIntegrator,
                                 volumeIntegrator, scene);
 
     // Create and launch _SamplerRendererTask_s for rendering image
@@ -198,7 +206,6 @@ void SamplerRenderer::Render(const Scene *scene) {
     vector<Task *> renderTasks;
 
 
-//CHANGEMENT
 
     for (int i = 0; i < nTasks; ++i)
         renderTasks.push_back(new SamplerRendererTask(scene, this, camera,
@@ -213,7 +220,8 @@ void SamplerRenderer::Render(const Scene *scene) {
     PBRT_FINISHED_RENDERING();
     // Clean up after rendering and store final image
     delete sample;
-    camera->film->WriteImage();*/
+    camera->film->WriteImage();
+}
 }
 
 
@@ -239,17 +247,22 @@ Spectrum SamplerRenderer::Li(const Scene *scene,
 
 
 
-
-		//AJOUT POUR FAIRE DE L'ABSORPTION VOLUME
-
+Spectrum Lvi=0;
+	if (PhotonImage)	//AJOUT POUR FAIRE DE L'ABSORPTION VOLUME
+{
 
 //    Spectrum Lvi = volumeIntegrator->Li(scene, this, ray, sample, rng,
   //                                      T, arena);
 	
-Spectrum Lvi=0;
+Lvi=0;
 	*T=1;
 
+}
+else { 
+Lvi = volumeIntegrator->Li(scene, this, ray, sample, rng,
+                                        T, arena);
 
+}
     return *T * Li + Lvi;
 }
 

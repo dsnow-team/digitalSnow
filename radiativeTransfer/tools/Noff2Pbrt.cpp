@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
   fichierPhoton=fichier_sortie;
   fichierPhoton+="Photon.pbrt";
   fichierPbrt=fichier_sortie;
-  fichierPbrt+=".pbrt";
+  fichierPbrt+="Image.pbrt";
   fichierEXR=fichier_sortie;
   fichierEXR+=".exr";
 

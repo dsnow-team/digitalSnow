@@ -30,6 +30,8 @@
 #include "paramset.h"
 #include "montecarlo.h"
 
+extern bool PhotonImage;
+
 // TriangleMesh Method Definitions
 TriangleMesh::TriangleMesh(const Transform *o2w, const Transform *w2o,
         bool ro, int nt, int nv, const int *vi, const Point *P,
@@ -183,13 +185,14 @@ bool Triangle::Intersect(const Ray &ray, float *tHit, float *rayEpsilon,
 	
 
 //AJOUT POUR ABSORPTION VOLUME
+	if (PhotonImage){
 	Normal &normalMesh=mesh->n[v[0]];
 	if (Dot(normalMesh,Cross(dpdu,dpdv)) <0)
 	{
 		dpdu=-dpdu;
 	
 	}
-
+}
 //	FIN AJOUT	
 
 
@@ -203,12 +206,6 @@ bool Triangle::Intersect(const Ray &ray, float *tHit, float *rayEpsilon,
             return false;
     }
     }
-
-
-
-//printf(" %f %f %f , %f %f %f \n", Cross(dpdu,dpdv).x, Cross(dpdu,dpdv).y, Cross(dpdu,dpdv).z,ray(t).x, ray(t).y, ray(t).z);
-
-
 
 
 

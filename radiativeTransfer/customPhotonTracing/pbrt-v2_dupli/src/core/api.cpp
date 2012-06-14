@@ -137,6 +137,7 @@ double M_ABSORB=0.000000029;
 int dimensionImageX=512, dimensionImageY=512,dimensionImageZ=512;
 float resolutionPixel=8.59;
 string fileName="fichierSortie";
+bool PhotonImage(false);
 #endif
 
 //[DGtal la structure indice stocke l'indice de réfraction
@@ -1021,8 +1022,11 @@ void pbrtInit(const Options &opt) {
     // API Initialization
 
 	//[DGtal ajout pour calculer l'indice et le coefficient d'absorption]
-	calculAbsor(opt);
-
+	if (opt.photon)
+	{
+		calculAbsor(opt);
+		PhotonImage=true;
+	}	
 
 
     if (currentApiState != STATE_UNINITIALIZED)

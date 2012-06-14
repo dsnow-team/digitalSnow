@@ -41,8 +41,7 @@ int main(int argc, char *argv[]) {
 
 
 	//[DGtal on met que un coeur pour avoir tous les calculs séquentiels et les résultats dans un seul fichier
-	options.nCores=1;
-	bool wavelength(false), resPix(false), dimensionX(false),dimensionY(false),dimensionZ(false);
+	bool wavelength(false), resPix(false), dimensionX(false),dimensionY(false),dimensionZ(false), ImagePhoton(false);
 		
 
     // Process command-line arguments
@@ -53,8 +52,8 @@ int main(int argc, char *argv[]) {
         else if (!strcmp(argv[i], "--quiet")) options.quiet = true;
         else if (!strcmp(argv[i], "--verbose")) options.verbose = true;
         else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
-            printf("usage: pbrt  "
-                   "[--help] [--wavelength wavelength(nm) || -w wavelength(nm)] [-x dimImageX] [-y dimImageY] [-z dimImageZ] [--resPixel PixelResolution(micrometer) || -r PixelResolution(micrometer)] [ <filename.pbrt> ...\n");
+            printf("usage: pbrt  [--image || -i ] file.pbrt \n"
+                   "pbrt [--photon || -p] [--wavelength wavelength(nm) || -w wavelength(nm)] [-x dimImageY] [-y dimImageY] [-z dimImageZ] [--resPixel PixelResolution(micrometer) || -r PixelResolution(micrometer)] [ <filenamePhoton.pbrt> ...\n");
            return 0;
         }
 	//[DGtal ajout option pour faire de l'absorption]
@@ -63,8 +62,8 @@ int main(int argc, char *argv[]) {
 	else if (!strcmp(argv[i],"-y")) { options.dimy=atoi(argv[++i]); dimensionY=true; }
 	else if (!strcmp(argv[i],"-z")) { options.dimz=atoi(argv[++i]); dimensionZ=true; }
 	else if ((!strcmp(argv[i],"--resPixel")) || (!strcmp(argv[i],"-r"))) { options.resolPixel=atof(argv[++i]); resPix=true; }
-		
-
+	else if ((!strcmp(argv[i],"--photon")) || (!strcmp(argv[i],"-p"))){ImagePhoton=true; options.photon=true;options.nCores=1;}	
+	else if ((!strcmp(argv[i],"--image")) || (!strcmp(argv[i],"-i"))) { ImagePhoton=true; options.photon=false;}
 
         else {
 		filenames.push_back(argv[i]);
@@ -73,11 +72,12 @@ int main(int argc, char *argv[]) {
     }
 
 	//[DGtal : test arguments]
-
-	if ((!wavelength) || (!dimensionX) || (!dimensionY) || (!dimensionZ) || (!resPix))
+	if (!ImagePhoton) {printf("usage: pbrt  [--image || -i ] file.pbrt \n"
+                   "pbrt [--photon || -p] [--wavelength wavelength(nm) || -w wavelength(nm)] [-x dimImageY] [-y dimImageY] [-z dimImageZ] [--resPixel PixelResolution(micrometer) || -r PixelResolution(micrometer)] [ <filenamePhoton.pbrt> ...\n"); exit(1);}
+	else if (options.photon && ((!wavelength) || (!dimensionX) || (!dimensionY) || (!dimensionZ) || (!resPix)))
 	{
-            printf("usage: pbrt  "
-                   "[--help] [--wavelength wavelength(nm) || -w wavelength(nm)] [-x dimImageX] [-y dimImageY] [-z dimImageZ] [--resPixel PixelResolution(micrometer) || -r PixelResolution(micrometer)] [ <filename.pbrt> ...\n");
+            printf("usage: pbrt  [--image || -i ] file.pbrt \n"
+                   "pbrt [--photon || -p] [--wavelength wavelength(nm) || -w wavelength(nm)] [-x dimImageY] [-y dimImageY] [-z dimImageZ] [--resPixel PixelResolution(micrometer) || -r PixelResolution(micrometer)] [ <filenamePhoton.pbrt> ...\n");
 	exit(1);
 	}
 
