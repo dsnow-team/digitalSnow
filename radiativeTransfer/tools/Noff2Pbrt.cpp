@@ -253,7 +253,7 @@ if (Maximum==0){cout << "geometry file is empty !!!" <<endl; Maximum=1;}
   fichierSortiePbrt << "#le fond \nAttributeBegin\nMaterial \"matte\" \"color Kd\" [.8 .8 .8]\nShape \"trianglemesh\"  \"integer indices\" [0 2 1 0 3 2] \"point P\" [800.000000 0.000000 0.000000 -250.000000 0.000000 0.000000 -250.000000 0.000000 1000.000000 800.000000 0.000000 1000.000000]\nAttributeEnd\n \n";
 
   //on inclut l'echantillon
-  fichierSortiePbrt << "#include of the sample\nAttributeBegin\nTranslate 180 140 386 \nRotate -30 1 0 0\nRotate 30 0 1 0\nScale "<< (double)256/Maximum << " " << (double)256/Maximum<<" " << (double)256/Maximum<<"\n Rotate -90 1 0 0 \nTranslate "<< -minX <<" " << -minY << " " <<-minZ <<"\nMaterial \"matte\" \"color Kd\" [1 1 1]\nInclude \"" << fichierGeomPbrt<<"\"\nAttributeEnd\n \nWorldEnd";
+  fichierSortiePbrt << "#include of the sample\nAttributeBegin\nTranslate 180 180 386 \nRotate -30 1 0 0\nRotate 30 0 1 0\nScale "<< (double)256/Maximum << " " << (double)256/Maximum<<" " << (double)256/Maximum<<"\n Rotate -90 1 0 0 \nTranslate "<< -minX <<" " << -minY << " " <<-minZ <<"\nMaterial \"matte\" \"color Kd\" [1 1 1]\nInclude \"" << fichierGeomPbrt<<"\"\nAttributeEnd\n \nWorldEnd";
 
   cout << "pbrt file generated"<<endl;
 }
