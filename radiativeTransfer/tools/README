@@ -1,3 +1,6 @@
+DESCRIPTION
+===========
+
 The two functions presented here are used with the photon launcher : the first transform a file .off into a file readable by the photon launcher. The second transform a BRDF file (output of the photon launcher) into a file containing the DCRF that you can trace using gnuplot for example.
 
 	1) Noff2Pbrt
@@ -16,3 +19,8 @@ The two functions presented here are used with the photon launcher : the first t
 2)syntax : < command > -i input.txt -o output.txt [--dAngle int(degree)]
 	--dAngle : gives the precision on the angle : for example "--dAngle 20" will plot the DCRF with delta theta and delta phi of 20 degree -> default 15 degree.
 	A file is generated : "output.txt" that you can use with gnuplot to plot the DCRF : splot "file_brdfResizeDCRF.txt" using 1:2:3:4 with pm3d.
+
+INSTALL
+=======
+
+ Build the programs using cmake.

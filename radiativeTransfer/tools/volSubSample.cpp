@@ -86,18 +86,31 @@ int main(int argc, char**argv)
   if ( ! ( vm.count ( "output" ) ) ) missingParam ( "--output" );
   std::string outputFileName = vm["output"].as<std::string>();
 
+  trace.beginBlock("Loading file");
   typedef ImageContainerBySTLVector<Z3i::Domain, unsigned char>  MyImageC;
 
   MyImageC  imageC = VolReader< MyImageC >::importVol ( filename );
   MyImageC  outputImage( Z3i::Domain( imageC.domain().lowerBound() - Vector().diagonal(1),
                                       (imageC.domain().upperBound()-imageC.domain().lowerBound())/Vector().diagonal(2) + Vector().diagonal(1)));
-  
+
+  trace.endBlock();
+  unsigned int cpt=0;
+  unsigned int maxS = imageC.domain().size();
+  Point subvector = Vector().diagonal(2);
+
+  trace.beginBlock("Down-scaling the volume...");
   //Fast Copy
   for(MyImageC::Domain::ConstIterator it = imageC.domain().begin(),
-        itend = imageC.domain().end(); it != itend; ++it){
-	if ((*it)[0]%2==0 && (*it)[1]%2==0 && (*it)[2]%2==0)
-    outputImage.setValue( *it/(Point().diagonal(2)) , imageC(*it));
-}  
+        itend = imageC.domain().end(); it != itend; ++it)
+    {
+      trace.info() << cpt; 
+      trace.progressBar( cpt, maxS);
+      cpt++;
+      outputImage.setValue( *it/subvector , imageC(*it));
+    }
+  trace.endBlock();
+  
+  
   typedef GrayscaleColorMap<unsigned char> Gray;
   bool res =  VolWriter< MyImageC , Gray>::exportVol(outputFileName, outputImage, 0, 255);
   if (res) return 0; else return 1;
