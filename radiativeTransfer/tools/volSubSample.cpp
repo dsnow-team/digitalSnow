@@ -73,9 +73,9 @@ int main(int argc, char**argv)
   po::notify ( vm );
   if ( vm.count ( "help" ) ||argc<=1 )
     {
-      trace.info() << "Add a border of one voxel with value 0 around a vol file."<<std::endl
+      trace.info() << "brutally sub sample a vol file (division by 2 in each direction)."<<std::endl
                    << std::endl << "Basic usage: "<<std::endl
-                   << "\tvolAddBorder --input <volFileName> --o <volOutputFileName> "<<std::endl
+                   << "\tvolSubSample --input <volFileName> --o <volOutputFileName> "<<std::endl
                    << general_opt << "\n";
       return 0;
     }
