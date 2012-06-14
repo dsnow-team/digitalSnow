@@ -244,13 +244,13 @@ void ecritFichierPbrt(string fichierPbrt, string fichierGeomPbrt, string fichier
   fichierSortiePbrt <<"## to have a nicest image level up the \"samplesperpixel\" of metropolis\n## to be more rapid, make this number down (but loose quality of image)\n \n \n";
 
   //declaration des attributs generaux
-  fichierSortiePbrt << "Scale -1.000000 1.000000 1.000000 \n \nTranslate -278.000000 -273.000000 500.000000\n \nRenderer \"metropolis\" \"integer samplesperpixel\" [128]\n \nCamera \"perspective\" \"float fov\" [55.000000]\n \nFilm \"image\" \"integer xresolution\" [1000] \"integer yresolution\" [750]\n    \"string filename\" \""<< fichierEXR  <<"\"\n \nPixelFilter \"box\" \n \nWorldBegin\n \n AttributeBegin\nTranslate 340.000000 278.000000 -50\nLightSource \"point\" \"point from\" [0.000000 200.000000 0.000000] \"color I\" [412300 341100 298600]\nAttributeEnd\n \n";
+  fichierSortiePbrt << "Scale -1.000000 1.000000 1.000000 \n \nTranslate -278.000000 -273.000000 500.000000\n \nRenderer \"metropolis\" \"integer samplesperpixel\" [128]\n \nCamera \"perspective\" \"float fov\" [55.000000]\n \nFilm \"image\" \"integer xresolution\" [1000] \"integer yresolution\" [750]\n    \"string filename\" \""<< fichierEXR  <<"\"\n \nPixelFilter \"box\" \n \nWorldBegin\n \n AttributeBegin\nTranslate 340.000000 278.000000 -50\nLightSource \"point\" \"point from\" [0.000000 200.000000 -50.000000] \"color I\" [412300 341100 298600]\nAttributeEnd\n \n";
 
   //declaration du fond
   fichierSortiePbrt << "#le fond \nAttributeBegin\nMaterial \"matte\" \"color Kd\" [.8 .8 .8]\nShape \"trianglemesh\"  \"integer indices\" [0 2 1 0 3 2] \"point P\" [800.000000 0.000000 0.000000 -250.000000 0.000000 0.000000 -250.000000 0.000000 1000.000000 800.000000 0.000000 1000.000000]\nAttributeEnd\n \n";
 
   //on inclut l'echantillon
-  fichierSortiePbrt << "#include of the sample\nAttributeBegin\nTranslate 130 300 130 \nRotate -15 1 0 0\nRotate 30 0 1 0\nScale "<< 256/(maxX-minX) << " " << (double)256/(maxZ-minZ)<<" " << (double)256/(maxY-minY)<<"\n Rotate 90 1 0 0 \nTranslate "<< -minX <<" " << -minY << " " <<-minZ <<"\nMaterial \"matte\" \"color Kd\" [1 1 1]\nInclude \"" << fichierGeomPbrt<<"\"\nAttributeEnd\n \nWorldEnd";
+  fichierSortiePbrt << "#include of the sample\nAttributeBegin\nTranslate 180 140 386 \nRotate -30 1 0 0\nRotate 30 0 1 0\nScale "<< (double)256/(maxZ-minZ) << " " << (double)256/(maxZ-minZ)<<" " << (double)256/(maxZ-minZ)<<"\n Rotate -90 1 0 0 \nTranslate "<< -minX <<" " << -minY << " " <<-minZ <<"\nMaterial \"matte\" \"color Kd\" [1 1 1]\nInclude \"" << fichierGeomPbrt<<"\"\nAttributeEnd\n \nWorldEnd";
 
   cout << "pbrt file generated"<<endl;
 }
