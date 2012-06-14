@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cctype>
 #include <cstring>
+#include <algorithm>
+
 
 using namespace std;
 //variables globales qui cernent la bounding box
@@ -235,9 +237,10 @@ void ecritFichierGeometrie(string fichierNoff, string fichierGeomPbrt)
 void ecritFichierPbrt(string fichierPbrt, string fichierGeomPbrt, string fichierEXR){
 
   ofstream fichierSortiePbrt(fichierPbrt.c_str());
+double Maximum(0);
 
-
-
+Maximum = max(max(maxX-minX, maxY-minY), maxZ-minZ);
+if (Maximum==0){cout << "geometry file is empty !!!" <<endl; Maximum=1;} 
 
 
   // et on écrit dans le fichier qu'il faudra lancer sous pbrt
@@ -250,7 +253,7 @@ void ecritFichierPbrt(string fichierPbrt, string fichierGeomPbrt, string fichier
   fichierSortiePbrt << "#le fond \nAttributeBegin\nMaterial \"matte\" \"color Kd\" [.8 .8 .8]\nShape \"trianglemesh\"  \"integer indices\" [0 2 1 0 3 2] \"point P\" [800.000000 0.000000 0.000000 -250.000000 0.000000 0.000000 -250.000000 0.000000 1000.000000 800.000000 0.000000 1000.000000]\nAttributeEnd\n \n";
 
   //on inclut l'echantillon
-  fichierSortiePbrt << "#include of the sample\nAttributeBegin\nTranslate 180 140 386 \nRotate -30 1 0 0\nRotate 30 0 1 0\nScale "<< (double)256/(maxZ-minZ) << " " << (double)256/(maxZ-minZ)<<" " << (double)256/(maxZ-minZ)<<"\n Rotate -90 1 0 0 \nTranslate "<< -minX <<" " << -minY << " " <<-minZ <<"\nMaterial \"matte\" \"color Kd\" [1 1 1]\nInclude \"" << fichierGeomPbrt<<"\"\nAttributeEnd\n \nWorldEnd";
+  fichierSortiePbrt << "#include of the sample\nAttributeBegin\nTranslate 180 140 386 \nRotate -30 1 0 0\nRotate 30 0 1 0\nScale "<< (double)256/Maximum << " " << (double)256/Maximum<<" " << (double)256/Maximum<<"\n Rotate -90 1 0 0 \nTranslate "<< -minX <<" " << -minY << " " <<-minZ <<"\nMaterial \"matte\" \"color Kd\" [1 1 1]\nInclude \"" << fichierGeomPbrt<<"\"\nAttributeEnd\n \nWorldEnd";
 
   cout << "pbrt file generated"<<endl;
 }
