@@ -1,0 +1,9 @@
+fichiers modifiés : 
+
+	photonmap.cpp        :   void PhotonShootingTask::Run   
+	samplerrenderer.cpp  :   Spectrum SamplerRenderer::Li
+	Shapes/trianglemesh.cpp : Intersect
+	Light/distant.cpp    :   Sample_L
+	core/api.cpp         :   ajout de M_Nt et M_ABSORB, calculAbsor() changement de pbrtInit()
+	core/api.h	     :   déclaration fonction calculAbsor();
+	core/pbrt.h 	     :   ajout d'une composante lOnde dans option

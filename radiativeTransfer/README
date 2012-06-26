@@ -1,0 +1,10 @@
+This task is devoted to functions used with the photon tracking in order to study the radiative transfer of a snow sample.
+
+To use the photon tracking from a .raw file :
+	-transform file.raw to file.vol (DGtal function raw2vol)
+	-close the geometry : file.vol becomes file1.vol (DGtal function volAddBorder)
+	(-eventually sub sample with : >> volSubSample -i file1.vol -o file2.vol ; then close the geometry again)
+	-transform file1.vol to file.off (DGtal function vol2normalField)
+	-transform file.off to filePhoton.pbrt (function Noff2Pbrt)
+	-use the photon tracking (pbrt)
+
