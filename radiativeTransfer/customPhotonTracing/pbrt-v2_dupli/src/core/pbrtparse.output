@@ -1,0 +1,1344 @@
+Terminals unused in grammar
+
+   ID
+
+
+Grammaire
+
+    0 $accept: start $end
+
+    1 start: pbrt_stmt_list
+
+    2 array_init: /* vide */
+
+    3 string_array_init: /* vide */
+
+    4 num_array_init: /* vide */
+
+    5 array: string_array
+    6      | num_array
+
+    7 string_array: array_init LBRACK string_list RBRACK
+    8             | single_element_string_array
+
+    9 single_element_string_array: array_init string_list_entry
+
+   10 string_list: string_list string_list_entry
+   11            | string_list_entry
+
+   12 string_list_entry: string_array_init STRING
+
+   13 num_array: array_init LBRACK num_list RBRACK
+   14          | single_element_num_array
+
+   15 single_element_num_array: array_init num_list_entry
+
+   16 num_list: num_list num_list_entry
+   17         | num_list_entry
+
+   18 num_list_entry: num_array_init NUM
+
+   19 paramlist: paramlist_init paramlist_contents
+
+   20 paramlist_init: /* vide */
+
+   21 paramlist_contents: paramlist_entry paramlist_contents
+   22                   | /* vide */
+
+   23 paramlist_entry: STRING array
+
+   24 pbrt_stmt_list: pbrt_stmt_list pbrt_stmt
+   25               | pbrt_stmt
+
+   26 pbrt_stmt: ACCELERATOR STRING paramlist
+   27          | ACTIVETRANSFORM ALL
+   28          | ACTIVETRANSFORM ENDTIME
+   29          | ACTIVETRANSFORM STARTTIME
+   30          | AREALIGHTSOURCE STRING paramlist
+   31          | ATTRIBUTEBEGIN
+   32          | ATTRIBUTEEND
+   33          | CAMERA STRING paramlist
+   34          | CONCATTRANSFORM num_array
+   35          | COORDINATESYSTEM STRING
+   36          | COORDSYSTRANSFORM STRING
+   37          | FILM STRING paramlist
+   38          | IDENTITY
+   39          | INCLUDE STRING
+   40          | LIGHTSOURCE STRING paramlist
+   41          | LOOKAT NUM NUM NUM NUM NUM NUM NUM NUM NUM
+   42          | MAKENAMEDMATERIAL STRING paramlist
+   43          | MATERIAL STRING paramlist
+   44          | NAMEDMATERIAL STRING
+   45          | OBJECTBEGIN STRING
+   46          | OBJECTEND
+   47          | OBJECTINSTANCE STRING
+   48          | PIXELFILTER STRING paramlist
+   49          | RENDERER STRING paramlist
+   50          | REVERSEORIENTATION
+   51          | ROTATE NUM NUM NUM NUM
+   52          | SAMPLER STRING paramlist
+   53          | SCALE NUM NUM NUM
+   54          | SHAPE STRING paramlist
+   55          | SURFACEINTEGRATOR STRING paramlist
+   56          | TEXTURE STRING STRING STRING paramlist
+   57          | TRANSFORMBEGIN
+   58          | TRANSFORMEND
+   59          | TRANSFORMTIMES NUM NUM
+   60          | TRANSFORM num_array
+   61          | TRANSLATE NUM NUM NUM
+   62          | VOLUMEINTEGRATOR STRING paramlist
+   63          | VOLUME STRING paramlist
+   64          | WORLDBEGIN
+   65          | WORLDEND
+
+
+Terminaux, suivis des règles où ils apparaissent
+
+$end (0) 0
+error (256)
+STRING (258) 12 23 26 30 33 35 36 37 39 40 42 43 44 45 47 48 49 52
+    54 55 56 62 63
+ID (259)
+NUM (260) 18 41 51 53 59 61
+LBRACK (261) 7 13
+RBRACK (262) 7 13
+ACCELERATOR (263) 26
+ACTIVETRANSFORM (264) 27 28 29
+ALL (265) 27
+AREALIGHTSOURCE (266) 30
+ATTRIBUTEBEGIN (267) 31
+ATTRIBUTEEND (268) 32
+CAMERA (269) 33
+CONCATTRANSFORM (270) 34
+COORDINATESYSTEM (271) 35
+COORDSYSTRANSFORM (272) 36
+ENDTIME (273) 28
+FILM (274) 37
+IDENTITY (275) 38
+INCLUDE (276) 39
+LIGHTSOURCE (277) 40
+LOOKAT (278) 41
+MAKENAMEDMATERIAL (279) 42
+MATERIAL (280) 43
+NAMEDMATERIAL (281) 44
+OBJECTBEGIN (282) 45
+OBJECTEND (283) 46
+OBJECTINSTANCE (284) 47
+PIXELFILTER (285) 48
+RENDERER (286) 49
+REVERSEORIENTATION (287) 50
+ROTATE (288) 51
+SAMPLER (289) 52
+SCALE (290) 53
+SHAPE (291) 54
+STARTTIME (292) 29
+SURFACEINTEGRATOR (293) 55
+TEXTURE (294) 56
+TRANSFORMBEGIN (295) 57
+TRANSFORMEND (296) 58
+TRANSFORMTIMES (297) 59
+TRANSFORM (298) 60
+TRANSLATE (299) 61
+VOLUME (300) 63
+VOLUMEINTEGRATOR (301) 62
+WORLDBEGIN (302) 64
+WORLDEND (303) 65
+HIGH_PRECEDENCE (304)
+
+
+Non-terminaux, suivis des règles où ils apparaissent
+
+$accept (50)
+    à gauche: 0
+start (51)
+    à gauche: 1, à droite: 0
+array_init (52)
+    à gauche: 2, à droite: 7 9 13 15
+string_array_init (53)
+    à gauche: 3, à droite: 12
+num_array_init (54)
+    à gauche: 4, à droite: 18
+array (55)
+    à gauche: 5 6, à droite: 23
+string_array (56)
+    à gauche: 7 8, à droite: 5
+single_element_string_array (57)
+    à gauche: 9, à droite: 8
+string_list (58)
+    à gauche: 10 11, à droite: 7 10
+string_list_entry (59)
+    à gauche: 12, à droite: 9 10 11
+num_array (60)
+    à gauche: 13 14, à droite: 6 34 60
+single_element_num_array (61)
+    à gauche: 15, à droite: 14
+num_list (62)
+    à gauche: 16 17, à droite: 13 16
+num_list_entry (63)
+    à gauche: 18, à droite: 15 16 17
+paramlist (64)
+    à gauche: 19, à droite: 26 30 33 37 40 42 43 48 49 52 54 55 56
+    62 63
+paramlist_init (65)
+    à gauche: 20, à droite: 19
+paramlist_contents (66)
+    à gauche: 21 22, à droite: 19 21
+paramlist_entry (67)
+    à gauche: 23, à droite: 21
+pbrt_stmt_list (68)
+    à gauche: 24 25, à droite: 1 24
+pbrt_stmt (69)
+    à gauche: 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43
+    44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64
+    65, à droite: 24 25
+
+
+état 0
+
+    0 $accept: . start $end
+
+    ACCELERATOR         décalage et aller à l'état 1
+    ACTIVETRANSFORM     décalage et aller à l'état 2
+    AREALIGHTSOURCE     décalage et aller à l'état 3
+    ATTRIBUTEBEGIN      décalage et aller à l'état 4
+    ATTRIBUTEEND        décalage et aller à l'état 5
+    CAMERA              décalage et aller à l'état 6
+    CONCATTRANSFORM     décalage et aller à l'état 7
+    COORDINATESYSTEM    décalage et aller à l'état 8
+    COORDSYSTRANSFORM   décalage et aller à l'état 9
+    FILM                décalage et aller à l'état 10
+    IDENTITY            décalage et aller à l'état 11
+    INCLUDE             décalage et aller à l'état 12
+    LIGHTSOURCE         décalage et aller à l'état 13
+    LOOKAT              décalage et aller à l'état 14
+    MAKENAMEDMATERIAL   décalage et aller à l'état 15
+    MATERIAL            décalage et aller à l'état 16
+    NAMEDMATERIAL       décalage et aller à l'état 17
+    OBJECTBEGIN         décalage et aller à l'état 18
+    OBJECTEND           décalage et aller à l'état 19
+    OBJECTINSTANCE      décalage et aller à l'état 20
+    PIXELFILTER         décalage et aller à l'état 21
+    RENDERER            décalage et aller à l'état 22
+    REVERSEORIENTATION  décalage et aller à l'état 23
+    ROTATE              décalage et aller à l'état 24
+    SAMPLER             décalage et aller à l'état 25
+    SCALE               décalage et aller à l'état 26
+    SHAPE               décalage et aller à l'état 27
+    SURFACEINTEGRATOR   décalage et aller à l'état 28
+    TEXTURE             décalage et aller à l'état 29
+    TRANSFORMBEGIN      décalage et aller à l'état 30
+    TRANSFORMEND        décalage et aller à l'état 31
+    TRANSFORMTIMES      décalage et aller à l'état 32
+    TRANSFORM           décalage et aller à l'état 33
+    TRANSLATE           décalage et aller à l'état 34
+    VOLUME              décalage et aller à l'état 35
+    VOLUMEINTEGRATOR    décalage et aller à l'état 36
+    WORLDBEGIN          décalage et aller à l'état 37
+    WORLDEND            décalage et aller à l'état 38
+
+    start           aller à l'état 39
+    pbrt_stmt_list  aller à l'état 40
+    pbrt_stmt       aller à l'état 41
+
+
+état 1
+
+   26 pbrt_stmt: ACCELERATOR . STRING paramlist
+
+    STRING  décalage et aller à l'état 42
+
+
+état 2
+
+   27 pbrt_stmt: ACTIVETRANSFORM . ALL
+   28          | ACTIVETRANSFORM . ENDTIME
+   29          | ACTIVETRANSFORM . STARTTIME
+
+    ALL        décalage et aller à l'état 43
+    ENDTIME    décalage et aller à l'état 44
+    STARTTIME  décalage et aller à l'état 45
+
+
+état 3
+
+   30 pbrt_stmt: AREALIGHTSOURCE . STRING paramlist
+
+    STRING  décalage et aller à l'état 46
+
+
+état 4
+
+   31 pbrt_stmt: ATTRIBUTEBEGIN .
+
+    $défaut  réduction par utilisation de la règle 31 (pbrt_stmt)
+
+
+état 5
+
+   32 pbrt_stmt: ATTRIBUTEEND .
+
+    $défaut  réduction par utilisation de la règle 32 (pbrt_stmt)
+
+
+état 6
+
+   33 pbrt_stmt: CAMERA . STRING paramlist
+
+    STRING  décalage et aller à l'état 47
+
+
+état 7
+
+   34 pbrt_stmt: CONCATTRANSFORM . num_array
+
+    $défaut  réduction par utilisation de la règle 2 (array_init)
+
+    array_init                aller à l'état 48
+    num_array                 aller à l'état 49
+    single_element_num_array  aller à l'état 50
+
+
+état 8
+
+   35 pbrt_stmt: COORDINATESYSTEM . STRING
+
+    STRING  décalage et aller à l'état 51
+
+
+état 9
+
+   36 pbrt_stmt: COORDSYSTRANSFORM . STRING
+
+    STRING  décalage et aller à l'état 52
+
+
+état 10
+
+   37 pbrt_stmt: FILM . STRING paramlist
+
+    STRING  décalage et aller à l'état 53
+
+
+état 11
+
+   38 pbrt_stmt: IDENTITY .
+
+    $défaut  réduction par utilisation de la règle 38 (pbrt_stmt)
+
+
+état 12
+
+   39 pbrt_stmt: INCLUDE . STRING
+
+    STRING  décalage et aller à l'état 54
+
+
+état 13
+
+   40 pbrt_stmt: LIGHTSOURCE . STRING paramlist
+
+    STRING  décalage et aller à l'état 55
+
+
+état 14
+
+   41 pbrt_stmt: LOOKAT . NUM NUM NUM NUM NUM NUM NUM NUM NUM
+
+    NUM  décalage et aller à l'état 56
+
+
+état 15
+
+   42 pbrt_stmt: MAKENAMEDMATERIAL . STRING paramlist
+
+    STRING  décalage et aller à l'état 57
+
+
+état 16
+
+   43 pbrt_stmt: MATERIAL . STRING paramlist
+
+    STRING  décalage et aller à l'état 58
+
+
+état 17
+
+   44 pbrt_stmt: NAMEDMATERIAL . STRING
+
+    STRING  décalage et aller à l'état 59
+
+
+état 18
+
+   45 pbrt_stmt: OBJECTBEGIN . STRING
+
+    STRING  décalage et aller à l'état 60
+
+
+état 19
+
+   46 pbrt_stmt: OBJECTEND .
+
+    $défaut  réduction par utilisation de la règle 46 (pbrt_stmt)
+
+
+état 20
+
+   47 pbrt_stmt: OBJECTINSTANCE . STRING
+
+    STRING  décalage et aller à l'état 61
+
+
+état 21
+
+   48 pbrt_stmt: PIXELFILTER . STRING paramlist
+
+    STRING  décalage et aller à l'état 62
+
+
+état 22
+
+   49 pbrt_stmt: RENDERER . STRING paramlist
+
+    STRING  décalage et aller à l'état 63
+
+
+état 23
+
+   50 pbrt_stmt: REVERSEORIENTATION .
+
+    $défaut  réduction par utilisation de la règle 50 (pbrt_stmt)
+
+
+état 24
+
+   51 pbrt_stmt: ROTATE . NUM NUM NUM NUM
+
+    NUM  décalage et aller à l'état 64
+
+
+état 25
+
+   52 pbrt_stmt: SAMPLER . STRING paramlist
+
+    STRING  décalage et aller à l'état 65
+
+
+état 26
+
+   53 pbrt_stmt: SCALE . NUM NUM NUM
+
+    NUM  décalage et aller à l'état 66
+
+
+état 27
+
+   54 pbrt_stmt: SHAPE . STRING paramlist
+
+    STRING  décalage et aller à l'état 67
+
+
+état 28
+
+   55 pbrt_stmt: SURFACEINTEGRATOR . STRING paramlist
+
+    STRING  décalage et aller à l'état 68
+
+
+état 29
+
+   56 pbrt_stmt: TEXTURE . STRING STRING STRING paramlist
+
+    STRING  décalage et aller à l'état 69
+
+
+état 30
+
+   57 pbrt_stmt: TRANSFORMBEGIN .
+
+    $défaut  réduction par utilisation de la règle 57 (pbrt_stmt)
+
+
+état 31
+
+   58 pbrt_stmt: TRANSFORMEND .
+
+    $défaut  réduction par utilisation de la règle 58 (pbrt_stmt)
+
+
+état 32
+
+   59 pbrt_stmt: TRANSFORMTIMES . NUM NUM
+
+    NUM  décalage et aller à l'état 70
+
+
+état 33
+
+   60 pbrt_stmt: TRANSFORM . num_array
+
+    $défaut  réduction par utilisation de la règle 2 (array_init)
+
+    array_init                aller à l'état 48
+    num_array                 aller à l'état 71
+    single_element_num_array  aller à l'état 50
+
+
+état 34
+
+   61 pbrt_stmt: TRANSLATE . NUM NUM NUM
+
+    NUM  décalage et aller à l'état 72
+
+
+état 35
+
+   63 pbrt_stmt: VOLUME . STRING paramlist
+
+    STRING  décalage et aller à l'état 73
+
+
+état 36
+
+   62 pbrt_stmt: VOLUMEINTEGRATOR . STRING paramlist
+
+    STRING  décalage et aller à l'état 74
+
+
+état 37
+
+   64 pbrt_stmt: WORLDBEGIN .
+
+    $défaut  réduction par utilisation de la règle 64 (pbrt_stmt)
+
+
+état 38
+
+   65 pbrt_stmt: WORLDEND .
+
+    $défaut  réduction par utilisation de la règle 65 (pbrt_stmt)
+
+
+état 39
+
+    0 $accept: start . $end
+
+    $end  décalage et aller à l'état 75
+
+
+état 40
+
+    1 start: pbrt_stmt_list .
+   24 pbrt_stmt_list: pbrt_stmt_list . pbrt_stmt
+
+    ACCELERATOR         décalage et aller à l'état 1
+    ACTIVETRANSFORM     décalage et aller à l'état 2
+    AREALIGHTSOURCE     décalage et aller à l'état 3
+    ATTRIBUTEBEGIN      décalage et aller à l'état 4
+    ATTRIBUTEEND        décalage et aller à l'état 5
+    CAMERA              décalage et aller à l'état 6
+    CONCATTRANSFORM     décalage et aller à l'état 7
+    COORDINATESYSTEM    décalage et aller à l'état 8
+    COORDSYSTRANSFORM   décalage et aller à l'état 9
+    FILM                décalage et aller à l'état 10
+    IDENTITY            décalage et aller à l'état 11
+    INCLUDE             décalage et aller à l'état 12
+    LIGHTSOURCE         décalage et aller à l'état 13
+    LOOKAT              décalage et aller à l'état 14
+    MAKENAMEDMATERIAL   décalage et aller à l'état 15
+    MATERIAL            décalage et aller à l'état 16
+    NAMEDMATERIAL       décalage et aller à l'état 17
+    OBJECTBEGIN         décalage et aller à l'état 18
+    OBJECTEND           décalage et aller à l'état 19
+    OBJECTINSTANCE      décalage et aller à l'état 20
+    PIXELFILTER         décalage et aller à l'état 21
+    RENDERER            décalage et aller à l'état 22
+    REVERSEORIENTATION  décalage et aller à l'état 23
+    ROTATE              décalage et aller à l'état 24
+    SAMPLER             décalage et aller à l'état 25
+    SCALE               décalage et aller à l'état 26
+    SHAPE               décalage et aller à l'état 27
+    SURFACEINTEGRATOR   décalage et aller à l'état 28
+    TEXTURE             décalage et aller à l'état 29
+    TRANSFORMBEGIN      décalage et aller à l'état 30
+    TRANSFORMEND        décalage et aller à l'état 31
+    TRANSFORMTIMES      décalage et aller à l'état 32
+    TRANSFORM           décalage et aller à l'état 33
+    TRANSLATE           décalage et aller à l'état 34
+    VOLUME              décalage et aller à l'état 35
+    VOLUMEINTEGRATOR    décalage et aller à l'état 36
+    WORLDBEGIN          décalage et aller à l'état 37
+    WORLDEND            décalage et aller à l'état 38
+
+    $défaut  réduction par utilisation de la règle 1 (start)
+
+    pbrt_stmt  aller à l'état 76
+
+
+état 41
+
+   25 pbrt_stmt_list: pbrt_stmt .
+
+    $défaut  réduction par utilisation de la règle 25 (pbrt_stmt_list)
+
+
+état 42
+
+   26 pbrt_stmt: ACCELERATOR STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 77
+    paramlist_init  aller à l'état 78
+
+
+état 43
+
+   27 pbrt_stmt: ACTIVETRANSFORM ALL .
+
+    $défaut  réduction par utilisation de la règle 27 (pbrt_stmt)
+
+
+état 44
+
+   28 pbrt_stmt: ACTIVETRANSFORM ENDTIME .
+
+    $défaut  réduction par utilisation de la règle 28 (pbrt_stmt)
+
+
+état 45
+
+   29 pbrt_stmt: ACTIVETRANSFORM STARTTIME .
+
+    $défaut  réduction par utilisation de la règle 29 (pbrt_stmt)
+
+
+état 46
+
+   30 pbrt_stmt: AREALIGHTSOURCE STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 79
+    paramlist_init  aller à l'état 78
+
+
+état 47
+
+   33 pbrt_stmt: CAMERA STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 80
+    paramlist_init  aller à l'état 78
+
+
+état 48
+
+   13 num_array: array_init . LBRACK num_list RBRACK
+   15 single_element_num_array: array_init . num_list_entry
+
+    LBRACK  décalage et aller à l'état 81
+
+    $défaut  réduction par utilisation de la règle 4 (num_array_init)
+
+    num_array_init  aller à l'état 82
+    num_list_entry  aller à l'état 83
+
+
+état 49
+
+   34 pbrt_stmt: CONCATTRANSFORM num_array .
+
+    $défaut  réduction par utilisation de la règle 34 (pbrt_stmt)
+
+
+état 50
+
+   14 num_array: single_element_num_array .
+
+    $défaut  réduction par utilisation de la règle 14 (num_array)
+
+
+état 51
+
+   35 pbrt_stmt: COORDINATESYSTEM STRING .
+
+    $défaut  réduction par utilisation de la règle 35 (pbrt_stmt)
+
+
+état 52
+
+   36 pbrt_stmt: COORDSYSTRANSFORM STRING .
+
+    $défaut  réduction par utilisation de la règle 36 (pbrt_stmt)
+
+
+état 53
+
+   37 pbrt_stmt: FILM STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 84
+    paramlist_init  aller à l'état 78
+
+
+état 54
+
+   39 pbrt_stmt: INCLUDE STRING .
+
+    $défaut  réduction par utilisation de la règle 39 (pbrt_stmt)
+
+
+état 55
+
+   40 pbrt_stmt: LIGHTSOURCE STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 85
+    paramlist_init  aller à l'état 78
+
+
+état 56
+
+   41 pbrt_stmt: LOOKAT NUM . NUM NUM NUM NUM NUM NUM NUM NUM
+
+    NUM  décalage et aller à l'état 86
+
+
+état 57
+
+   42 pbrt_stmt: MAKENAMEDMATERIAL STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 87
+    paramlist_init  aller à l'état 78
+
+
+état 58
+
+   43 pbrt_stmt: MATERIAL STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 88
+    paramlist_init  aller à l'état 78
+
+
+état 59
+
+   44 pbrt_stmt: NAMEDMATERIAL STRING .
+
+    $défaut  réduction par utilisation de la règle 44 (pbrt_stmt)
+
+
+état 60
+
+   45 pbrt_stmt: OBJECTBEGIN STRING .
+
+    $défaut  réduction par utilisation de la règle 45 (pbrt_stmt)
+
+
+état 61
+
+   47 pbrt_stmt: OBJECTINSTANCE STRING .
+
+    $défaut  réduction par utilisation de la règle 47 (pbrt_stmt)
+
+
+état 62
+
+   48 pbrt_stmt: PIXELFILTER STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 89
+    paramlist_init  aller à l'état 78
+
+
+état 63
+
+   49 pbrt_stmt: RENDERER STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 90
+    paramlist_init  aller à l'état 78
+
+
+état 64
+
+   51 pbrt_stmt: ROTATE NUM . NUM NUM NUM
+
+    NUM  décalage et aller à l'état 91
+
+
+état 65
+
+   52 pbrt_stmt: SAMPLER STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 92
+    paramlist_init  aller à l'état 78
+
+
+état 66
+
+   53 pbrt_stmt: SCALE NUM . NUM NUM
+
+    NUM  décalage et aller à l'état 93
+
+
+état 67
+
+   54 pbrt_stmt: SHAPE STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 94
+    paramlist_init  aller à l'état 78
+
+
+état 68
+
+   55 pbrt_stmt: SURFACEINTEGRATOR STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 95
+    paramlist_init  aller à l'état 78
+
+
+état 69
+
+   56 pbrt_stmt: TEXTURE STRING . STRING STRING paramlist
+
+    STRING  décalage et aller à l'état 96
+
+
+état 70
+
+   59 pbrt_stmt: TRANSFORMTIMES NUM . NUM
+
+    NUM  décalage et aller à l'état 97
+
+
+état 71
+
+   60 pbrt_stmt: TRANSFORM num_array .
+
+    $défaut  réduction par utilisation de la règle 60 (pbrt_stmt)
+
+
+état 72
+
+   61 pbrt_stmt: TRANSLATE NUM . NUM NUM
+
+    NUM  décalage et aller à l'état 98
+
+
+état 73
+
+   63 pbrt_stmt: VOLUME STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 99
+    paramlist_init  aller à l'état 78
+
+
+état 74
+
+   62 pbrt_stmt: VOLUMEINTEGRATOR STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 100
+    paramlist_init  aller à l'état 78
+
+
+état 75
+
+    0 $accept: start $end .
+
+    $défaut  accepter
+
+
+état 76
+
+   24 pbrt_stmt_list: pbrt_stmt_list pbrt_stmt .
+
+    $défaut  réduction par utilisation de la règle 24 (pbrt_stmt_list)
+
+
+état 77
+
+   26 pbrt_stmt: ACCELERATOR STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 26 (pbrt_stmt)
+
+
+état 78
+
+   19 paramlist: paramlist_init . paramlist_contents
+
+    STRING  décalage et aller à l'état 101
+
+    $défaut  réduction par utilisation de la règle 22 (paramlist_contents)
+
+    paramlist_contents  aller à l'état 102
+    paramlist_entry     aller à l'état 103
+
+
+état 79
+
+   30 pbrt_stmt: AREALIGHTSOURCE STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 30 (pbrt_stmt)
+
+
+état 80
+
+   33 pbrt_stmt: CAMERA STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 33 (pbrt_stmt)
+
+
+état 81
+
+   13 num_array: array_init LBRACK . num_list RBRACK
+
+    $défaut  réduction par utilisation de la règle 4 (num_array_init)
+
+    num_array_init  aller à l'état 82
+    num_list        aller à l'état 104
+    num_list_entry  aller à l'état 105
+
+
+état 82
+
+   18 num_list_entry: num_array_init . NUM
+
+    NUM  décalage et aller à l'état 106
+
+
+état 83
+
+   15 single_element_num_array: array_init num_list_entry .
+
+    $défaut  réduction par utilisation de la règle 15 (single_element_num_array)
+
+
+état 84
+
+   37 pbrt_stmt: FILM STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 37 (pbrt_stmt)
+
+
+état 85
+
+   40 pbrt_stmt: LIGHTSOURCE STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 40 (pbrt_stmt)
+
+
+état 86
+
+   41 pbrt_stmt: LOOKAT NUM NUM . NUM NUM NUM NUM NUM NUM NUM
+
+    NUM  décalage et aller à l'état 107
+
+
+état 87
+
+   42 pbrt_stmt: MAKENAMEDMATERIAL STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 42 (pbrt_stmt)
+
+
+état 88
+
+   43 pbrt_stmt: MATERIAL STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 43 (pbrt_stmt)
+
+
+état 89
+
+   48 pbrt_stmt: PIXELFILTER STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 48 (pbrt_stmt)
+
+
+état 90
+
+   49 pbrt_stmt: RENDERER STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 49 (pbrt_stmt)
+
+
+état 91
+
+   51 pbrt_stmt: ROTATE NUM NUM . NUM NUM
+
+    NUM  décalage et aller à l'état 108
+
+
+état 92
+
+   52 pbrt_stmt: SAMPLER STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 52 (pbrt_stmt)
+
+
+état 93
+
+   53 pbrt_stmt: SCALE NUM NUM . NUM
+
+    NUM  décalage et aller à l'état 109
+
+
+état 94
+
+   54 pbrt_stmt: SHAPE STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 54 (pbrt_stmt)
+
+
+état 95
+
+   55 pbrt_stmt: SURFACEINTEGRATOR STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 55 (pbrt_stmt)
+
+
+état 96
+
+   56 pbrt_stmt: TEXTURE STRING STRING . STRING paramlist
+
+    STRING  décalage et aller à l'état 110
+
+
+état 97
+
+   59 pbrt_stmt: TRANSFORMTIMES NUM NUM .
+
+    $défaut  réduction par utilisation de la règle 59 (pbrt_stmt)
+
+
+état 98
+
+   61 pbrt_stmt: TRANSLATE NUM NUM . NUM
+
+    NUM  décalage et aller à l'état 111
+
+
+état 99
+
+   63 pbrt_stmt: VOLUME STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 63 (pbrt_stmt)
+
+
+état 100
+
+   62 pbrt_stmt: VOLUMEINTEGRATOR STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 62 (pbrt_stmt)
+
+
+état 101
+
+   23 paramlist_entry: STRING . array
+
+    $défaut  réduction par utilisation de la règle 2 (array_init)
+
+    array_init                   aller à l'état 112
+    array                        aller à l'état 113
+    string_array                 aller à l'état 114
+    single_element_string_array  aller à l'état 115
+    num_array                    aller à l'état 116
+    single_element_num_array     aller à l'état 50
+
+
+état 102
+
+   19 paramlist: paramlist_init paramlist_contents .
+
+    $défaut  réduction par utilisation de la règle 19 (paramlist)
+
+
+état 103
+
+   21 paramlist_contents: paramlist_entry . paramlist_contents
+
+    STRING  décalage et aller à l'état 101
+
+    $défaut  réduction par utilisation de la règle 22 (paramlist_contents)
+
+    paramlist_contents  aller à l'état 117
+    paramlist_entry     aller à l'état 103
+
+
+état 104
+
+   13 num_array: array_init LBRACK num_list . RBRACK
+   16 num_list: num_list . num_list_entry
+
+    RBRACK  décalage et aller à l'état 118
+
+    $défaut  réduction par utilisation de la règle 4 (num_array_init)
+
+    num_array_init  aller à l'état 82
+    num_list_entry  aller à l'état 119
+
+
+état 105
+
+   17 num_list: num_list_entry .
+
+    $défaut  réduction par utilisation de la règle 17 (num_list)
+
+
+état 106
+
+   18 num_list_entry: num_array_init NUM .
+
+    $défaut  réduction par utilisation de la règle 18 (num_list_entry)
+
+
+état 107
+
+   41 pbrt_stmt: LOOKAT NUM NUM NUM . NUM NUM NUM NUM NUM NUM
+
+    NUM  décalage et aller à l'état 120
+
+
+état 108
+
+   51 pbrt_stmt: ROTATE NUM NUM NUM . NUM
+
+    NUM  décalage et aller à l'état 121
+
+
+état 109
+
+   53 pbrt_stmt: SCALE NUM NUM NUM .
+
+    $défaut  réduction par utilisation de la règle 53 (pbrt_stmt)
+
+
+état 110
+
+   56 pbrt_stmt: TEXTURE STRING STRING STRING . paramlist
+
+    $défaut  réduction par utilisation de la règle 20 (paramlist_init)
+
+    paramlist       aller à l'état 122
+    paramlist_init  aller à l'état 78
+
+
+état 111
+
+   61 pbrt_stmt: TRANSLATE NUM NUM NUM .
+
+    $défaut  réduction par utilisation de la règle 61 (pbrt_stmt)
+
+
+état 112
+
+    7 string_array: array_init . LBRACK string_list RBRACK
+    9 single_element_string_array: array_init . string_list_entry
+   13 num_array: array_init . LBRACK num_list RBRACK
+   15 single_element_num_array: array_init . num_list_entry
+
+    LBRACK  décalage et aller à l'état 123
+
+    NUM       réduction par utilisation de la règle 4 (num_array_init)
+    $défaut  réduction par utilisation de la règle 3 (string_array_init)
+
+    string_array_init  aller à l'état 124
+    num_array_init     aller à l'état 82
+    string_list_entry  aller à l'état 125
+    num_list_entry     aller à l'état 83
+
+
+état 113
+
+   23 paramlist_entry: STRING array .
+
+    $défaut  réduction par utilisation de la règle 23 (paramlist_entry)
+
+
+état 114
+
+    5 array: string_array .
+
+    $défaut  réduction par utilisation de la règle 5 (array)
+
+
+état 115
+
+    8 string_array: single_element_string_array .
+
+    $défaut  réduction par utilisation de la règle 8 (string_array)
+
+
+état 116
+
+    6 array: num_array .
+
+    $défaut  réduction par utilisation de la règle 6 (array)
+
+
+état 117
+
+   21 paramlist_contents: paramlist_entry paramlist_contents .
+
+    $défaut  réduction par utilisation de la règle 21 (paramlist_contents)
+
+
+état 118
+
+   13 num_array: array_init LBRACK num_list RBRACK .
+
+    $défaut  réduction par utilisation de la règle 13 (num_array)
+
+
+état 119
+
+   16 num_list: num_list num_list_entry .
+
+    $défaut  réduction par utilisation de la règle 16 (num_list)
+
+
+état 120
+
+   41 pbrt_stmt: LOOKAT NUM NUM NUM NUM . NUM NUM NUM NUM NUM
+
+    NUM  décalage et aller à l'état 126
+
+
+état 121
+
+   51 pbrt_stmt: ROTATE NUM NUM NUM NUM .
+
+    $défaut  réduction par utilisation de la règle 51 (pbrt_stmt)
+
+
+état 122
+
+   56 pbrt_stmt: TEXTURE STRING STRING STRING paramlist .
+
+    $défaut  réduction par utilisation de la règle 56 (pbrt_stmt)
+
+
+état 123
+
+    7 string_array: array_init LBRACK . string_list RBRACK
+   13 num_array: array_init LBRACK . num_list RBRACK
+
+    NUM       réduction par utilisation de la règle 4 (num_array_init)
+    $défaut  réduction par utilisation de la règle 3 (string_array_init)
+
+    string_array_init  aller à l'état 124
+    num_array_init     aller à l'état 82
+    string_list        aller à l'état 127
+    string_list_entry  aller à l'état 128
+    num_list           aller à l'état 104
+    num_list_entry     aller à l'état 105
+
+
+état 124
+
+   12 string_list_entry: string_array_init . STRING
+
+    STRING  décalage et aller à l'état 129
+
+
+état 125
+
+    9 single_element_string_array: array_init string_list_entry .
+
+    $défaut  réduction par utilisation de la règle 9 (single_element_string_array)
+
+
+état 126
+
+   41 pbrt_stmt: LOOKAT NUM NUM NUM NUM NUM . NUM NUM NUM NUM
+
+    NUM  décalage et aller à l'état 130
+
+
+état 127
+
+    7 string_array: array_init LBRACK string_list . RBRACK
+   10 string_list: string_list . string_list_entry
+
+    RBRACK  décalage et aller à l'état 131
+
+    $défaut  réduction par utilisation de la règle 3 (string_array_init)
+
+    string_array_init  aller à l'état 124
+    string_list_entry  aller à l'état 132
+
+
+état 128
+
+   11 string_list: string_list_entry .
+
+    $défaut  réduction par utilisation de la règle 11 (string_list)
+
+
+état 129
+
+   12 string_list_entry: string_array_init STRING .
+
+    $défaut  réduction par utilisation de la règle 12 (string_list_entry)
+
+
+état 130
+
+   41 pbrt_stmt: LOOKAT NUM NUM NUM NUM NUM NUM . NUM NUM NUM
+
+    NUM  décalage et aller à l'état 133
+
+
+état 131
+
+    7 string_array: array_init LBRACK string_list RBRACK .
+
+    $défaut  réduction par utilisation de la règle 7 (string_array)
+
+
+état 132
+
+   10 string_list: string_list string_list_entry .
+
+    $défaut  réduction par utilisation de la règle 10 (string_list)
+
+
+état 133
+
+   41 pbrt_stmt: LOOKAT NUM NUM NUM NUM NUM NUM NUM . NUM NUM
+
+    NUM  décalage et aller à l'état 134
+
+
+état 134
+
+   41 pbrt_stmt: LOOKAT NUM NUM NUM NUM NUM NUM NUM NUM . NUM
+
+    NUM  décalage et aller à l'état 135
+
+
+état 135
+
+   41 pbrt_stmt: LOOKAT NUM NUM NUM NUM NUM NUM NUM NUM NUM .
+
+    $défaut  réduction par utilisation de la règle 41 (pbrt_stmt)
