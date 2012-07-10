@@ -64,8 +64,8 @@ bool displayPartition(TViewer& viewer, const TImage& img)
     }
 
   GradientColorMap<long> colorMap( 0, 510 );
-  colorMap.addColor(Color::Blue);
   colorMap.addColor(Color::Yellow);
+  colorMap.addColor(Color::Blue);
   colorMap.addColor(Color::Red);
   colorMap.addColor(Color::Green);
 
@@ -100,7 +100,7 @@ bool displayPartition(TViewer& viewer, const TImage& img)
       {
 	viewer << DGtal::CustomColors3D( colorMap( iLabel+oLabel ), 
 					 colorMap( iLabel+oLabel ) );
-	viewer << *it; 
+	viewer << aKSpace.unsigns( *it ); 
 	aSet.erase( aKSpace.unsigns( *it ) );
       }
   }

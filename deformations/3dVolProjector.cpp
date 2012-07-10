@@ -65,7 +65,24 @@ int displayOneFile(int argc, char** argv,
   viewer.show();
  
   //display
-  displayPartition(viewer, image); 
+  //  displayPartition(viewer, image); 
+  Domain domain(image.domain());
+
+  GradientColorMap<long> colorMap( 0, 510 );
+  colorMap.addColor(Color::Yellow);
+  colorMap.addColor(Color::Blue);
+  colorMap.addColor(Color::Red);
+  colorMap.addColor(Color::Green);
+
+  for(Domain::ConstIterator it = domain.begin(), itend=domain.end(); it!=itend; ++it){
+    unsigned char  val= image( *it );     
+    Color c = colorMap( val );
+    if(val > 0){
+      viewer << CustomColors3D(c, c);     
+      viewer << *it;     
+    }     
+  }
+
 
   viewer << Viewer3D::updateDisplay;
 
@@ -78,7 +95,7 @@ int displayOneFile(int argc, char** argv,
     }
   viewer.updateGL(); 
 
-  if (offset != 0)
+  if ( (offset != 0)&&(step != 0) )
     {
       viewer.camera()->setOrientation( -(offset*step), 0.0);
       viewer.showEntireScene(); 
@@ -125,18 +142,19 @@ int main( int argc, char** argv )
     ("help,h", "display this message")
     ("output-file,o",   po::value<string>()->default_value("interface"), "output file(s) basename" )
     ("input-file,i", po::value<std::string>(), "volume file" )
+    ("multi-input,mi", po::value<std::string>(), "volume files basename " )
     ("start,s",  po::value<int>()->default_value(1), "starting number (for option -mi)" )
     ("end,e",  po::value<int>()->default_value(2), "ending number, not included (for option -mi)" )
-    ("angle-step,a",  po::value<int>()->default_value(360), "angle step as a fraction of 2PI (for option -mi)" )
-    ("multi-input,mi", po::value<std::string>(), "volume files basename " ) ;
+    ("angle-step,a",  po::value<int>()->default_value(360), "angle step as a fraction of 2PI (0 disables this feature)" )
+    ("number,n",  po::value<int>()->default_value(90), "number of angle steps when moving camera" );
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, general_opt), vm);  
   po::notify(vm);    
   if(vm.count("help")||argc<=1)
     {
       std::cout << "Usage: " << argv[0] << " [input-file]\n"
-    << "Display volume file as a set of digital frontiers"
-    << general_opt << "\n";
+		<< "Display volume file as a set of digital frontiers"
+		<< general_opt << "\n";
       return 0;
     }
   
@@ -155,13 +173,55 @@ int main( int argc, char** argv )
 	  return 1;
 	}
       string inputFilename = vm["input-file"].as<std::string>();
-      displayOneFile(argc, argv, inputFilename,outputBasename); 
+
+      if(vm.count("angle-step"))
+	{
+	  int den = vm["angle-step"].as<int>(); 
+	  double angleStep = (den == 0)?0.0:( (2.0*M_PI)/((double) den) );
+	  int n = vm["number"].as<int>(); 
+	  for (int i = 0; i < n; ++i)
+	    {
+	      trace.info() << i << std::endl; 
+	      std::stringstream so;
+	      so << outputBasename << setfill('0') << std::setw(4) 
+		 << i; 
+
+	      displayOneFile(argc, argv, inputFilename, so.str(), i+1, angleStep); 
+	    }
+
+	  {//rename state file
+	    std::stringstream olds;
+	    olds << ".qglviewer" << n << ".xml"; 
+	    string oldf = olds.str();
+	    string newf = ".qglviewer.xml";  
+	    if (rename (oldf.c_str(), newf.c_str()) == -1) 
+	      trace.info() << "renaming " << oldf << " into " 
+			   << newf << " failed " << std::endl; 
+	  }
+
+	}
+      else 
+	{
+	  displayOneFile(argc, argv, inputFilename, outputBasename); 
+
+
+	  {//rename state file
+	    string oldf = ".qglviewer1.xml";
+	    string newf = ".qglviewer.xml";  
+	    if (rename (oldf.c_str(), newf.c_str()) == -1) 
+	      trace.info() << "renaming " << oldf << " into " 
+			   << newf << " failed " << std::endl; 
+	  }
+	}
     }
   else
     {
       if (vm.count("multi-input"))
 	{
 	  string inputBasename = vm["multi-input"].as<std::string>();
+
+	  int den = vm["angle-step"].as<int>(); 
+	  double angleStep = (den == 0)?0.0:( (2.0*M_PI)/((double) den) );
 
 	  int start = vm["start"].as<int>();
 	  int end = vm["end"].as<int>();
@@ -175,10 +235,10 @@ int main( int argc, char** argv )
 	      so << outputBasename << setfill('0') << std::setw(4) 
 		 << i; 
 
-	      double angleStep = ( (2.0*M_PI)/((double)vm["angle-step"].as<int>()) );
-	      displayOneFile(argc, argv, si.str(), so.str(), i, angleStep); 
+	      displayOneFile(argc, argv, si.str(), so.str(), i+1, angleStep); 
 
 	    }
+
 
 	  {//rename state file
 	    std::stringstream olds;
