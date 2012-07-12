@@ -37,12 +37,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 // ----------------------- Standard services ------------------------------
 
-
 template <typename TLabelImage, typename TFieldImage, typename TEvolver>
 inline
 DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
-::MultiPhaseField(LabelImage& aI, const Evolver& aE)
-  : myLabelImage( aI ), myEvolver( aE )
+::MultiPhaseField(LabelImage& aI, Evolver& aE, const Label& aDefaultLabel)
+  : myLabelImage( aI ), myEvolver( aE ), myDefaultLabel( aDefaultLabel )
 { 
  
   //domain
@@ -51,7 +50,7 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
   /// retrieve labels
   std::set<Label> labels;
   for (typename LabelImage::ConstRange::ConstIterator it = myLabelImage.range().begin(), 
-       itEnd = myLabelImage.range().end(); it != itEnd; ++it)
+	 itEnd = myLabelImage.range().end(); it != itEnd; ++it)
     {
       labels.insert( *it ); 
     }
@@ -60,11 +59,13 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
   for (typename std::set<Label>::const_iterator it = labels.begin(); 
        it != labels.end(); ++it)
     {
+      std::cerr << "Region of label " << *it << std::endl; 
+ 
       /// new phase field
-      FieldImagePtr ptr = 0; 
+      FieldImage* ptr = 0; 
       try 
         {
-          FieldImagePtr ptr = new FieldImage( d ); 
+          ptr = new FieldImage( d ); 
         }
       catch (std::exception e)
         {
@@ -81,7 +82,7 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
       std::transform(ptr->begin(), ptr->end(), ptr->begin(), profile);       
 
       /// store phase field
-      myFields.push_back( ptr ); 
+      myFields.push_back( FieldImagePtr( ptr ) ); 
       /// store label
       myLabels.push_back( *it ); 
     }
@@ -89,6 +90,7 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
   ASSERT( labels.size() == myFields.size() ); 
   ASSERT( labels.size() == myLabels.size() ); 
 
+  std::cerr << *this << std::endl; 
 }
 
 template <typename TLabelImage, typename TFieldImage, typename TEvolver>
@@ -107,46 +109,49 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
 ::update(const double& aT)
 {
 
+    Domain domain = Domain( myLabelImage.domain().lowerBound(), myLabelImage.domain().upperBound() );
+
   /// update all phase fields (in arbitrary order)
-{
-  for (typename std::vector<FieldImagePtr>::const_iterator it = myFields.begin(), 
-	 itEnd = myFields.end(); it != itEnd; ++it)
-    {
-      myEvolver.update( *it, aT );   
-    }
-}
+  {
+    for (typename std::vector<FieldImagePtr>::iterator it = myFields.begin(), 
+	   itEnd = myFields.end(); it != itEnd; ++it)
+      {
+	myEvolver.update( **it, aT );   
+      }
+  }
   /// normalization
-{
-  for (typename Domain::ConstIterator itPt = domain.begin(); itPt != domain.end(); ++itPt)
-    {
-      double sum = 0; 
-      for (typename std::vector<FieldImagePtr>::const_iterator it = myFields.begin(), 
-	 itEnd = myFields.end(); it != itEnd; ++it)
-        {
-          sum += it->operator()(*itPtr);   
-        }
-      for (typename std::vector<FieldImagePtr>::const_iterator it = myFields.begin(), 
-	 itEnd = myFields.end(); it != itEnd; ++it)
-        {
-          it->setValue( *itPtr, it->operator()(*itPtr) / sum );   
-        }
-    } 
-}
+  {
+    for (typename Domain::ConstIterator itPt = domain.begin(); itPt != domain.end(); ++itPt)
+      {
+    	double sum = 0; 
+    	for (typename std::vector<FieldImagePtr>::const_iterator it = myFields.begin(), 
+    	       itEnd = myFields.end(); it != itEnd; ++it)
+    	  {
+    	    sum += (*it)->operator()(*itPt);   
+    	  }
+    	for (typename std::vector<FieldImagePtr>::iterator it = myFields.begin(), 
+    	       itEnd = myFields.end(); it != itEnd; ++it)
+    	  {
+    	    (*it)->setValue( *itPt, (*it)->operator()(*itPt) / sum );   
+    	  }
+      } 
+  }
   /// update image of labels
-//TODO default value for points that does not belong to any region
-{
-  Domain d = Domain( myLabelImage.domain().lowerBound(), myLabelImage.domain().upperBound() );
-  typename std::vector<FieldImagePtr>::const_iterator it = myFields.begin(); 
-  typename std::vector<Label>::const_iterator itLabel = myLabels.begin();  
-  for ( ; it != myFields.end(); ++it, ++itLabel)
-    {
-      for (typename Domain::ConstIterator itPt = domain.begin(); itPt != domain.end(); ++itPt)
-        {
-          if (it->operator()(*itPt) >= 0.5)
-            myLabelImage.setValue( *itPt, *itLabel ); 
-        }   
-    }  
-}
+  {
+    //default label
+       std::fill( myLabelImage.range().begin(), myLabelImage.range().end(), myDefaultLabel); 
+    //other labels
+    typename std::vector<FieldImagePtr>::const_iterator it = myFields.begin(); 
+    typename std::vector<Label>::const_iterator itLabel = myLabels.begin();  
+    for ( ; it != myFields.end(); ++it, ++itLabel)
+      {
+	for (typename Domain::ConstIterator itPt = domain.begin(); itPt != domain.end(); ++itPt)
+	  {
+	    if ((*it)->operator()(*itPt) >= 0.5)
+	      myLabelImage.setValue( *itPt, *itLabel ); 
+	  }   
+      }  
+  }
 
   return aT; 
 }
@@ -178,7 +183,7 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
 {
 
   Domain d = Domain( myLabelImage.domain().lowerBound(), myLabelImage.domain().upperBound() );
-  typename Domain::ConstIterator cIt; 
+  typename Domain::ConstIterator cIt = d.begin(); 
   typename Domain::ConstIterator cItBegin = d.begin(); 
   typename Domain::ConstIterator cItEnd = d.end(); 
 
@@ -186,20 +191,20 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
   typedef ImageContainerBySTLVector<Domain, DGtal::int32_t> Image; 
   Image copy1( d );
   for (cIt = cItBegin; cIt != cItEnd; ++cIt)
-  { 
-    if ( myLabelImage( *cIt ) == aLabel )
-      copy1.setValue( *cIt, 0 ); 
-    else
-      copy1.setValue( *cIt, 1 ); 
-  }
+    { 
+      if ( myLabelImage( *cIt ) == aLabel )
+	copy1.setValue( *cIt, 0 ); 
+      else
+	copy1.setValue( *cIt, 1 ); 
+    }
   Image copy2( d );  
   for (cIt = cItBegin; cIt != cItEnd; ++cIt)
-  { 
-    if ( myLabelImage( *cIt ) != aLabel )
-      copy2.setValue( *cIt, 0 ); 
-    else
-      copy2.setValue( *cIt, 1 ); 
-  }
+    { 
+      if ( myLabelImage( *cIt ) != aLabel )
+	copy2.setValue( *cIt, 0 ); 
+      else
+	copy2.setValue( *cIt, 1 ); 
+    }
 
   //DT computation 
   typedef  DistanceTransformation<Image, 2> DT;
@@ -209,23 +214,23 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
 
   //deduce the signed distance function 
   for (cIt = cItBegin; cIt != cItEnd; ++cIt)
-  { //for each domain point
+    { //for each domain point
 
-    Point p( *cIt ); //point p
-    double dist = 0; //signed distance
-    if ( dtImage( p ) == 0 )
-      {
-        if ( rDtImage( p ) == 0 )
-          ASSERT( false && "Err init with DT in DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>::getSignedDistance" ); 
-        else
-          dist = std::sqrt( (double) rDtImage( p ) ) - 0.5;  
-      }
-    else
-      {
-        dist = - ( std::sqrt( (double) dtImage( p ) ) - 0.5 );  
-      }
-    aImage.setValue(p, dist);  
-  }
+      Point p( *cIt ); //point p
+      double dist = 0; //signed distance
+      if ( dtImage( p ) == 0 )
+	{
+	  if ( rDtImage( p ) == 0 )
+	    ASSERT( false && "Err init with DT in DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>::getSignedDistance" ); 
+	  else
+	    dist = std::sqrt( (double) rDtImage( p ) ) - 0.5;  
+	}
+      else
+	{
+	  dist = - ( std::sqrt( (double) dtImage( p ) ) - 0.5 );  
+	}
+      aImage.setValue(p, dist);  
+    }
 
 }
 

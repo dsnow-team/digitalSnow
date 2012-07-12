@@ -48,6 +48,12 @@
 #include "DGtal/base/CowPtr.h"
 #include "DGtal/base/CountedPtr.h"
 
+
+//for getSignedDistance private method
+#include <DGtal/images/ImageContainerBySTLVector.h>
+#include <DGtal/geometry/volumes/distance/DistanceTransformation.h>
+
+#include "deformationFunctions.h"
 //////////////////////////////////////////////////////////////////////////////
 
 namespace DGtal
@@ -109,12 +115,17 @@ namespace DGtal
      */
     LabelImage& myLabelImage; 
     /**
-     * Constant reference on the evolver
+     * Reference on the evolver
      */
-    const Evolver& myEvolver; 
+    Evolver& myEvolver; 
 
 
     // ------------------------- Data --------------------------------
+    /**
+     * Default label for points that does not belong to any region
+     * after some evolution steps
+     */
+    Label myDefaultLabel; 
     /**
      * List of smart owning pointers on phase fields
      */
@@ -131,8 +142,10 @@ namespace DGtal
      * Constructor.
      * @param aI an image of labels
      * @param aE any phase field evolver
+     * @param aDefaultLabel label used for points that
+     * does not belong to any region after evolution
      */
-    MultiPhaseField(LabelImage& aI, const Evolver& aE);
+    MultiPhaseField(LabelImage& aI, Evolver& aE, const Label& aDefaultLabel = Label());
 
     /**
      * Destructor. Does nothing.
@@ -198,7 +211,7 @@ namespace DGtal
      * @param aLabel region id
      * @param aImage image to initialize
      */
-    void getSignedDistance(const Label& aLabel, FieldImage& aImage); 
+    void getSignedDistance(const Label& aLabel, FieldImage& aImage) const; 
 
   }; // end of class MultiPhaseField
 
@@ -212,7 +225,7 @@ namespace DGtal
   template <typename TLabelImage, typename TFieldImage, typename TEvolver>
   std::ostream&
   operator<< ( std::ostream & out, 
-	       const DGtal::MultiPhaseField<TLabelImage, TFieldImage, TExternImage, TEvolver>& object );
+	       const DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>& object );
 
 
 } // namespace DGtal

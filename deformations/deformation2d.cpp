@@ -24,6 +24,7 @@ using namespace Z2i;
 #include "ExplicitReactionEvolver.h"
 #include "ExactReactionEvolver.h"
 #include "LieSplittingEvolver.h"
+#include "MultiPhaseField.h"
 
 //local level set
 #include "BinaryPredicates.h"
@@ -333,10 +334,55 @@ int main(int argc, char** argv)
 
       DGtal::trace.endBlock();      
 
+    } else if (algo.compare("multiPhaseField")==0)
+    {
+
+      double epsilon = 3.0; 
+      if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
+      epsilon = vm["epsilon"].as<double>(); 
+      if (epsilon <= 0) 
+	{
+	  trace.error() << "epsilon should be greater than 0" << std::endl;
+	  return 0; 
+	} 
+
+      std::stringstream ss; 
+      ss << outputFiles << "0001"; 
+      drawContours(*labelImage, ss.str(), format); 
+
+      typedef ImageContainerBySTLVector<Domain,double> FieldImage;
+      typedef ExactDiffusionEvolver<FieldImage> Diffusion; 
+      typedef ExactReactionEvolver<FieldImage> Reaction; 
+      Diffusion diffusion; 
+      Reaction reaction( epsilon );
+      LieSplittingEvolver<Diffusion,Reaction> phaseField(diffusion, reaction); 
+      MultiPhaseField<LabelImage, FieldImage, LieSplittingEvolver<Diffusion,Reaction> > e(*labelImage, phaseField); 
+
+      DGtal::trace.beginBlock( "Deformation (multi phase field)" );
+
+      for (unsigned int i = step; i <= max; i += step) 
+	{
+
+	  DGtal::trace.info() << "iteration # " << i << std::endl;
+
+	  e.update( tstep ); 
+
+	  if ((i%step)==0) 
+	    {
+	      //display
+	      std::stringstream s; 
+	      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+	      drawContours(*labelImage, s.str(), format); 
+	    }
+
+	}
+
+      DGtal::trace.endBlock();
     } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
 
 
-	  DGtal::trace.info() << "end" << std::endl; 
+  DGtal::trace.info() << "end" << std::endl; 
+
   //free
   delete( labelImage ); 
   

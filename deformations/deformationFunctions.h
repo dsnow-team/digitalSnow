@@ -1,3 +1,14 @@
+#if defined(deformationFunctions_RECURSES)
+#error Recursive header files inclusion detected in deformationFunctions.h
+#else // defined(deformationFunctions_RECURSES)
+/** Prevents recursive inclusion of headers. */
+#define deformationFunctions_RECURSES
+
+#if !defined deformationFunctions_h
+/** Prevents repeated inclusion of headers. */
+#define deformationFunctions_h
+
+
 //images
 #include <DGtal/images/ImageContainerBySTLVector.h>
 
@@ -233,3 +244,8 @@ public:
    return 0.5 - 0.5*std::tanh(-v/(2*myEpsilon)); 
   }
 }; 
+
+#endif // !defined deformationFunctions_h
+
+#undef deformationFunctions_RECURSES
+#endif // else defined(deformationFunctions_RECURSES)
