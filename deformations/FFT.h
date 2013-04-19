@@ -6,6 +6,7 @@
 #include <complex>
 
 #include <DGtal/images/CImage.h>
+#include "DGtal/images/ImageContainerBySTLVector.h"
 
 namespace DGtal{
 

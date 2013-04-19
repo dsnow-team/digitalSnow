@@ -33,7 +33,7 @@ DGtal::FFT<TImage>::compute(ComplexImage& anImage)
   int n = 1; 
   for (unsigned int i= 0; i < dimension; ++i) 
     {
-      t[i] = v.at(i);
+      t[i] = v[i];
       n *= t[i];  
     }
 
