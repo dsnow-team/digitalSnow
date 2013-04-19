@@ -13,6 +13,7 @@ namespace po = boost::program_options;
 #include <DGtal/helpers/StdDefs.h>
 #include "DGtal/io/readers/VolReader.h"
 
+using namespace DGtal; 
 using namespace Z3i; 
 
 //evolvers

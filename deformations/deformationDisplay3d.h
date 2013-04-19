@@ -11,7 +11,7 @@
 #include "DGtal/io/writers/VolWriter.h"
 
 template< typename TImage >
-bool writeImage(const TImage& img, string filename, string format, const double& threshold = 0)
+bool writeImage(const TImage& img, std::string filename, std::string format, const double& threshold = 0)
 {
 
   if (format.compare("png")==0)
@@ -121,8 +121,8 @@ bool writeImage(const TImage& img, string filename, string format, const double&
     //write it into a vol file
     std::stringstream s; 
     s << filename << ".vol";
-    typedef GradientColorMap<typename LabelImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
-    VolWriter<LabelImage,ColorMap>::exportVol( s.str(), labelImage, 0, 255 );
+    typedef CastFunctor<unsigned char> Fonctor; 
+    VolWriter<LabelImage, Fonctor>::exportVol( s.str(), labelImage, Fonctor() );
 
     return true; 
 
