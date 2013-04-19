@@ -82,25 +82,6 @@ void initWithFlower(TImage& img, const typename TImage::Point& c, double r, doub
 
 #include "DGtal/geometry/volumes/distance/DistanceTransformation.h"
 
-#include <functional>
-
-template< typename TValue >
-TValue aFunction(const TValue& v)
-{
-  if (v == 0) return 1; 
-  else return 0;
-}
-
-struct Predicate 
-{
-  template< typename TValue >
-  bool operator()(const TValue& v)
-  {
-    if (v == 0) return true; 
-    else return false;
-  }
-}; 
-
 template< typename TImage >
 void initWithDT(const TImage& inputImage, ImageContainerBySTLVector<typename TImage::Domain,double>& outputImage)
 {
@@ -134,7 +115,8 @@ void initWithDT(const TImage& inputImage, ImageContainerBySTLVector<typename TIm
   DT2 dt2( d, predicate2, l2);
 
   //Signed distance 
-  typename ImageContainerBySTLVector<typename TImage::Domain,double>::OutputIterator out; 
+  typename ImageContainerBySTLVector<typename TImage::Domain,double>::Range::Iterator 
+    out = outputImage.range().begin(); 
   for ( typename DT::ConstRange::ConstIterator 
 	  it = dt.constRange().begin(), itend = dt.constRange().end();
 	it != itend; ++it)
@@ -146,6 +128,7 @@ void initWithDT(const TImage& inputImage, ImageContainerBySTLVector<typename TIm
       // outputImage.setValue(p, dist);  
     }
 
+  out = outputImage.range().begin(); 
   for ( typename DT2::ConstRange::ConstIterator 
 	  it = dt2.constRange().begin(), itend = dt2.constRange().end();
 	it != itend; ++it)
@@ -153,52 +136,13 @@ void initWithDT(const TImage& inputImage, ImageContainerBySTLVector<typename TIm
       double dist = (*it); 
       if (dist != 0) 
 	{ //only write if dist != 0
-	  dist = std::sqrt( dist ) - 0.5;  
+	  dist = -std::sqrt( dist ) + 0.5;  
 	  *out++ = dist; 
 	  // outputImage.setValue(p, dist);  
 	}
       else 
 	out++; 
     }
-
-  // typedef  DistanceTransformation<TImage, 2> DT;
-  // DT dt;
-  // typename DT::OutputImage dtImage = dt.compute ( inputImage );
-
-  // //inv
-  // TImage rInputImage(d); 
-  // std::transform(inputImage.begin(), inputImage.end(),
-  //                rInputImage.begin(), aFunction<typename TImage::Value> ); 
-  // typename DT::OutputImage rDtImage = dt.compute ( rInputImage );
-
-  // //deduce the signed distance function 
-  // typename TImage::Domain::ConstIterator cIt = d.begin(); 
-  // typename TImage::Domain::ConstIterator cItEnd = d.end(); 
-  // for ( ; cIt != cItEnd; ++cIt)
-  // { //for each domain point
-
-  //   typedef typename TImage::Point Point; 
-  //   Point p( *cIt ); //point p
-
-  //   double dist = 0; //signed distance
-  //   if ( dtImage( p ) == 0 )
-  //     {
-  //       if ( rDtImage( p ) == 0 )
-  //         {
-  //           std::cerr << "Error init with DT" << std::endl;  
-  //         }
-  //       else
-  //         {
-  //           dist = std::sqrt( (double) rDtImage( p ) ) - 0.5;  
-  //         }
-  //     }
-  //   else
-  //     {
-  //       dist = - ( std::sqrt( (double) dtImage( p ) ) - 0.5 );  
-  //     }
-
-  //   outputImage.setValue(p, (double) dist);  
-  // }
 }
 
 class Profile {
