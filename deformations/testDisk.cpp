@@ -15,7 +15,7 @@ namespace po = boost::program_options;
 
 using namespace DGtal; 
 using namespace Z2i;
-
+using namespace std; 
 //evolvers
 //level set
 #include "WeickertKuhneEvolver.h"

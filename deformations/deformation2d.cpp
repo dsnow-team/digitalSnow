@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iomanip>
+#include <iterator>
 
 /////////////////////
 #include <boost/program_options/options_description.hpp>
@@ -15,6 +16,7 @@ namespace po = boost::program_options;
 
 using namespace DGtal;
 using namespace Z2i;
+using namespace std;
 
 //evolvers
 //level set
@@ -115,7 +117,7 @@ int main(int argc, char** argv)
 
   //image and implicit function
   Point p(0,0);
-  Point q(dsize,dsize); 
+  Point q(dsize+5,dsize); //ATTENTION 
   Point c(dsize/2,dsize/2); 
   ImageContainerBySTLVector<Domain,double> implicitFunction( Domain(p,q) ); 
   //initWithBall( implicitFunction, c, (dsize*3/5)/2 ); 
@@ -228,11 +230,22 @@ int main(int argc, char** argv)
       s0 << "iteration # " << i; 
       DGtal::trace.beginBlock( s0.str() );
 
-      e.update( implicitFunction, (tstep*step) ); 
+      // cout << "avant" << endl; 
+      // std::copy( implicitFunction.constRange().begin(), 
+      // 		 implicitFunction.constRange().end(),
+      // 		 ostream_iterator<double>(std::cout, " ") ); 
+      e.update( implicitFunction, (tstep*step) );
+      // cout << "apres" << endl; 
+      // std::copy( implicitFunction.constRange().begin(), 
+      // 		 implicitFunction.constRange().end(),
+      // 		 ostream_iterator<double>(std::cout, " ") ); 
 
       std::stringstream s; 
       s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
       drawContour(implicitFunction, s.str(), format, 0.5); 
+      std::stringstream s2; 
+      s2 << outputFiles << "-function" << setfill('0') << std::setw(4) << (i/step)+1; 
+      drawFunction(implicitFunction, s2.str()); 
 
       DGtal::trace.endBlock(); 
 

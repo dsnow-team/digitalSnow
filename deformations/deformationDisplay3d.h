@@ -17,7 +17,7 @@ bool writeImage(const TImage& img, std::string filename, std::string format, con
   if (format.compare("png")==0)
   {
   #ifdef WITH_CAIRO
-    Board3DTo2D viewer;
+    Board3DTo2D<> viewer;
     
     Domain d = img.domain(); 
     Domain::ConstIterator cIt = d.begin(); 
@@ -86,16 +86,16 @@ bool writeImage(const TImage& img, std::string filename, std::string format, con
 
     //default config
     typename TImage::Vector v = img.extent(); 
-    viewer << CameraPosition(v.at(0)/2, v.at(1)/2, 2*v.at(2))
+    viewer << CameraPosition(v[0]/2, v[1]/2, 2*v[2])
 	   << CameraDirection(0, 0, -1) 
      << CameraUpVector(0, 1, 0)
-     << CameraZNearFar(v.at(2)/2, 3*v.at(2));
+     << CameraZNearFar(v[2]/2, 3*v[2]);
   }
 
-    int size = img.extent().at(0); 
+    int size = img.extent()[0]; 
     std::stringstream s; 
     s << filename << ".png";
-    viewer.saveCairo(s.str().c_str(),Board3DTo2D::CairoPNG,3*size/2,3*size/2 ); 
+    viewer.saveCairo(s.str().c_str(),Board3DTo2D<>::CairoPNG,3*size/2,3*size/2 ); 
     return true; 
   #else
     trace.emphase() << "Failed to use Cairo 3d to 2d (not installed)" << std::endl;
@@ -160,7 +160,7 @@ bool displayImage(int argc, char** argv, const TImage& img, const double& thresh
 
   #ifdef WITH_VISU3D_QGLVIEWER
   QApplication application(argc,argv);
-  Viewer3D viewer;
+  Viewer3D<> viewer;
   viewer.show();
 
   for(unsigned int i=0; i< vectConnectedSCell.size();i++){
@@ -169,7 +169,7 @@ bool displayImage(int argc, char** argv, const TImage& img, const double& thresh
     }    
   }
 
-  viewer << Viewer3D::updateDisplay;
+  viewer << Viewer3D<>::updateDisplay;
 
   return application.exec();
 #else
