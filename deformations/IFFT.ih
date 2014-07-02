@@ -33,10 +33,10 @@ DGtal::IFFT<TImage>::compute(TOutputImage& anImage)
   Vector v = myImage.extent();  
   int t[dimension];
   int n = 1; 
-  for (int i = dimension - 1; i >= 0; --i) 
+  for (int i = 0; i < dimension; ++i) 
     { //row-major order
-      t[i] = v[i];
-      n *= t[i];  
+      t[dimension-1-i] = v[i];
+      n *= v[i];  
     }
 
   //using fftw library
@@ -53,7 +53,6 @@ DGtal::IFFT<TImage>::compute(TOutputImage& anImage)
   for(unsigned int i=0; it != itEnd; ++it, ++i)
     {
       Value c = myImage(*it); 
-      std::cerr << *it << c << std::endl; 
       frequency_repr[i][0] = real(c); //real part
       frequency_repr[i][1] = imag(c); //imaginary part
     }

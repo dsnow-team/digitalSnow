@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 
   //image and implicit function
   Point p(0,0);
-  Point q(dsize+5,dsize); //ATTENTION 
+  Point q(dsize,dsize);
   Point c(dsize/2,dsize/2); 
   ImageContainerBySTLVector<Domain,double> implicitFunction( Domain(p,q) ); 
   //initWithBall( implicitFunction, c, (dsize*3/5)/2 ); 
@@ -155,11 +155,11 @@ int main(int argc, char** argv)
     drawContour(implicitFunction, ss.str(), format); 
 
     //data functions
-    ImageContainerBySTLVector<Domain,double> a( Domain(p,q) ); 
+    ImageContainerBySTLVector<Domain,double> a( implicitFunction.domain() ); 
     std::fill(a.begin(),a.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> b( Domain(p,q) ); 
+    ImageContainerBySTLVector<Domain,double> b( implicitFunction.domain() ); 
     std::fill(b.begin(),b.end(), 1.0 );  
-    ImageContainerBySTLVector<Domain,double> g( Domain(p,q) ); 
+    ImageContainerBySTLVector<Domain,double> g( implicitFunction.domain() ); 
     std::fill(g.begin(),g.end(), 1.0 );  
 
     //evolution
@@ -223,35 +223,26 @@ int main(int argc, char** argv)
     Reaction reaction( epsilon, a, k, flagWithCstVol );
     LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
 
-    for (unsigned int i = step; i <= max; i += step) 
+    for (unsigned int i = 1; i <= max; ++i) 
     {
 
       std::stringstream s0; 
       s0 << "iteration # " << i; 
       DGtal::trace.beginBlock( s0.str() );
 
-      // cout << "avant" << endl; 
-      // std::copy( implicitFunction.constRange().begin(), 
-      // 		 implicitFunction.constRange().end(),
-      // 		 ostream_iterator<double>(std::cout, " ") ); 
-      e.update( implicitFunction, (tstep*step) );
-      // cout << "apres" << endl; 
-      // std::copy( implicitFunction.constRange().begin(), 
-      // 		 implicitFunction.constRange().end(),
-      // 		 ostream_iterator<double>(std::cout, " ") ); 
+      e.update( implicitFunction, tstep); 
 
-      std::stringstream s; 
-      s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
-      drawContour(implicitFunction, s.str(), format, 0.5); 
-      std::stringstream s2; 
-      s2 << outputFiles << "-function" << setfill('0') << std::setw(4) << (i/step)+1; 
-      drawFunction(implicitFunction, s2.str()); 
+      if ((i%step)==0) 
+      {
+        std::stringstream s; 
+        s << outputFiles << setfill('0') << std::setw(4) << (i/step)+1; 
+        drawContour(implicitFunction, s.str(), format, 0.5); 
+      }
 
       DGtal::trace.endBlock(); 
 
       //area
       trace.info() << "# area: " << setSize( implicitFunction, 0.5 ) << std::endl; 
-
     }
 
   } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
