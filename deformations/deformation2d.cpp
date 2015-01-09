@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     ("displayStep",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
-     "can be: \n <levelSet>  \n or <phaseField> \n or <localLevelSet>" )
+     "can be: \n <levelSet>  \n or <phaseField> \n or <localLevelSet> \n or <multiPhaseField>" )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("withCstVol", "with volume conservation (only for phase fields)" )
