@@ -135,7 +135,7 @@ DGtal::WeickertKuhneEvolver<TImage>
   Vector e = aF.extent(); 
   int size = 1; 
   for (Dimension k = 0; k < dimension; ++k)
-      size *= e.at(k);
+      size *= e[k];
 
   //reserve
   alpha.reserve(size); 

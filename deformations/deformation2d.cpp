@@ -1,5 +1,6 @@
 #include <sstream>
 #include <iomanip>
+#include <iterator>
 
 /////////////////////
 #include <boost/program_options/options_description.hpp>
@@ -13,7 +14,9 @@ namespace po = boost::program_options;
 #include <DGtal/helpers/StdDefs.h>
 #include "DGtal/io/readers/PNMReader.h"
 
+using namespace DGtal;
 using namespace Z2i;
+using namespace std;
 
 //evolvers
 //level set
@@ -182,11 +185,11 @@ int main(int argc, char** argv)
       drawContour(implicitFunction, ss.str(), format); 
 
       //data functions
-      ImageContainerBySTLVector<Domain,double> a( d ); 
+      ImageContainerBySTLVector<Domain,double> a( implicitFunction.domain() ); 
       std::fill(a.begin(),a.end(), 1.0 );  
-      ImageContainerBySTLVector<Domain,double> b( d ); 
+      ImageContainerBySTLVector<Domain,double> b( implicitFunction.domain() ); 
       std::fill(b.begin(),b.end(), 1.0 );  
-      ImageContainerBySTLVector<Domain,double> g( d ); 
+      ImageContainerBySTLVector<Domain,double> g( implicitFunction.domain() ); 
       std::fill(g.begin(),g.end(), 1.0 );  
 
       //evolution
@@ -260,8 +263,8 @@ int main(int argc, char** argv)
 
       DGtal::trace.beginBlock( "Deformation (phase field)" );
 
-      for (unsigned int i = step; i <= max; i += step) 
-	{
+    for (unsigned int i = 1; i <= max; ++i) 
+    {
 
 	  DGtal::trace.info() << "iteration # " << i << std::endl;
 

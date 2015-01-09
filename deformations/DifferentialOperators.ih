@@ -55,13 +55,13 @@ operator() (const Point& aPoint, const Dimension& aDim) const
   ASSERT( (aDim >= 0) && (aDim < dimension) ); 
 
   Point next = aPoint; 
-  next.at(aDim) += 1;
+  next[aDim] += 1;
   if ( myU.domain().isInside(next) )
     return ( (myU(next) - myU(aPoint)) / myH ); 
   else 
     {
       Point prev = aPoint; 
-      prev.at(aDim) -= 1;
+      prev[aDim] -= 1;
       if ( myU.domain().isInside(prev) )
 	return ( (myU(aPoint) - myU(prev)) / myH ); 
       else 
@@ -86,14 +86,14 @@ operator() (const Point& aPoint, const Dimension& aDim) const
   ASSERT( (aDim >= 0) && (aDim < dimension) ); 
 
   Point prev = aPoint; 
-  prev.at(aDim) -= 1;
+  prev[aDim] -= 1;
 
   if ( myU.domain().isInside(prev) )
     return ( (myU(aPoint) - myU(prev)) / myH ); 
   else 
     {
       Point next = aPoint; 
-      next.at(aDim) += 1;
+      next[aDim] += 1;
       if ( myU.domain().isInside(next) )
 	return ( (myU(next) - myU(aPoint)) / myH ); 
       else 
@@ -119,10 +119,10 @@ operator() (const Point& aPoint, const Dimension& aDim) const
 
   Domain d = myU.domain(); 
   Point next = aPoint; 
-  next.at(aDim) += 1;
+  next[aDim] += 1;
   bool nextInside = d.isInside(next); 
   Point prev = aPoint; 
-  prev.at(aDim) -= 1;
+  prev[aDim] -= 1;
   bool prevInside = d.isInside(prev);
 
   if (nextInside && prevInside )
@@ -153,10 +153,10 @@ operator() (const Point& aPoint, const Dimension& aDim) const
 
   Domain d = myU.domain(); 
   Point next = aPoint; 
-  next.at(aDim) += 1;
+  next[aDim] += 1;
   bool nextInside = d.isInside(next); 
   Point previous = aPoint; 
-  previous.at(aDim) -= 1;
+  previous[aDim] -= 1;
   bool previousInside = d.isInside(previous);
  
   if (nextInside && previousInside )
@@ -183,10 +183,10 @@ operator() (const Point& aPoint, const Dimension& aDim) const
 
   Domain d = myU.domain(); 
   Point next = aPoint; 
-  next.at(aDim) += 1;
+  next[aDim] += 1;
   bool nextInside = d.isInside(next); 
   Point previous = aPoint; 
-  previous.at(aDim) -= 1;
+  previous[aDim] -= 1;
   bool previousInside = d.isInside(previous);
 
   typedef Gradient<CentralDifference<Image,OutputValue > > Gradient; 
@@ -250,10 +250,10 @@ operator() (const Point& aPoint, const Dimension& aDim) const
 
   Domain d = myImage.domain(); 
   Point next = aPoint; 
-  next.at(aDim) += 1;
+  next[aDim] += 1;
   bool nextInside = d.isInside(next); 
   Point previous = aPoint; 
-  previous.at(aDim) -= 1;
+  previous[aDim] -= 1;
   bool previousInside = d.isInside(previous);
 
   typedef Gradient<CentralDifference<Image,OutputValue > > Gradient; 
@@ -329,7 +329,7 @@ operator() (const Point& aPoint) const
   OutputValue g; 
   for (Dimension k = 0; k < dimension; ++k ) 
     {
-      g.at(k) = myD(aPoint,k); 
+      g[k] = myD(aPoint,k); 
     }
   return g; 
 }
@@ -353,12 +353,12 @@ DGtal::UpwindGradient<TImage, TOutputValue>::
   OutputValue g; 
   for (Dimension k = 0; k < dimension; ++k ) 
     {
-      if (aVector.at(k) > 0) 
-	g.at(k) = myB(aPoint,k); 
-      else if (aVector.at(k) < 0)
-	g.at(k) = myF(aPoint,k);
+      if (aVector[k] > 0) 
+	g[k] = myB(aPoint,k); 
+      else if (aVector[k] < 0)
+	g[k] = myF(aPoint,k);
       else //== 0
-	g.at(k) = 0; 
+	g[k] = 0; 
     }
   return g; 
 }
@@ -397,7 +397,7 @@ operator() (const Point& aPoint, bool isPositive) const
 	  if (a < 0) a = 0; 
 	  typename OutputValue::Coordinate b = myF(aPoint,k);
 	  if (b > 0) b = 0; 
-	  g.at(k) = std::sqrt( std::max(a*a,b*b) ); 
+	  g[k] = std::sqrt( std::max(a*a,b*b) ); 
 	}
       else 
 	{
@@ -405,7 +405,7 @@ operator() (const Point& aPoint, bool isPositive) const
 	  if (a > 0) a = 0; 
 	  typename OutputValue::Coordinate b = myF(aPoint,k);
 	  if (b < 0) b = 0; 
-	  g.at(k) = std::sqrt( std::max(a*a,b*b) ); 
+	  g[k] = std::sqrt( std::max(a*a,b*b) ); 
 	} 
     }
   return g; 

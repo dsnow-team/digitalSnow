@@ -11,16 +11,11 @@ LINK_DIRECTORIES(${DGTAL_LIBRARY_DIRS})
 
 
 #Inclusion de Boost
-SET(Boost_ADDITIONAL_VERSIONS "1.49" "1.49.0")
-SET(Boost_DEBUG True)
-SET(Boost_USE_STATIC_LIBS   ON)
-SET(Boost_USE_MULTITHREADED OFF)
-SET(BOOST_ROOT /usr/local/)
-SET(BOOST_INCLUDEDIR /usr/local/include/boost)
-SET(BOOST_LIBRARYDIR /usr/local/lib)
+include(FindBoost)
 find_package(Boost 1.49.0 COMPONENTS program_options)
-message(STATUS "Found Boost: ${Boost_LIBRARIES} ")
+message(STATUS "Found Boost: ${Boost_LIBRARIES} in ${Boost_LIBRARY_DIRS} and ${Boost_INCLUDE_DIRS} ")
 message(STATUS "More precisely: ${Boost_PROGRAM_OPTIONS_LIBRARY} ")
+link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
@@ -45,13 +40,13 @@ TARGET_LINK_LIBRARIES(generate3d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
 #TARGET_LINK_LIBRARIES(testLocalDeformation2d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
 
 ADD_EXECUTABLE(testDisk testDisk)
-TARGET_LINK_LIBRARIES(testDisk ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
+TARGET_LINK_LIBRARIES(testDisk ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3 boost_program_options)
 
 ADD_EXECUTABLE(deformation2d deformation2d)
-TARGET_LINK_LIBRARIES(deformation2d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
+TARGET_LINK_LIBRARIES(deformation2d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3 boost_program_options)
 
 ADD_EXECUTABLE(deformation3d deformation3d)
-TARGET_LINK_LIBRARIES(deformation3d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
+TARGET_LINK_LIBRARIES(deformation3d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3 boost_program_options)
 
 ADD_EXECUTABLE(imageBlurring imageBlurring)
-TARGET_LINK_LIBRARIES(imageBlurring ${DGTAL_LIBRARIES} fftw3)
+TARGET_LINK_LIBRARIES(imageBlurring ${DGTAL_LIBRARIES} fftw3 boost_program_options)

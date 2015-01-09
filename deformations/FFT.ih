@@ -29,22 +29,21 @@ DGtal::FFT<TImage>::compute(ComplexImage& anImage)
 
   //image size
   Vector v = myImage.extent();  
-  int t[dimension];
+  int t[dimension]; 
   int n = 1; 
-  for (unsigned int i= 0; i < dimension; ++i) 
-    {
-      t[i] = v.at(i);
-      n *= t[i];  
+  for (int i = 0; i < dimension; ++i) 
+    { //row-major order
+      t[dimension-1-i] = v[i];
+      n *= v[i];  
     }
 
-//using fftw library
+  //using fftw library
   //input and output arrays
    fftw_complex* spatial_repr;
    fftw_complex* frequency_repr;
    spatial_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
    frequency_repr=(fftw_complex*) fftw_malloc(sizeof(fftw_complex)*n);
 
-  //fill the arrays
   Domain d = myImage.domain();  
   typename Domain::ConstIterator it = d.begin(); 
   typename Domain::ConstIterator itEnd = d.end(); 

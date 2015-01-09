@@ -12,7 +12,9 @@ namespace po = boost::program_options;
 #include <DGtal/base/Common.h>
 #include <DGtal/helpers/StdDefs.h>
 
+using namespace DGtal; 
 using namespace Z3i; 
+using namespace std; 
 
 //evolvers
 //level set

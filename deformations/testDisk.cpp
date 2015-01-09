@@ -13,8 +13,9 @@ namespace po = boost::program_options;
 #include <DGtal/helpers/StdDefs.h>
 #include "DGtal/io/readers/PNMReader.h"
 
+using namespace DGtal; 
 using namespace Z2i;
-
+using namespace std; 
 //evolvers
 //level set
 #include "WeickertKuhneEvolver.h"

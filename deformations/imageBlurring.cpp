@@ -1,4 +1,8 @@
 /////////////////////
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
 #include <DGtal/base/Common.h>
 #include <DGtal/helpers/StdDefs.h>
 
@@ -10,13 +14,15 @@
 namespace po = boost::program_options;
 
 /////////////////////
+using namespace std; 
+using namespace DGtal; 
+using namespace Z2i;
 
 #include "DGtal/io/readers/PNMReader.h"
 #include "DGtal/io/Color.h"
 #include "DGtal/io/colormaps/GradientColorMap.h"
 #include "DGtal/io/writers/PNMWriter.h"
 
-using namespace Z2i;
 
 #include "ExactDiffusionEvolver.h"
 #include "WeickertKuhneEvolver.h"
