@@ -45,7 +45,7 @@
 #include "DGtal/base/Common.h"
 #include "DGtal/images/CImage.h"
 
-#include "DGtal/images/DifferentialOperators.h"
+#include "DifferentialOperators.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
