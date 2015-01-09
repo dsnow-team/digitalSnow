@@ -80,7 +80,7 @@ struct SetFromImageDomainValueTraits<
 struct SetFromImageSelector
   { 
   public: 
-    BOOST_CONCEPT_ASSERT(( CImage<I> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<I> )); 
     typedef typename I::Domain Domain; 
     typedef typename I::Value Value; 
 

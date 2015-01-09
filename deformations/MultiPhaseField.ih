@@ -26,7 +26,7 @@
  * This file is part of the DGtal library.
  */
 
-
+#include <DGtal/images/SimpleThresholdForegroundPredicate.h>
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -206,12 +206,24 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
 	copy2.setValue( *cIt, 1 ); 
     }
 
-  //DT computation 
-  typedef  DistanceTransformation<Image, 2> DT;
-  DT dt;
-  typename DT::OutputImage dtImage = dt.compute ( copy1 );
-  typename DT::OutputImage rDtImage = dt.compute ( copy2 );
+  // Distance transformation
+  // Old code was:
+  //    typedef  DistanceTransformation<Image, 2> DT;
+  //    DT dt;
+  //    typename DT::OutputImage dtImage = dt.compute ( copy1 );
+  //    typename DT::OutputImage rDtImage = dt.compute ( copy2 );
+  // 
+  // I suppose that 2 means L2Metric (with the correct Z#i-namespace in scope),
+  //    and that 0 value is used as threshold for the predicate.
+  typedef typename DGtal::functors::SimpleThresholdForegroundPredicate<Image> PointPredicate;
+  typedef typename DGtal::DistanceTransformation<Space, PointPredicate, L2Metric> DT;
+    
+  PointPredicate copy1Predicate( copy1, 0 );
+  PointPredicate copy2Predicate( copy2, 0 );
 
+  DT  dtImage( copy1.domain(), copy1Predicate, l2Metric );
+  DT rDtImage( copy2.domain(), copy2Predicate, l2Metric );
+  
   //deduce the signed distance function 
   for (cIt = cItBegin; cIt != cItEnd; ++cIt)
     { //for each domain point
@@ -251,5 +263,7 @@ DGtal::operator<< ( std::ostream & out,
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
+
+/* vim: set tabstop=2 shiftwidth=2 : */
 
 

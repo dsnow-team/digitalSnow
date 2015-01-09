@@ -85,8 +85,8 @@ namespace DGtal
   {
 
 
-    BOOST_CONCEPT_ASSERT(( CImage<TLabelImage> )); 
-    BOOST_CONCEPT_ASSERT(( CImage<TDistanceImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TLabelImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TDistanceImage> )); 
     BOOST_STATIC_ASSERT
     (( ConceptUtils::SameType< typename TKSpace::Point,
        typename TLabelImage::Point>::value ));
@@ -94,7 +94,7 @@ namespace DGtal
     (( ConceptUtils::SameType< typename TKSpace::Point,
        typename TDistanceImage::Point>::value ));
 
-    BOOST_CONCEPT_ASSERT(( CImage<TExternImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TExternImage> )); 
     BOOST_STATIC_ASSERT
     (( ConceptUtils::SameType< typename TKSpace::Point,
        typename TExternImage::Point>::value ));

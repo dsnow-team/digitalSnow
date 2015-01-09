@@ -133,6 +133,7 @@ DGtal::CascadingPointPredicate<TPointPredicate1,TPointPredicate2>
       myPred1 = other.myPred1; 
       myPred2 = other.myPred2; 
     }
+  return *this;
 }
 //------------------------------------------------------------------------------
 template <typename TPointPredicate1, typename TPointPredicate2>

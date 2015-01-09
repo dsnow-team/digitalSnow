@@ -12,7 +12,7 @@ namespace po = boost::program_options;
 /////////////////////
 #include <DGtal/base/Common.h>
 #include <DGtal/helpers/StdDefs.h>
-#include "DGtal/io/readers/PNMReader.h"
+#include "DGtal/io/readers/PGMReader.h"
 
 using namespace DGtal;
 using namespace Z2i;
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
       string imageFileName = vm["inputImage"].as<std::string>();
       trace.emphase() << imageFileName <<std::endl; 
       DGtal::trace.beginBlock("image reading..."); 
-      LabelImage tmp = PNMReader<LabelImage>::importPGM( imageFileName ); 
+      LabelImage tmp = PGMReader<LabelImage>::importPGM( imageFileName ); 
       labelImage = new LabelImage( tmp ); 
       DGtal::trace.endBlock(); 
 

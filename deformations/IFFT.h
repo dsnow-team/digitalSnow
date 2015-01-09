@@ -20,7 +20,7 @@ namespace DGtal{
   {
 
     //ASSERT
-    BOOST_CONCEPT_ASSERT(( CImage<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TImage> )); 
     BOOST_STATIC_ASSERT((boost::is_same< typename TImage::Value, 
 			 std::complex<double> >::value));
 

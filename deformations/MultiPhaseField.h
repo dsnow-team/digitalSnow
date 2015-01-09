@@ -79,8 +79,8 @@ namespace DGtal
 
     // ----------------------- Types check -----------------------
 
-    BOOST_CONCEPT_ASSERT(( CImage<TLabelImage> )); 
-    BOOST_CONCEPT_ASSERT(( CImage<TFieldImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TLabelImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TFieldImage> )); 
     BOOST_STATIC_ASSERT
     (( ConceptUtils::SameType< typename TLabelImage::Point,
        typename TFieldImage::Point>::value ));

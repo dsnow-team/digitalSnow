@@ -11,7 +11,7 @@ namespace po = boost::program_options;
 /////////////////////
 #include <DGtal/base/Common.h>
 #include <DGtal/helpers/StdDefs.h>
-#include "DGtal/io/readers/PNMReader.h"
+#include "DGtal/io/readers/PGMReader.h"
 
 using namespace DGtal; 
 using namespace Z2i;

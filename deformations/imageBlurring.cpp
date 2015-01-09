@@ -18,24 +18,24 @@ using namespace std;
 using namespace DGtal; 
 using namespace Z2i;
 
-#include "DGtal/io/readers/PNMReader.h"
+#include "DGtal/io/readers/PGMReader.h"
 #include "DGtal/io/Color.h"
 #include "DGtal/io/colormaps/GradientColorMap.h"
-#include "DGtal/io/writers/PNMWriter.h"
+#include "DGtal/io/writers/PGMWriter.h"
 
 
 #include "ExactDiffusionEvolver.h"
 #include "WeickertKuhneEvolver.h"
+#include "GrayscaleMapCast.h"
 
 template< typename TImage >
 void write ( const TImage& img, std::string basename, int min = 0, int max = 255 ) 
 {
 
-    typedef GradientColorMap<typename TImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
-
+    typedef GrayscaleMapCast<typename TImage::Value> ColorMap;
     std::stringstream s; 
     s << basename << ".pgm"; 
-    PNMWriter<TImage,ColorMap>::exportPGM( s.str(), img, min, max, true );
+    PGMWriter<TImage,ColorMap>::exportPGM( s.str(), img, ColorMap(min, max), true );
 } 
 
 
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
   /////////////////////////////////////////////////////////////////////////////////////////
   //reading image
   typedef ImageContainerBySTLVector<Domain,unsigned char> GrayImage; 
-  GrayImage img = PNMReader<GrayImage>::importPGM( inputFilename ); 
+  GrayImage img = PGMReader<GrayImage>::importPGM( inputFilename ); 
 
   //Diffusion
   trace.info() << "sigma: " << sigma << std::endl; 

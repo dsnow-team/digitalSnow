@@ -11,7 +11,7 @@ namespace po = boost::program_options;
 /////////////////////
 #include <DGtal/base/Common.h>
 #include <DGtal/helpers/StdDefs.h>
-#include "DGtal/io/readers/PNMReader.h"
+#include "DGtal/io/readers/PGMReader.h"
 
 #include "DGtal/images/ImageContainerBySTLVector.h"
 #include "DGtal/images/ImageContainerBySTLMap.h"
@@ -153,7 +153,7 @@ int main(int argc, char** argv)
     { 
   string imageFileName = vm["inputImage"].as<std::string>();
   trace.emphase() << imageFileName <<std::endl; 
-  LabelImage labelImage = PNMReader<LabelImage>::importPGM( imageFileName);
+  LabelImage labelImage = PGMReader<LabelImage>::importPGM( imageFileName);
   inv(labelImage); 
     }
 

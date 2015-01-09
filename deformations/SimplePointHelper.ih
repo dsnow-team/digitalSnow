@@ -42,7 +42,7 @@
 template <typename TImage>
 inline
 DGtal::SimplePointHelper<TImage>::SimplePointHelper(LabelsImage& aImg, 
-						    const Label& aInftyRegionLabel = Label() )
+						    const Label& aInftyRegionLabel )
   : myImgPtr( &aImg ), 
     myInftyRegionLabel( aInftyRegionLabel )
 {

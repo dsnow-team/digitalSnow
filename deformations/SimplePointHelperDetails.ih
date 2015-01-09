@@ -291,15 +291,15 @@ namespace SimplePointHelperDetails
       TPoint p(aPoint); 
       for (typename TPoint::Dimension i = 0; i != TPoint::dimension; ++i)
 	{ //for each coordinate
-	  typename TPoint::Coordinate c = p.at(i); 
+	  typename TPoint::Coordinate c = p[i]; 
 	  //candidate1
-	  p.at(i) = c + 1; 
+	  p[i] = c + 1; 
 	  if (myD.isInside(p)) aPointsVector.push_back(p); 
 	  //candidate2
-	  p.at(i) = c - 1; 
+	  p[i] = c - 1; 
 	  if (myD.isInside(p)) aPointsVector.push_back(p);
 	  //
-	  p.at(i) = c; 
+	  p[i] = c; 
 	} //end for each coordinate
     }
   }; 
@@ -341,19 +341,19 @@ namespace SimplePointHelperDetails
       TPoint p(aPoint); 
       for (typename TPoint::Dimension i = 0; i != TPoint::dimension; ++i)
 	{ //for each coordinate
-	  if (p.at(i) == myCenter.at(i)) 
+	  if (p[i] == myCenter[i]) 
 	    { //if coordinate i of p is equal to the one of myCenter
-	      typename TPoint::Coordinate c = p.at(i); 
+	      typename TPoint::Coordinate c = p[i]; 
 	      //candidate1
-	      p.at(i) = c + 1; 
+	      p[i] = c + 1; 
 	      ASSERT ( (p-myCenter).norm(TPoint::L_1) == ((aPoint-myCenter).norm(TPoint::L_1)+1) ); 
 	      aPointsVector.push_back(p); 
 	      //candidate2
-	      p.at(i) = c - 1; 
+	      p[i] = c - 1; 
 	      ASSERT ( (p-myCenter).norm(TPoint::L_1) == ((aPoint-myCenter).norm(TPoint::L_1)+1) ); 
 	      aPointsVector.push_back(p);
 	      //
-	      p.at(i) = c; 
+	      p[i] = c; 
 	    } 
 	} //end for each coordinate
 
@@ -396,15 +396,15 @@ namespace SimplePointHelperDetails
       TPoint p(aPoint); 
       for (typename TPoint::Dimension i = 0; i != TPoint::dimension; ++i)
 	{ //for each coordinate
-	  if (p.at(i) != myCenter.at(i)) 
+	  if (p[i] != myCenter[i]) 
 	    { //if coordinate i of p is not equal to the one of myCenter
-	      typename TPoint::Coordinate c = p.at(i); 
+	      typename TPoint::Coordinate c = p[i]; 
 	      //new candidate
-	      p.at(i) = myCenter.at(i); 
+	      p[i] = myCenter[i]; 
 	      ASSERT ( (p-myCenter).norm(TPoint::L_1) == ((aPoint-myCenter).norm(TPoint::L_1)-1) ); 
 	      aPointsVector.push_back(p);
 	      //
-	      p.at(i) = c; 
+	      p[i] = c; 
 	    } 
 	} //end for each coordinate
     }

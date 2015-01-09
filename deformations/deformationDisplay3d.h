@@ -29,6 +29,7 @@
 #include "DGtal/io/CDrawableWithDisplay3D.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
 
+using namespace DGtal::functors;
 
 template< typename TViewer, typename TImage >
 bool displayPartition(TViewer& viewer, const TImage& img)
@@ -106,6 +107,8 @@ bool displayPartition(TViewer& viewer, const TImage& img)
   }
   trace.info() << counter << " frontier(s) displayed" << std::endl; 
 
+  // What should it return ?
+  return true;
 }
 
 template< typename TImage >
@@ -211,12 +214,12 @@ bool writePartition(const TImage& img, string filename, string format)
     char* argv[1]; 
     argv[0] = argv1; 
     QApplication application(argc,argv);
-    Viewer3D viewer;
+    Viewer3D<> viewer;
     viewer.show();
 
     //display
     displayPartition(viewer, img); 
-    viewer << Viewer3D::updateDisplay;
+    viewer << Viewer3D<>::updateDisplay;
 
     if (QGLViewer::QGLViewerIndex(&viewer) > 0)
       {//rename state file
@@ -267,7 +270,11 @@ bool writePartition(const TImage& img, string filename, string format)
     }
 
     viewer.setStateFileName(QString::null);  
-    application.exit(); 
+    application.exit();
+
+    // Guess ...
+    return true;
+
     }
   else if (format.compare("vol")==0)
   {
@@ -275,7 +282,7 @@ bool writePartition(const TImage& img, string filename, string format)
     //write it into a vol file
     std::stringstream s; 
     s << filename << ".vol";
-    typedef CastFunctor<unsigned char> Fonctor; 
+    typedef Cast<unsigned char> Fonctor; 
     VolWriter<TImage, Fonctor>::exportVol( s.str(), img, Fonctor() );
 
     return true; 
@@ -305,7 +312,7 @@ bool writePartition(const TImage& img, string filename, string format)
 
 //   #ifdef WITH_VISU3D_QGLVIEWER
 //   QApplication application(argc,argv);
-//   Viewer3D viewer;
+//   Viewer3D<> viewer;
 //   viewer.show();
 
 //   for(unsigned int i=0; i< vectConnectedSCell.size();i++){
@@ -314,7 +321,7 @@ bool writePartition(const TImage& img, string filename, string format)
 //     }    
 //   }
 
-//   viewer << Viewer3D::updateDisplay;
+//   viewer << Viewer3D<>::updateDisplay;
 
 //   return application.exec();
 // #else
@@ -392,9 +399,13 @@ bool displayImageWithInfo(int argc, char** argv, const TLabelImage& limg,
 				       + normal[1]*normal[1] 
 				       + normal[2]*normal[2] );
 	normal /= normalNorm; 
-	viewer.addLine(center[0],center[1],center[2],
-		       center[0]+normal[0],center[1]+normal[1],center[2]+normal[2], 
-		       DGtal::Color(250,0,0), 1.0);
+    
+    viewer.setLineColor( DGtal::Color(255,0,0) );
+    viewer.addLine(
+        Space::RealPoint(center[0], center[1], center[2]),
+        Space::RealPoint(center[0]+normal[0], center[1]+normal[1], center[2]+normal[2]),
+        1.0
+    );
 
       }
   }
@@ -414,13 +425,13 @@ bool displayPartition(int argc, char** argv, const TImage& img)
 
   #ifdef WITH_VISU3D_QGLVIEWER
   QApplication application(argc,argv);
-  Viewer3D viewer;
+  Viewer3D<> viewer;
   viewer.show();
 
   displayPartition(viewer, img); 
 
   viewer.setSnapshotFormat("PNG");  
-  viewer << Viewer3D::updateDisplay;
+  viewer << Viewer3D<>::updateDisplay;
 
   return application.exec();
 #else

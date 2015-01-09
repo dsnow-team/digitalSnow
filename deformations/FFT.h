@@ -21,7 +21,7 @@ namespace DGtal{
   {
 
     //ASSERT
-    BOOST_CONCEPT_ASSERT(( CImage<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:

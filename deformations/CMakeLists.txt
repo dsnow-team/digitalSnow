@@ -19,6 +19,9 @@ link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
+# Workaround for strange bug while trying to include boost_program_options
+SET(BOOST_LIBRARIES ${BOOST_LIBRARIES} boost_program_options)
+
 #fftw
 INCLUDE_DIRECTORIES(/usr/include/)
 LINK_DIRECTORIES(/usr/lib/)
@@ -40,13 +43,14 @@ TARGET_LINK_LIBRARIES(generate3d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
 #TARGET_LINK_LIBRARIES(testLocalDeformation2d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES})
 
 ADD_EXECUTABLE(testDisk testDisk)
-TARGET_LINK_LIBRARIES(testDisk ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3 boost_program_options)
+TARGET_LINK_LIBRARIES(testDisk ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
 
 ADD_EXECUTABLE(deformation2d deformation2d)
-TARGET_LINK_LIBRARIES(deformation2d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3 boost_program_options)
+TARGET_LINK_LIBRARIES(deformation2d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
 
 ADD_EXECUTABLE(deformation3d deformation3d)
-TARGET_LINK_LIBRARIES(deformation3d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3 boost_program_options)
+TARGET_LINK_LIBRARIES(deformation3d ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
 
 ADD_EXECUTABLE(imageBlurring imageBlurring)
-TARGET_LINK_LIBRARIES(imageBlurring ${DGTAL_LIBRARIES} fftw3 boost_program_options)
+TARGET_LINK_LIBRARIES(imageBlurring ${DGTAL_LIBRARIES} ${BOOST_LIBRARIES} fftw3)
+

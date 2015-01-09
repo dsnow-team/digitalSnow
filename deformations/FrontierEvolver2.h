@@ -48,7 +48,7 @@
 #include "DGtal/kernel/CPointPredicate.h"
 
 //predicates
-#include "DGtal/base/BasicBoolFunctions.h"
+#include "DGtal/base/BasicBoolFunctors.h"
 #include "DGtal/kernel/BasicPointPredicates.h"
 #include "PointPredicates.h"
 
@@ -112,8 +112,8 @@ namespace DGtal
   {
 
 
-    BOOST_CONCEPT_ASSERT(( CImage<TLabelImage> )); 
-    BOOST_CONCEPT_ASSERT(( CImage<TDistanceImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TLabelImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TDistanceImage> )); 
     BOOST_STATIC_ASSERT
     (( ConceptUtils::SameType< typename TKSpace::Point,
        typename TLabelImage::Point>::value ));
@@ -121,12 +121,12 @@ namespace DGtal
     (( ConceptUtils::SameType< typename TKSpace::Point,
        typename TDistanceImage::Point>::value ));
 
-    BOOST_CONCEPT_ASSERT(( CPointFunctor<TFunctor> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CPointFunctor<TFunctor> )); 
     BOOST_STATIC_ASSERT
     (( ConceptUtils::SameType< typename TKSpace::Point,
        typename TFunctor::Point>::value ));
 
-    // BOOST_CONCEPT_ASSERT(( CPointPredicate<TTopoPredicate> )); 
+    // BOOST_CONCEPT_ASSERT(( concepts::CPointPredicate<TTopoPredicate> )); 
     // BOOST_STATIC_ASSERT
     // (( ConceptUtils::SameType< typename TKSpace::Point,
     //    typename TTopoPredicate::Point>::value ));

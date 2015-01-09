@@ -12,6 +12,7 @@ namespace po = boost::program_options;
 #include <DGtal/base/Common.h>
 #include <DGtal/helpers/StdDefs.h>
 
+using namespace DGtal;
 using namespace Z3i; 
 
 
@@ -19,7 +20,7 @@ using namespace Z3i;
 #include "deformationFunctions.h"
 #include "deformationDisplay3d.h"
 #include "DGtal/io/readers/VolReader.h"
-
+#include "GrayscaleMapCast.h"
 
 template<typename T>
 bool absCompare(const T& a, const T& b)
@@ -124,10 +125,10 @@ int main(int argc, char** argv)
     LabelImage::Value v = ( dist1 <= 0 )?255:0;
     //cube
     Point ptmp = (*cIt-c2);
-    double tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp.at( 0 )) );
+    double tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp[0]) );
     for ( Dimension i = 1; i < Point::dimension; ++i )
-      if ( tmp < fabs ( NumberTraits<Integer>::castToDouble( ptmp.at ( i ) ) ))
-        tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp.at ( i ) ));
+      if ( tmp < fabs ( NumberTraits<Integer>::castToDouble( ptmp[i] ) ))
+        tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp[i] ));
     double dist2 = tmp - r*2/3; 
     if (dist2 <= 0) v = 127;
     //set value
@@ -151,10 +152,10 @@ int main(int argc, char** argv)
     LabelImage::Value v = ( dist1 <= 0 )?255:0;
     //cube
     ptmp = (*cIt-c2);
-    double tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp.at( 0 )) );
+    double tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp[0]) );
     for ( Dimension i = 1; i < Point::dimension; ++i )
-      if ( tmp < fabs ( NumberTraits<Integer>::castToDouble( ptmp.at ( i ) ) ))
-        tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp.at ( i ) ));
+      if ( tmp < fabs ( NumberTraits<Integer>::castToDouble( ptmp[i]  ) ))
+        tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp[i] ));
     double dist2 = tmp - r; 
     if (dist2 <= 0) v = 127;
     //set value
@@ -171,10 +172,10 @@ int main(int argc, char** argv)
   { //for each domain point
     //cube
     Point ptmp = (*cIt-c);
-    double tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp.at( 0 )) );
+    double tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp[0]) );
     for ( Dimension i = 1; i < Point::dimension; ++i )
-      if ( tmp < fabs ( NumberTraits<Integer>::castToDouble( ptmp.at ( i ) ) ))
-        tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp.at ( i ) ));
+      if ( tmp < fabs ( NumberTraits<Integer>::castToDouble( ptmp[i] ) ))
+        tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp[i] ));
     double dist = tmp - r; 
     //set value
     LabelImage::Value v = ( dist <= 0 )?255:0;
@@ -184,9 +185,9 @@ int main(int argc, char** argv)
       if ( (vm["shape"].as<std::string>()) == "doubleBall" )
         {
           Point c1 = Point::diagonal(dsize/3+1);
-	  c1.at(2) += dsize/8; 
+	  c1[2] += dsize/8; 
           Point c2 = Point::diagonal(dsize/3+1); 
-	  c2.at(2) -= dsize/8; 
+	  c2[2] -= dsize/8; 
           double r = (dsize/5); 
   Domain::ConstIterator cIt = d.begin(); 
   Domain::ConstIterator cItEnd = d.end(); 
@@ -202,9 +203,9 @@ int main(int argc, char** argv)
       if ( (vm["shape"].as<std::string>()) == "doubleBallCube" )
         {
           Point c1 = Point::diagonal(dsize*2/5);
-	  c1.at(2) += dsize/8; 
+	  c1[2] += dsize/8; 
           Point c2 = Point::diagonal(dsize*2/5); 
-	  c2.at(2) -= dsize/8; 
+	  c2[2] -= dsize/8; 
           double r = (dsize/5); 
 	  Point c3 = Point::diagonal(dsize*3/5);
 	  double r3 = (dsize/8); 
@@ -219,10 +220,10 @@ int main(int argc, char** argv)
     if (dist2 <= 0) v = 255; 
     //cube
     Point ptmp = (*cIt-c3);
-    double tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp.at( 0 )) );
+    double tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp[0]) );
     for ( Dimension i = 1; i < Point::dimension; ++i )
-      if ( tmp < fabs ( NumberTraits<Integer>::castToDouble( ptmp.at ( i ) ) ))
-        tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp.at ( i ) ));
+      if ( tmp < fabs ( NumberTraits<Integer>::castToDouble( ptmp[i] ) ))
+        tmp = fabs ( NumberTraits<Integer>::castToDouble( ptmp[i] ));
     double dist = tmp - r3; 
     if ( dist <= 0 ) v = 127;
     //set value
@@ -249,8 +250,8 @@ int main(int argc, char** argv)
   //write into a vol file
   std::stringstream s; 
   s << outputFiles << ".vol";
-  typedef GradientColorMap<LabelImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
-  VolWriter<LabelImage,ColorMap>::exportVol( s.str(), labelImage, 0, 255 );
+  typedef GrayscaleMapCast<LabelImage::Value> ColorMap;
+  VolWriter<LabelImage,ColorMap>::exportVol( s.str(), labelImage, ColorMap(0, 255) );
 
   return 1;
 }

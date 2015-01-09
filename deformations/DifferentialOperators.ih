@@ -29,6 +29,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 #include <cstdlib>
+#include <stdexcept>
 //////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,10 +63,12 @@ operator() (const Point& aPoint, const Dimension& aDim) const
     {
       Point prev = aPoint; 
       prev[aDim] -= 1;
-      if ( myU.domain().isInside(prev) )
-	return ( (myU(aPoint) - myU(prev)) / myH ); 
-      else 
-	ASSERT( false && "too small image" ) ; 
+      if ( myU.domain().isInside(prev) ) {
+	    return ( (myU(aPoint) - myU(prev)) / myH ); 
+      } else {
+	    ASSERT( false && "too small image" ) ; 
+        throw std::domain_error("too small image");
+      }
     }
 }
 
@@ -94,10 +97,12 @@ operator() (const Point& aPoint, const Dimension& aDim) const
     {
       Point next = aPoint; 
       next[aDim] += 1;
-      if ( myU.domain().isInside(next) )
-	return ( (myU(next) - myU(aPoint)) / myH ); 
-      else 
-	ASSERT( false && "too small image" ) ; 
+      if ( myU.domain().isInside(next) ) {
+	    return ( (myU(next) - myU(aPoint)) / myH ); 
+      } else {
+	    ASSERT( false && "too small image" ) ; 
+        throw std::domain_error("too small image");
+      }
     }
 }
 
@@ -131,8 +136,10 @@ operator() (const Point& aPoint, const Dimension& aDim) const
     return ( (myU(next) - myU(aPoint)) / myH ); 
   else if ( (!nextInside) && prevInside )
     return ( (myU(aPoint) - myU(prev)) / myH ); 
-  else 
+  else {
     ASSERT( false && "too small image" ) ; 
+    throw std::domain_error("too small image");
+  }
 }
 
 template <typename TImage, typename TOutputValue>
@@ -215,8 +222,10 @@ operator() (const Point& aPoint, const Dimension& aDim) const
 		*(myU(next) - myU(aPoint)) ) 
 	      / NumberTraits<Value>::castToDouble(myH*myH) ); 
      }
-  else 
+  else { 
     ASSERT( false && "too small image" ) ; 
+    throw std::domain_error("too small image");
+  }
 }
 
 template <typename TImage, typename TOutputValue>
@@ -286,8 +295,10 @@ operator() (const Point& aPoint, const Dimension& aDim) const
 		*(myImage(next) - myImage(aPoint)) ) 
 	      / NumberTraits<Value>::castToDouble(myH*myH) ); 
      }
-  else 
+  else { 
     ASSERT( false && "too small image" ) ; 
+    throw std::domain_error("too small image");
+  }
 
 }
 

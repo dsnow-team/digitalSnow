@@ -3,8 +3,9 @@
 #include <DGtal/io/boards/Board2D.h>
 #include "DGtal/io/Color.h"
 #include "DGtal/io/colormaps/GradientColorMap.h"
-#include "DGtal/io/writers/PNMWriter.h"
+#include "DGtal/io/writers/PGMWriter.h"
 
+#include "GrayscaleMapCast.h"
 
 template< typename TImage >
 bool drawContour(const TImage& img, std::string filename, std::string format, 
@@ -61,8 +62,8 @@ bool drawContour(const TImage& img, std::string filename, std::string format,
     //write it into a pgm file
     std::stringstream s; 
     s << filename << ".pgm";
-    typedef GradientColorMap<typename LabelImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
-    PNMWriter<LabelImage,ColorMap>::exportPGM( s.str(), labelImage, 0, 255, true );
+    typedef GrayscaleMapCast<typename LabelImage::Value> ColorMap;
+    PGMWriter<LabelImage,ColorMap>::exportPGM( s.str(), labelImage, ColorMap(0, 255), true );
 
     return true; 
  } else return false; 
@@ -105,8 +106,8 @@ bool drawContours(const TImage& img, std::string filename, std::string format,
     //write it into a pgm file
     std::stringstream s; 
     s << filename << ".pgm";
-    typedef GradientColorMap<typename TImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
-    PNMWriter<TImage,ColorMap>::exportPGM( s.str(), img, 0, 255, true );
+    typedef GrayscaleMapCast<typename TImage::Value> ColorMap;
+    PGMWriter<TImage,ColorMap>::exportPGM( s.str(), img, ColorMap(0, 255), true );
 
     return true; 
  } else return false; 
@@ -116,12 +117,12 @@ bool drawContours(const TImage& img, std::string filename, std::string format,
 template< typename TImage >
 void drawFunction( const TImage& img, std::string basename) 
 {
-    typedef GradientColorMap<typename TImage::Value, DGtal::CMAP_GRAYSCALE> ColorMap; 
+    typedef GrayscaleMapCast<typename TImage::Value> ColorMap;
     typename TImage::Value min = *min_element( img.begin(),img.end() ); 
     typename TImage::Value max = *max_element( img.begin(),img.end() );
     //std::cerr << min << " " << max << std::endl;  
     std::stringstream s; 
     s << basename << ".pgm"; 
-    PNMWriter<TImage,ColorMap>::exportPGM( s.str(), img, min, max, true );
+    PGMWriter<TImage,ColorMap>::exportPGM( s.str(), img, ColorMap(min, max), true );
 } 
 

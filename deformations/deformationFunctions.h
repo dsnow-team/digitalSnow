@@ -12,6 +12,8 @@
 //images
 #include <DGtal/images/ImageContainerBySTLVector.h>
 
+using namespace DGtal::functors;
+
 /////////////////////////// useful functions
 template< typename TImage >
 int getSize(TImage& img, const double& threshold = 0)

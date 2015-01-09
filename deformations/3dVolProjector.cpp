@@ -61,7 +61,7 @@ int displayOneFile(int argc, char** argv,
   Image image = VolReader<Image>::importVol( inputFilename );
  
   QApplication application(argc,argv);
-  Viewer3D viewer;
+  Viewer3D<> viewer;
   viewer.show();
  
   //display
@@ -84,7 +84,7 @@ int displayOneFile(int argc, char** argv,
   }
 
 
-  viewer << Viewer3D::updateDisplay;
+  viewer << Viewer3D<>::updateDisplay;
 
   if (!viewer.restoreStateFromFile())
     {

@@ -69,8 +69,8 @@ namespace DGtal
     typedef TFunction PointFunctor;
     typedef TExternField ExternField; 
 
-    BOOST_CONCEPT_ASSERT(( CPointFunctor<PointFunctor> )); 
-    BOOST_CONCEPT_ASSERT(( CPointFunctor<ExternField> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CPointFunctor<PointFunctor> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CPointFunctor<ExternField> )); 
     BOOST_STATIC_ASSERT
     (( ConceptUtils::SameType< typename PointFunctor::Point,
        typename ExternField::Point>::value ));

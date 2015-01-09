@@ -119,6 +119,7 @@ namespace DGtal
 
     typedef TImage LabelsImage; 
     typedef typename TImage::Value Label; 
+    // Why is this concept not in DGtal::concepts namespace ?
     BOOST_CONCEPT_ASSERT ((CLabel<Label>));
 
     typedef typename TImage::Domain::Space Space; 
@@ -145,7 +146,7 @@ namespace DGtal
      * (default value if not provided)
      */
     SimplePointHelper(LabelsImage& aImg, 
-		      const Label& aInftyRegionLabel);
+		      const Label& aInftyRegionLabel = Label());
 
     /**
      * Copy constructor.
