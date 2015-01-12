@@ -35,6 +35,9 @@ using namespace std;
 #include "deformationDisplay3d.h"
 #include "DGtal/io/readers/VolReader.h"
 
+// Qt
+#include <QApplication>
+
 ///////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
@@ -42,7 +45,8 @@ int main(int argc, char** argv)
   DGtal::trace.info() << "3d interface evolution using DGtal ";
   DGtal::trace.emphase() << "(version "<< DGTAL_VERSION << ")"<< std::endl;
   
-
+  // QApplication initialization with command-line parameters
+  QApplication application(argc, argv);
 
   // parse command line ----------------------------------------------
   po::options_description general_opt("Allowed options are");
@@ -115,7 +119,6 @@ int main(int argc, char** argv)
       return 0; 
     }
 
-
   //image and implicit function
   typedef ImageContainerBySTLVector<Domain,short int> LabelImage;
   LabelImage* labelImage = NULL; 
@@ -154,7 +157,7 @@ int main(int argc, char** argv)
   Domain d = Domain( labelImage->domain().lowerBound(), labelImage->domain().upperBound() );
 
   if (vm["outputFormat"].as<std::string>() == "png") //visu for choosing camera position
-    displayPartition( argc, argv, *labelImage );     
+    displayPartition( *labelImage );     
 
   //algo
   std::string algo; 
@@ -212,7 +215,7 @@ int main(int argc, char** argv)
       //interactive display after the evolution
       updateLabelImage( *labelImage, implicitFunction, 0 ); 
       if (vm.count("withVisu")) 
-	displayImageWithInfo( argc, argv, *labelImage, implicitFunction, a, b ); 
+	displayImageWithInfo( *labelImage, implicitFunction, a, b ); 
 
     } else if (algo.compare("phaseField")==0)
     {
@@ -273,7 +276,7 @@ int main(int argc, char** argv)
 
       //interactive display after the evolution
       updateLabelImage( *labelImage, implicitFunction, 0.5 ); 
-      if (vm.count("withVisu")) displayPartition( argc, argv, *labelImage ); 
+      if (vm.count("withVisu")) displayPartition( *labelImage ); 
 
     } else if (algo.compare("localLevelSet")==0)
     {
@@ -322,7 +325,7 @@ int main(int argc, char** argv)
       DGtal::trace.endBlock();
 
       //interactive display after the evolution
-      if (vm.count("withVisu")) displayPartition( argc, argv, *labelImage ); 
+      if (vm.count("withVisu")) displayPartition( *labelImage ); 
       
 
     } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;

@@ -28,7 +28,7 @@
 #include "DGtal/topology/LightExplicitDigitalSurface.h"
 
 // interactive
-#include <QtGui/qapplication.h>
+#include <QCoreApplication>
 #include "DGtal/io/viewers/Viewer3D.h"
 #include "DGtal/io/CDrawableWithDisplay3D.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
@@ -217,12 +217,7 @@ bool writePartition(const TImage& img, string filename, string format)
     {
     trace.emphase() << "snapshot with QGLViewer" << std::endl;
 
-    int argc = 1; 
-    string sargv1 = "QGLViewer"; 
-    char* argv1 = const_cast<char*>( sargv1.c_str() ); 
-    char* argv[1]; 
-    argv[0] = argv1; 
-    QApplication application(argc,argv);
+    QCoreApplication* application = QCoreApplication::instance();
     Viewer3D<> viewer;
     viewer.show();
 
@@ -279,7 +274,7 @@ bool writePartition(const TImage& img, string filename, string format)
     }
 
     viewer.setStateFileName(QString::null);  
-    application.exit();
+    application->exit();
 
     // Guess ...
     return true;
@@ -341,7 +336,7 @@ bool writePartition(const TImage& img, string filename, string format)
 
 
 template< typename TLabelImage, typename TDistanceImage, typename TExternImage >
-bool displayImageWithInfo(int argc, char** argv, const TLabelImage& limg, 
+bool displayImageWithInfo(const TLabelImage& limg, 
 		   TDistanceImage& img, 
 		  const TExternImage& ext1, const TExternImage& ext2, 
 		  const short int& threshold = 0)
@@ -368,7 +363,7 @@ bool displayImageWithInfo(int argc, char** argv, const TLabelImage& limg,
   DiffOperator op(img, ext1, ext2); 
 
   #ifdef WITH_VISU3D_QGLVIEWER
-  QApplication application(argc,argv);
+  QCoreApplication* application = QCoreApplication::instance();
  
   Viewer3D<> viewer(K);
   viewer.show();
@@ -422,7 +417,7 @@ bool displayImageWithInfo(int argc, char** argv, const TLabelImage& limg,
 
   viewer << Viewer3D<>::updateDisplay;
 
-  return application.exec();
+  return application->exec();
 #else
   return false; 
 #endif
@@ -430,11 +425,11 @@ bool displayImageWithInfo(int argc, char** argv, const TLabelImage& limg,
 
 
 template< typename TImage >
-bool displayPartition(int argc, char** argv, const TImage& img)
+bool displayPartition(const TImage& img)
 {
 
   #ifdef WITH_VISU3D_QGLVIEWER
-  QApplication application(argc,argv);
+  QCoreApplication* application = QCoreApplication::instance();
   Viewer3D<> viewer;
   viewer.show();
 
@@ -443,7 +438,7 @@ bool displayPartition(int argc, char** argv, const TImage& img)
   viewer.setSnapshotFormat("PNG");  
   viewer << Viewer3D<>::updateDisplay;
 
-  return application.exec();
+  return application->exec();
 #else
   return false; 
 #endif

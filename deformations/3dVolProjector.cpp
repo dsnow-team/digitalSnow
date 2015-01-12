@@ -30,7 +30,10 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <QtGui/qapplication.h>
+
+// Qt
+#include <QApplication>
+#include <QCoreApplication>
 
 #include "DGtal/base/Common.h"
 #include "DGtal/io/readers/VolReader.h"
@@ -51,7 +54,7 @@ using namespace Z3i;
 
 namespace po = boost::program_options;
 
-int displayOneFile(int argc, char** argv, 
+int displayOneFile( 
 		   const string& inputFilename, 
 		   const string& outputBasename,
 		   const int& offset = 0, const double& step = 0)
@@ -60,7 +63,7 @@ int displayOneFile(int argc, char** argv,
   typedef ImageSelector<Domain, unsigned char>::Type Image;
   Image image = VolReader<Image>::importVol( inputFilename );
  
-  QApplication application(argc,argv);
+  QCoreApplication* application = QCoreApplication::instance();
   Viewer3D<> viewer;
   viewer.show();
  
@@ -129,13 +132,16 @@ int displayOneFile(int argc, char** argv,
 		   << newf << " failed " << std::endl; 
   }
 
-  application.exit();
+  application->exit();
 
   return 0; 
 }
 
 int main( int argc, char** argv )
 {
+  // Init Qt with command-line parameters
+  QApplication application(argc, argv);
+    
   // parse command line ----------------------------------------------
   po::options_description general_opt("Allowed options are: ");
   general_opt.add_options()
@@ -186,7 +192,7 @@ int main( int argc, char** argv )
 	      so << outputBasename << setfill('0') << std::setw(4) 
 		 << i; 
 
-	      displayOneFile(argc, argv, inputFilename, so.str(), i+1, angleStep); 
+	      displayOneFile(inputFilename, so.str(), i+1, angleStep); 
 	    }
 
 	  {//rename state file
@@ -202,7 +208,7 @@ int main( int argc, char** argv )
 	}
       else 
 	{
-	  displayOneFile(argc, argv, inputFilename, outputBasename); 
+	  displayOneFile(inputFilename, outputBasename); 
 
 
 	  {//rename state file
@@ -235,7 +241,7 @@ int main( int argc, char** argv )
 	      so << outputBasename << setfill('0') << std::setw(4) 
 		 << i; 
 
-	      displayOneFile(argc, argv, si.str(), so.str(), i+1, angleStep); 
+	      displayOneFile(si.str(), so.str(), i+1, angleStep); 
 
 	    }
 

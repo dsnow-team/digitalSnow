@@ -54,6 +54,9 @@ namespace po = boost::program_options;
 
 int main( int argc, char** argv )
 {
+  // Qt init with command-line parameters
+  QApplication application(argc, argv);
+  
   // parse command line ----------------------------------------------
   po::options_description general_opt("Allowed options are: ");
   general_opt.add_options()
@@ -83,7 +86,6 @@ int main( int argc, char** argv )
   int thresholdMax = vm["thresholdMax"].as<int>();
   unsigned char transp = vm["transparency"].as<uint>();
  
-  QApplication application(argc,argv);
   Viewer3D<> viewer;
   viewer.setWindowTitle("simple Volume Viewer");
   viewer.show();
