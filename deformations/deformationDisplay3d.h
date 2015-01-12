@@ -84,7 +84,8 @@ bool displayPartition(TViewer& viewer, const TImage& img)
     /// frontier from sbel
     typedef FrontierPredicate<KSpace, TImage> SurfelPredicate;
     /// !!!!!! be careful oLabel and iLabel are swaped because func is wrong
-    SurfelPredicate surfelPred( aKSpace, img, oLabel, iLabel ); 
+    ///     => Seems to have been corrected since ...
+    SurfelPredicate surfelPred( aKSpace, img, iLabel, oLabel ); 
     typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
     Frontier frontier( aKSpace, 
 		       surfelPred, 
@@ -101,7 +102,7 @@ bool displayPartition(TViewer& viewer, const TImage& img)
       {
 	viewer << DGtal::CustomColors3D( colorMap( iLabel+oLabel ), 
 					 colorMap( iLabel+oLabel ) );
-	viewer << aKSpace.unsigns( *it ); 
+	viewer << aKSpace.unsigns( *it );
 	aSet.erase( aKSpace.unsigns( *it ) );
       }
   }
