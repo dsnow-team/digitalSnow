@@ -1,4 +1,5 @@
 #include <fstream>
+#include <new>
 
 //display 3D
 // static 
@@ -16,12 +17,15 @@
 #include "DGtal/topology/helpers/Surfaces.h"
 #include "DGtal/base/BasicFunctors.h"
 #include "DGtal/kernel/BasicPointPredicates.h"
+
+// Cell embedders
+#include <DGtal/topology/CanonicCellEmbedder.h>
+#include <DGtal/topology/CanonicSCellEmbedder.h>
+
 // frontier
 #include "DGtal/topology/SurfelAdjacency.h"
 #include "DGtal/topology/helpers/FrontierPredicate.h"
 #include "DGtal/topology/LightExplicitDigitalSurface.h"
-
-
 
 // interactive
 #include <QtGui/qapplication.h>
@@ -42,6 +46,10 @@ bool displayPartition(TViewer& viewer, const TImage& img)
   Point aUpperBound = d.upperBound(); 
   KSpace aKSpace;
   aKSpace.init(aLowerBound, aUpperBound, true);
+
+  // Update embedders for the viewer
+  viewer.setKSpaceEmbedder(  new CanonicCellEmbedder<KSpace>(aKSpace) );
+  viewer.setSKSpaceEmbedder( new CanonicSCellEmbedder<KSpace>(aKSpace) );
 
   //container
   std::set<Cell> aSet; 
@@ -361,7 +369,8 @@ bool displayImageWithInfo(int argc, char** argv, const TLabelImage& limg,
 
   #ifdef WITH_VISU3D_QGLVIEWER
   QApplication application(argc,argv);
-  Viewer3D<> viewer;
+ 
+  Viewer3D<> viewer(K);
   viewer.show();
 
   //good for Al
