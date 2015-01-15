@@ -29,6 +29,7 @@
 
 // interactive
 #include <QCoreApplication>
+#include <QObject>
 #include "DGtal/io/viewers/Viewer3D.h"
 #include "DGtal/io/CDrawableWithDisplay3D.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
@@ -219,12 +220,27 @@ bool writePartition(const TImage& img, string filename, string format)
 
     QCoreApplication* application = QCoreApplication::instance();
     Viewer3D<> viewer;
-    viewer.show();
+    
+    // Prepare snapshot and connect it to drawFinished signal
+    // Ref: http://www.libqglviewer.com/refManual/classQGLViewer.html#a1cf2ffb973b096b249dc7e90327a2a8e
+    viewer.setSnapshotFileName(filename.c_str());  
+    viewer.setSnapshotFormat("PNG");  
+    QObject::connect( &viewer, SIGNAL(drawFinished(bool)), &viewer, SLOT(saveSnapshot(bool)) );
 
-    //display
+    // Camera configuration
+    if (!viewer.restoreStateFromFile())
+    {
+	    string s = viewer.stateFileName().toStdString(); 
+	    trace.emphase() << " file " << s << " not found " << std::endl;
+    }
+
+    // Display & render
+    viewer.show();
     displayPartition(viewer, img); 
     viewer << Viewer3D<>::updateDisplay;
+    viewer.updateGL(); 
 
+    /*
     if (QGLViewer::QGLViewerIndex(&viewer) > 0)
       {//rename state file
 	string oldf = ".qglviewer.xml";
@@ -235,19 +251,7 @@ bool writePartition(const TImage& img, string filename, string format)
 	  trace.info() << "renaming " << oldf << " into " 
 		       << newf << " failed " << std::endl; 
       }
-
-    if (!viewer.restoreStateFromFile())
-      {
-	string s = viewer.stateFileName().toStdString(); 
-	trace.emphase() << " file " << s 
-		      << " not found " 
-			<< std::endl;
-      }
-    viewer.updateGL(); 
-
-    viewer.setSnapshotFileName(filename.c_str());  
-    viewer.setSnapshotFormat("PNG");  
-    viewer.saveSnapshot(true, true); 
+    */
 
     {//rename snapshot
     std::stringstream olds;
@@ -262,7 +266,8 @@ bool writePartition(const TImage& img, string filename, string format)
       trace.info() << "renaming " << oldf << " into " 
 		   << newf << " failed " << std::endl; 
     }
-    
+   
+    /*
     {//rename state file
     string oldf = viewer.stateFileName().toStdString();
     std::stringstream news; 
@@ -272,9 +277,9 @@ bool writePartition(const TImage& img, string filename, string format)
       trace.info() << "renaming " << oldf << " into " 
 		   << newf << " failed " << std::endl; 
     }
-
+    */
+    
     viewer.setStateFileName(QString::null);  
-    application->exit();
 
     // Guess ...
     return true;

@@ -65,8 +65,7 @@ int displayOneFile(
  
   QCoreApplication* application = QCoreApplication::instance();
   Viewer3D<> viewer;
-  viewer.show();
- 
+  
   //display
   //  displayPartition(viewer, image); 
   Domain domain(image.domain());
@@ -86,9 +85,16 @@ int displayOneFile(
     }     
   }
 
-
+  viewer.show();
   viewer << Viewer3D<>::updateDisplay;
 
+  // Prepare snapshot and connect it to drawFinished signal
+  // Ref: http://www.libqglviewer.com/refManual/classQGLViewer.html#a1cf2ffb973b096b249dc7e90327a2a8e
+  viewer.setSnapshotFileName(outputBasename.c_str());  
+  viewer.setSnapshotFormat("PNG");  
+  QObject::connect( &viewer, SIGNAL(drawFinished(bool)), &viewer, SLOT(saveSnapshot(bool)) );
+
+  // Camera Configuration
   if (!viewer.restoreStateFromFile())
     {
       string s = viewer.stateFileName().toStdString(); 
@@ -96,17 +102,16 @@ int displayOneFile(
 		      << " not found " 
 		      << std::endl;
     }
-  viewer.updateGL(); 
 
   if ( (offset != 0)&&(step != 0) )
     {
       viewer.camera()->setOrientation( -(offset*step), 0.0);
       viewer.showEntireScene(); 
     }
+    
+  // Render
+  viewer.updateGL();
 
-  viewer.setSnapshotFileName(outputBasename.c_str());  
-  viewer.setSnapshotFormat("PNG");  
-  viewer.saveSnapshot(true, true); 
 
   {//rename snapshot
     std::stringstream olds;
@@ -122,6 +127,7 @@ int displayOneFile(
 		   << newf << " failed " << std::endl; 
   }
 
+  /*
   {//rename state file
     string oldf = viewer.stateFileName().toStdString();
     std::stringstream news; 
@@ -131,8 +137,7 @@ int displayOneFile(
       trace.info() << "renaming " << oldf << " into " 
 		   << newf << " failed " << std::endl; 
   }
-
-  application->exit();
+  */
 
   return 0; 
 }
@@ -209,7 +214,6 @@ int main( int argc, char** argv )
       else 
 	{
 	  displayOneFile(inputFilename, outputBasename); 
-
 
 	  {//rename state file
 	    string oldf = ".qglviewer1.xml";
