@@ -41,10 +41,10 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
-  
+
   DGtal::trace.info() << "3d interface evolution using DGtal ";
   DGtal::trace.emphase() << "(version "<< DGTAL_VERSION << ")"<< std::endl;
-  
+
   // QApplication initialization with command-line parameters
   QApplication application(argc, argv);
 
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     ("displayStep",  po::value<int>()->default_value(1), "Number of time steps between 2 drawings" )
     ("stepsNumber,n",  po::value<int>()->default_value(1), "Maximal number of steps" )
     ("algo,a",  po::value<string>()->default_value("levelSet"), 
-     "can be: \n <levelSet>  \n or <phaseField> \n or <localLevelSet>" )
+     "can be: \n <levelSet>  \n or <phaseField> \n or <multiPhaseField> \n or <localLevelSet>" )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
@@ -68,20 +68,20 @@ int main(int argc, char** argv)
      "Output files format: either <png> (3d to 2d with QGLViewer), <pngc> (3d to 2d with Cairo) or <vol> (3d, default)" )
     ("withVisu", "Enables interactive 3d visualization after evolution" );
 
-  
+
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, general_opt), vm);  
   po::notify(vm);    
   if(vm.count("help")||argc<=1)
     {
       trace.info()<< "Evolution of a 3d interface" << std::endl
-		  << "Basic usage: "<<std::endl
-		  << argv[0] << " [other options] -t <time step> -n <number of steps> --withVisu" 
-		  << std::endl
-		  << general_opt << "\n";
+        << "Basic usage: "<<std::endl
+        << argv[0] << " [other options] -t <time step> -n <number of steps> --withVisu" 
+        << std::endl
+        << general_opt << "\n";
       return 0;
     }
-  
+
   //Parse options
   //domain size
   int dsize; 
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
   double tstep; 
   if (!(vm.count("timeStep"))) trace.info() << "time step default value: 1.0" << std::endl; 
   tstep = vm["timeStep"].as<double>(); 
-    
+
   //iterations
   int step; 
   if (!(vm.count("displayStep"))) trace.info() << "number of steps between two drawings: 1 by default" << std::endl; 
@@ -122,7 +122,7 @@ int main(int argc, char** argv)
   //image and implicit function
   typedef ImageContainerBySTLVector<Domain,short int> LabelImage;
   LabelImage* labelImage = NULL; 
- 
+
   if (vm.count("inputImage")) 
     { 
       string imageFileName = vm["inputImage"].as<std::string>();
@@ -142,14 +142,14 @@ int main(int argc, char** argv)
       if (vm.count("shape"))
         {
           if ( (vm["shape"].as<std::string>()) == "flower" )
-	    initWithFlowerPredicate( *labelImage, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
+            initWithFlowerPredicate( *labelImage, c, (dsize*3/5)/2, (dsize*1/5)/2, 5 );
           else 
-	    initWithBallPredicate( *labelImage, c, (dsize*3/5)/2 );
+            initWithBallPredicate( *labelImage, c, (dsize*3/5)/2 );
         } 
       else 
         initWithBallPredicate( *labelImage, c, (dsize*3/5)/2 );
       trace.info() << "starting interface initialized with a " 
-		   << (vm["shape"].as<std::string>()) << std::endl;
+        << (vm["shape"].as<std::string>()) << std::endl;
       DGtal::trace.endBlock(); 
     }
 
@@ -190,44 +190,46 @@ int main(int argc, char** argv)
 
       double sumt = 0; 
       for (unsigned int i = 1; i <= max; ++i) 
-	{
-	  DGtal::trace.info() << "iteration # " << i << std::endl; 
+        {
+          DGtal::trace.info() << "iteration # " << i << std::endl; 
 
-	  //update
-	  e.update(implicitFunction,tstep); 
+          //update
+          e.update(implicitFunction,tstep); 
 
-	  if ((i%step)==0) 
-	    {
+          if ((i%step)==0) 
+            {
 
-	      //display
-	      std::stringstream s; 
-	      s << outputFiles << setfill('0') << std::setw(4) << (i/step);
-	      updateLabelImage( *labelImage, implicitFunction ); 
-	      writePartition( *labelImage, s.str(), format );
+              //display
+              std::stringstream s; 
+              s << outputFiles << setfill('0') << std::setw(4) << (i/step);
+              updateLabelImage( *labelImage, implicitFunction ); 
+              writePartition( *labelImage, s.str(), format );
 
-	    }
-	  sumt += tstep; 
-	  DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
-	}
+            }
+          sumt += tstep; 
+          DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
+        }
+
 
       DGtal::trace.endBlock();
 
       //interactive display after the evolution
       updateLabelImage( *labelImage, implicitFunction, 0 ); 
       if (vm.count("withVisu")) 
-	displayImageWithInfo( *labelImage, implicitFunction, a, b ); 
+        displayImageWithInfo( *labelImage, implicitFunction, a, b ); 
 
-    } else if (algo.compare("phaseField")==0)
+    } 
+  else if (algo.compare("phaseField")==0)
     {
 
       double epsilon = 3.0; 
       if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
       epsilon = vm["epsilon"].as<double>(); 
       if (epsilon <= 0) 
-	{
-	  trace.error() << "epsilon should be greater than 0" << std::endl;
-	  return 0; 
-	} 
+        {
+          trace.error() << "epsilon should be greater than 0" << std::endl;
+          return 0; 
+        } 
 
       ImageContainerBySTLVector<Domain,double> implicitFunction( d ); 
       initWithDT( *labelImage, implicitFunction );
@@ -252,25 +254,25 @@ int main(int argc, char** argv)
 
       double sumt = 0; 
       for (unsigned int i = 1; i <= max; ++i) 
-	{
-	  DGtal::trace.info() << "iteration # " << i << std::endl; 
+        {
+          DGtal::trace.info() << "iteration # " << i << std::endl; 
 
-	  //update
-	  e.update(implicitFunction,tstep); 
+          //update
+          e.update(implicitFunction,tstep); 
 
-	  if ((i%step)==0) 
-	    {
+          if ((i%step)==0) 
+            {
 
-	      //display
-	      std::stringstream s; 
-	      s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
-	      updateLabelImage( *labelImage, implicitFunction, 0.5 ); 
-	      writePartition( *labelImage, s.str(), format );
+              //display
+              std::stringstream s; 
+              s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
+              updateLabelImage( *labelImage, implicitFunction, 0.5 ); 
+              writePartition( *labelImage, s.str(), format );
 
-	    }
-	  sumt += tstep; 
-	  DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
-	}
+            }
+          sumt += tstep; 
+          DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
+        }
 
       DGtal::trace.endBlock();
 
@@ -278,12 +280,13 @@ int main(int argc, char** argv)
       updateLabelImage( *labelImage, implicitFunction, 0.5 ); 
       if (vm.count("withVisu")) displayPartition( *labelImage ); 
 
-    } else if (algo.compare("localLevelSet")==0)
+    } 
+  else if (algo.compare("localLevelSet")==0)
     {
       //space
       KSpace ks;
       ks.init( d.lowerBound(), d.upperBound(), true ); 
-   
+
       //distance image...
       typedef ImageContainerBySTLVector<Domain,double> DistanceImage; 
       //and extern data...
@@ -293,46 +296,49 @@ int main(int argc, char** argv)
       // topological predicate
       typedef SimplePointHelper<LabelImage> TopologicalPredicate; 
       TopologicalPredicate topologicalPredicate(*labelImage); 
-      
+
       //frontier evolver
       PartitionEvolver<KSpace, LabelImage, DistanceImage, DistanceImage, 
-	TopologicalPredicate> 
-	e(ks, *labelImage, g, topologicalPredicate); 
+        TopologicalPredicate> 
+          e(ks, *labelImage, g, topologicalPredicate); 
 
       DGtal::trace.info() << e << std::endl; 
-      
+
       DGtal::trace.beginBlock( "Deformation (narrow band with topological control)" );
 
       double sumt = 0; 
       for (unsigned int i = 1; i <= max; ++i) 
-	{
-	  DGtal::trace.info() << "iteration # " << i << std::endl; 
+        {
+          DGtal::trace.info() << "iteration # " << i << std::endl; 
 
-	  //update
-	  e.update(tstep); 
+          //update
+          e.update(tstep); 
 
-	  if ((i%step)==0) 
-	    {
-	      //display
-	      std::stringstream s; 
-	      s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
-	      writePartition( *labelImage, s.str(), format );
-	    }
-	  sumt += tstep; 
-	  DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
-      }
+          if ((i%step)==0) 
+            {
+              //display
+              std::stringstream s; 
+              s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
+              writePartition( *labelImage, s.str(), format );
+            }
+          sumt += tstep; 
+          DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
+        }
 
       DGtal::trace.endBlock();
 
       //interactive display after the evolution
       if (vm.count("withVisu")) displayPartition( *labelImage ); 
-      
 
-    } else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
+
+    } 
+  else trace.error() << "unknown algo. Try option -h to see the available algorithms " << std::endl;
 
   //free
   delete( labelImage ); 
 
   return 1;
 }
+
+/* vim: set ts=2 sw=2 expandtab cindent cinoptions=>4,n-2,{2,^-2,:2,=2,g0,h2,p5,t0,+2,(0,u0,w1,m1 : */
 
