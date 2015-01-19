@@ -25,6 +25,7 @@ using namespace std;
 #include "ExactReactionEvolver.h"
 #include "ExplicitReactionEvolver.h"
 #include "LieSplittingEvolver.h"
+#include "MultiPhaseField.h"
 
 //local level set
 #include "SimplePointHelper.h"
@@ -210,11 +211,11 @@ int main(int argc, char** argv)
           DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
         }
 
-
+      updateLabelImage( *labelImage, implicitFunction, 0 );
+      DGtal::trace.info() << "Volume: " << getSize(*labelImage, 0) << std::endl;
       DGtal::trace.endBlock();
 
       //interactive display after the evolution
-      updateLabelImage( *labelImage, implicitFunction, 0 ); 
       if (vm.count("withVisu")) 
         displayImageWithInfo( *labelImage, implicitFunction, a, b ); 
 
@@ -274,13 +275,80 @@ int main(int argc, char** argv)
           DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
         }
 
+      updateLabelImage( *labelImage, implicitFunction, 0.5 );
+      DGtal::trace.info() << "Volume: " << getSize(*labelImage, 0.5) << std::endl;
       DGtal::trace.endBlock();
 
       //interactive display after the evolution
-      updateLabelImage( *labelImage, implicitFunction, 0.5 ); 
       if (vm.count("withVisu")) displayPartition( *labelImage ); 
 
     } 
+  else if (algo.compare("multiPhaseField") == 0)
+    {
+
+      double epsilon = 3.0; 
+      if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
+      epsilon = vm["epsilon"].as<double>(); 
+      if (epsilon <= 0) 
+        {
+          trace.error() << "epsilon should be greater than 0" << std::endl;
+          return 0; 
+        } 
+
+      typedef ImageContainerBySTLVector<Domain, double> FieldImage;
+      typedef ExactDiffusionEvolver< FieldImage > Diffusion; 
+      typedef ExactReactionEvolver < FieldImage > Reaction; 
+
+      Diffusion diffusion; 
+      Reaction reaction( epsilon );
+      // typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
+      //   ImageContainerBySTLVector<Domain,double> > Reaction; 
+      // Diffusion diffusion; 
+      // ImageContainerBySTLVector<Domain,double> a( Domain( implicitFunction.domain() ) ); 
+      // std::fill(a.begin(),a.end(), 1.0 );  
+      // Reaction reaction( epsilon, a, k );
+
+      LieSplittingEvolver< Diffusion, Reaction > phaseEvolver(diffusion, reaction); 
+      MultiPhaseField< LabelImage, FieldImage, LieSplittingEvolver<Diffusion,Reaction> > evolver(*labelImage, phaseEvolver);
+      
+      DGtal::trace.beginBlock( "Deformation (multi phase field)" );
+
+      // Initial display
+      std::stringstream s; 
+      s << outputFiles << setfill('0') << std::setw(4) << 0; 
+      writePartition( *labelImage, s.str(), format );
+      
+      double sumt = 0; 
+      for (unsigned int i = 1; i <= max; ++i) 
+        {
+          DGtal::trace.info() << "iteration # " << i << std::endl; 
+
+          //update
+          evolver.update( tstep ); 
+
+          if ( (i%step) == 0 ) 
+            {
+
+              //display
+              std::stringstream s; 
+              s << outputFiles << setfill('0') << std::setw(4) << (i/step); 
+              writePartition( *labelImage, s.str(), format );
+
+            }
+
+          sumt += tstep; 
+          DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
+        }
+
+      //TODO: Volume of each label ?
+      //DGtal::trace.info() << "Volume: " << getSize(*labelImage, 1.5) << std::endl;
+      
+      DGtal::trace.endBlock();
+
+      //interactive display after the evolution
+      if (vm.count("withVisu")) displayPartition( *labelImage ); 
+
+    }
   else if (algo.compare("localLevelSet")==0)
     {
       //space
