@@ -80,7 +80,7 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
       // Profile computation
       Profile profile( 1.5 );  //TODO get epsilon from myEvolver or even better its profile function
       std::transform(ptr->begin(), ptr->end(), ptr->begin(), profile);       
-
+      
       /// store phase field
       myFields.push_back( FieldImagePtr( ptr ) ); 
       /// store label
@@ -140,9 +140,12 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
   {
     //default label
        std::fill( myLabelImage.range().begin(), myLabelImage.range().end(), myDefaultLabel); 
+
+    /*
     //other labels
     typename std::vector<FieldImagePtr>::const_iterator it = myFields.begin(); 
     typename std::vector<Label>::const_iterator itLabel = myLabels.begin();  
+    
     for ( ; it != myFields.end(); ++it, ++itLabel)
       {
 	for (typename Domain::ConstIterator itPt = domain.begin(); itPt != domain.end(); ++itPt)
@@ -150,7 +153,28 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
 	    if ((*it)->operator()(*itPt) >= 0.5)
 	      myLabelImage.setValue( *itPt, *itLabel ); 
 	  }   
-      }  
+      }
+    */
+
+    for (typename Domain::ConstIterator itPt = domain.begin(); itPt != domain.end(); ++itPt)
+      {
+        Label max_label;
+        typename TFieldImage::Value max_value = 0;
+        typename std::vector<FieldImagePtr>::const_iterator it = myFields.begin(); 
+        typename std::vector<Label>::const_iterator itLabel = myLabels.begin();  
+        for ( ; it != myFields.end(); ++it, ++itLabel )
+          {
+            typename TFieldImage::Value const value = (*it)->operator()(*itPt);
+            if (value >= max_value)
+              {
+                max_value = value;
+                max_label = *itLabel;
+              }
+          }
+
+        myLabelImage.setValue( *itPt, max_label );
+      }
+
   }
 
   return aT; 
@@ -243,7 +267,6 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
 	}
       aImage.setValue(p, dist);  
     }
-
 }
 
 
