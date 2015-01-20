@@ -64,6 +64,7 @@ int main(int argc, char** argv)
      "can be: \n <levelSet>  \n or <phaseField> \n or <multiPhaseField> \n or <localLevelSet>" )
     ("balloonForce,k",  po::value<double>()->default_value(0.0), "Balloon force" )
     ("epsilon,e",  po::value<double>()->default_value(3.0), "Interface width (only for phase fields)" )
+    ("withCstVol", "with volume conservation (only for phase fields)" )
     ("outputFiles,o",   po::value<string>()->default_value("interface"), "Output files basename" )
     ("outputFormat,f",   po::value<string>()->default_value("vol"), 
      "Output files format: either <png> (3d to 2d with QGLViewer), <pngc> (3d to 2d with Cairo) or <vol> (3d, default)" )
@@ -285,6 +286,11 @@ int main(int argc, char** argv)
     } 
   else if (algo.compare("multiPhaseField") == 0)
     {
+      
+      //balloon force
+      double k; 
+      if (!(vm.count("balloonForce"))) trace.info() << "balloon force default value: 0" << std::endl; 
+      k = vm["balloonForce"].as<double>(); 
 
       double epsilon = 3.0; 
       if (!(vm.count("epsilon"))) trace.info() << "epsilon default value: 3.0" << std::endl; 
@@ -293,20 +299,27 @@ int main(int argc, char** argv)
         {
           trace.error() << "epsilon should be greater than 0" << std::endl;
           return 0; 
-        } 
+        }
+
+      bool flagWithCstVol = vm.count("withCstVol") != 0;
 
       typedef ImageContainerBySTLVector<Domain, double> FieldImage;
       typedef ExactDiffusionEvolver< FieldImage > Diffusion; 
+     
+      // Exact Reaction Evolver (no possible volume conservation)
       typedef ExactReactionEvolver < FieldImage > Reaction; 
-
       Diffusion diffusion; 
       Reaction reaction( epsilon );
-      // typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
-      //   ImageContainerBySTLVector<Domain,double> > Reaction; 
-      // Diffusion diffusion; 
-      // ImageContainerBySTLVector<Domain,double> a( Domain( implicitFunction.domain() ) ); 
-      // std::fill(a.begin(),a.end(), 1.0 );  
-      // Reaction reaction( epsilon, a, k );
+      
+      // Explicit Reaction Evolver (with possible volume conservation)
+      /*
+      typedef ExplicitReactionEvolver<ImageContainerBySTLVector<Domain,double>, 
+         ImageContainerBySTLVector<Domain,double> > Reaction; 
+      ImageContainerBySTLVector<Domain,double> a( d ); 
+      std::fill(a.begin(),a.end(), 1.0 );  
+      Reaction reaction( epsilon, a, k, flagWithCstVol );
+      Diffusion diffusion
+      */
 
       LieSplittingEvolver< Diffusion, Reaction > phaseEvolver(diffusion, reaction); 
       MultiPhaseField< LabelImage, FieldImage, LieSplittingEvolver<Diffusion,Reaction> > evolver(*labelImage, phaseEvolver);
