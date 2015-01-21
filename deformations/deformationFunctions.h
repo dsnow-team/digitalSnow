@@ -36,6 +36,39 @@ int getSize(TImage& img, const double& threshold = 0)
   return c; 
 }
 
+/** Calculate histogram of an image (ie the size of each label) 
+ *
+ * @tparam  TImage  type of the image to analyse
+ * @tparam  TMap    type of the map (std) in which to store the result
+ *
+ * @param   img     the image
+ * @param   map     the map 
+*/
+template <
+  typename TImage, 
+  typename TMap
+>
+void calcHistogram( TImage const& img, TMap & map )
+{
+  typedef typename TImage::Domain TDomain;
+  typedef typename TMap::key_type T;
+  
+  TDomain d = img.domain();
+  typename TDomain::ConstIterator cIt    = d.begin();
+  typename TDomain::ConstIterator cItEnd = d.end();
+
+  for ( ; cIt != cItEnd; ++cIt )
+    {
+      const T label = static_cast<T>( img(*cIt) );
+      if ( map.count(label) == 0 )
+        map[label] = 1;
+      else
+        ++(map[label]);
+    }
+}
+
+
+
 template< typename TLabelImage, typename TDistanceImage >
 void updateLabelImage(TLabelImage& limg, const TDistanceImage& dimg, const double& threshold = 0)
 {
@@ -262,3 +295,7 @@ public:
 
 #undef deformationFunctions_RECURSES
 #endif // else defined(deformationFunctions_RECURSES)
+
+/* GNU coding style */
+/* vim: set ts=2 sw=2 expandtab cindent cinoptions=>4,n-2,{2,^-2,:2,=2,g0,h2,p5,t0,+2,(0,u0,w1,m1 : */
+

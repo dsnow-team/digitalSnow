@@ -1,6 +1,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cstddef>
+#include <map>
 
 /////////////////////
 #include <boost/program_options/options_description.hpp>
@@ -201,6 +202,7 @@ int main(int argc, char** argv)
             }
 
           sumt += tstep; 
+          DGtal::trace.info() << "Volume: " << getSize(*labelImage, 0) << std::endl;
           DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
         }
 
@@ -278,6 +280,7 @@ int main(int argc, char** argv)
             }
 
           sumt += tstep; 
+          DGtal::trace.info() << "Volume: " << getSize(*labelImage, 0.5) << std::endl;
           DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
         }
 
@@ -310,7 +313,7 @@ int main(int argc, char** argv)
       // Exact Reaction Evolver (no possible volume conservation)
       typedef ExactReactionEvolver < FieldImage > Reaction; 
       Reaction reaction( epsilon );
-      
+
       // Explicit Reaction Evolver (with possible volume conservation)
       /*
       typedef ExplicitReactionEvolver<
@@ -353,13 +356,20 @@ int main(int argc, char** argv)
 
             }
 
-          sumt += tstep; 
+          sumt += tstep;
+          
+          // Volume of each phase
+          typedef std::map<typename LabelImage::Value, unsigned int> Histo;
+          Histo histo;
+          calcHistogram( *labelImage, histo );
+          DGtal::trace.info() << "Volume: ";
+          for ( Histo::const_iterator it = histo.begin(); it != histo.end(); ++it )
+              DGtal::trace.info() << "V(" << it->first << ") = " << it->second;
+          DGtal::trace.info() << std::endl;
+
           DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
         }
 
-      //TODO: Volume of each label ?
-      //DGtal::trace.info() << "Volume: " << getSize(*labelImage, 1.5) << std::endl;
-      
       DGtal::trace.endBlock();
 
       // Interactive display after the evolution
