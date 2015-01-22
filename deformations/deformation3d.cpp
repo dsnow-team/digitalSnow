@@ -237,11 +237,12 @@ int main(int argc, char** argv)
       Diffusion diffusion;
 
       // Exact reaction evolver (no possible volume conservation)
+      /*
       typedef ExactReactionEvolver<ImageContainerBySTLVector<Domain,double> > Reaction; 
       Reaction reaction( epsilon );
+      */
 
       // Explicit reaction evolver (with possible volume conservation)
-      /*
       typedef ExplicitReactionEvolver<
           ImageContainerBySTLVector<Domain,double>, 
           ImageContainerBySTLVector<Domain,double> 
@@ -249,7 +250,6 @@ int main(int argc, char** argv)
       ImageContainerBySTLVector<Domain,double> a( Domain( implicitFunction.domain() ) ); 
       std::fill(a.begin(), a.end(), 1.0 );  
       Reaction reaction( epsilon, a, balloon, flagWithCstVol );
-      */
 
       // Lie splitting
       LieSplittingEvolver<Diffusion,Reaction> e(diffusion, reaction); 
@@ -311,11 +311,12 @@ int main(int argc, char** argv)
       Diffusion diffusion;
      
       // Exact Reaction Evolver (no possible volume conservation)
+      /*
       typedef ExactReactionEvolver < FieldImage > Reaction; 
       Reaction reaction( epsilon );
+      */
 
       // Explicit Reaction Evolver (with possible volume conservation)
-      /*
       typedef ExplicitReactionEvolver<
           ImageContainerBySTLVector<Domain,double>, 
           ImageContainerBySTLVector<Domain,double> 
@@ -323,7 +324,6 @@ int main(int argc, char** argv)
       ImageContainerBySTLVector<Domain,double> a( d ); 
       std::fill(a.begin(), a.end(), 1.0 );  
       Reaction reaction( epsilon, a, balloon, flagWithCstVol );
-      */
 
       // Lie splitting
       LieSplittingEvolver< Diffusion, Reaction > phaseEvolver(diffusion, reaction); 
