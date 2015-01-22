@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <cstddef>
 #include <map>
+#include <numeric>
 
 /////////////////////
 #include <boost/program_options/options_description.hpp>
@@ -281,6 +282,10 @@ int main(int argc, char** argv)
 
           sumt += tstep; 
           DGtal::trace.info() << "Volume: " << getSize(*labelImage, 0.5) << std::endl;
+          
+          const double vol_test = std::accumulate( implicitFunction.begin(), implicitFunction.end(), 0.);
+          DGtal::trace.info() << "Real volume: " << vol_test << std::endl;
+
           DGtal::trace.info() << "Time spent: " << sumt << std::endl;    
         }
 
