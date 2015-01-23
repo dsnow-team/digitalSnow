@@ -46,6 +46,8 @@
 //////////////////////////////////////////////////////////////////////////////
 // -------------------------- Some Tools --------------------------
 
+// Local namespace
+namespace {
 
 //! Type info for VTK (name and dimension)
 template <typename T>
@@ -55,28 +57,81 @@ template <>
 struct VTKType<double>
 {
   static inline
-  std::string name() 
-    {
-      return "double";
-    }
+  std::string name() { return "double"; }
 
   static inline constexpr
-  size_t dim()
-    {
-      return 1;
-    }
+  size_t dim() { return 1; }
 
-  template <typename TValue>
+  template < typename TStream, typename TValue >
   static inline
-  std::string format(TValue const& value)
+  void write( TStream & stream, TValue const& value )
     {
-      std::stringstream ss;
-      ss.imbue(std::locale());
-      ss <<  static_cast<double>(value);
-      return ss.str();
+      stream << static_cast<double>(value);
     }
 };
 
+template <>
+struct VTKType<float>
+{
+  static inline
+  std::string name() { return "float"; }
+
+  static inline constexpr
+  size_t dim() { return 1; }
+
+  template < typename TStream, typename TValue >
+  static inline
+  void write( TStream & stream, TValue const& value )
+    {
+      stream << static_cast<float>(value);
+    }
+};
+
+//! VTK Stream writer
+template <bool Binary>
+struct VTKDataWriter;
+
+//! VTK Stream writer for ASCII format
+template <>
+struct VTKDataWriter<false>
+{
+  static inline
+  std::string separator() { return "\n"; }
+
+  template < typename TStream, typename TValue >
+  static inline
+  void write( TStream & stream, TValue const& value )
+    {
+      stream << value << " ";
+    }
+
+  static inline
+  std::string data_format() { return "ASCII"; }
+};
+
+//! VTK Stream writer for BINARY format
+template <>
+struct VTKDataWriter<true>
+{
+  static inline
+  std::string separator() { return ""; }
+
+  template < typename TStream, typename TValue >
+  static inline
+  void write( TStream & stream, TValue const& value )
+    {
+      //stream.write( reinterpret_cast<const char *>(&value), sizeof value );
+      // *@#! endianness
+      const char* raw = reinterpret_cast<const char *>(&value);
+      for (size_t i = sizeof(TValue); i > 0; --i)
+        stream.put(raw[i-1]);
+    }
+  
+  static inline
+  std::string data_format() { return "BINARY"; }
+};
+
+} // namespace 
 
 ///////////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION of inline methods.
@@ -88,20 +143,22 @@ struct VTKType<double>
 /**
  * Constructor.
  */
-template <typename TSpace>
+template <typename TSpace, bool Binary>
 inline
-DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 VTKWriter( std::string const& filename, HyperRectDomain<TSpace> domain )
     : m_domain(domain), m_fieldname(""),
-      m_fstream( filename+".vtk", std::ofstream::out ), m_header(false)
+      m_fstream( filename+".vtk", std::ofstream::out | std::ofstream::binary ), 
+      m_header(false),
+      m_dataStream(m_fstream)
 {}
   
 /**
  * Destructor.
  */
-template <typename TSpace>
+template <typename TSpace, bool Binary>
 inline
-DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 ~VTKWriter()
 {
   close();
@@ -114,10 +171,10 @@ DGtal::VTKWriter< HyperRectDomain<TSpace> >::
  * Checks the validity/consistency of the object.
  * @return 'true' if the object is valid, 'false' otherwise.
  */
-template <typename TSpace>
+template <typename TSpace, bool Binary>
 inline
 bool
-DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 isValid() const
 {
     return m_fstream.good();
@@ -126,11 +183,10 @@ isValid() const
 /**
  * Write the VTK header
  */
-template <typename TSpace>
-DGtal::VTKWriter< HyperRectDomain<TSpace> > &
-DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+template <typename TSpace, bool Binary>
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > &
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 init()
-  throw(DGtal::IOException)
 {
   if ( !m_header )
     {
@@ -141,7 +197,7 @@ init()
         {
           m_fstream << "# vtk DataFile Version 2.0\n";
           m_fstream << "Exported with DGtal\n";
-          m_fstream << "ASCII\n";
+          m_fstream << m_dataStream.data_format() << "\n";
           m_fstream << "DATASET STRUCTURED_POINTS\n";
           m_fstream << "DIMENSIONS "
                     <<    ( (Domain::dimension >= 1) ? dimensions(0) : 1 ) << " "
@@ -166,20 +222,20 @@ init()
 /**
  * Set the name of the next field
  */
-template <typename TSpace>
+template <typename TSpace, bool Binary>
 inline
-DGtal::VTKWriter< HyperRectDomain<TSpace> > &
-DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > &
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 operator<< ( std::string const& fieldname )
 {
   m_fieldname = fieldname;
   return *this;
 }
 
-template <typename TSpace>
+template <typename TSpace, bool Binary>
 inline
-DGtal::VTKWriter< HyperRectDomain<TSpace> > &
-DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > &
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 operator<< ( const char* fieldname )
 {
   m_fieldname = fieldname;
@@ -189,13 +245,12 @@ operator<< ( const char* fieldname )
 /**
  * Write a field
  */
-template <typename TSpace>
+template <typename TSpace, bool Binary>
 template <typename TImage>
 BOOST_CONCEPT_REQUIRES( (( concepts::CImage<TImage> )),
-( DGtal::VTKWriter< HyperRectDomain<TSpace> > & ))
-DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+( DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > & ))
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 operator<< ( TImage const& field )
-  throw(DGtal::IOException)
 {
   return write( m_fieldname, field );
 }
@@ -203,15 +258,14 @@ operator<< ( TImage const& field )
 /**
  * Write a field, given his name
  */
-template <typename TSpace>
+template <typename TSpace, bool Binary>
 template <
   typename TImage,
   typename T
 >
-DGtal::VTKWriter< HyperRectDomain<TSpace> > &
-DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > &
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 write ( std::string const& fieldname, TImage const& field )
-  throw(DGtal::IOException)
 {
   BOOST_CONCEPT_ASSERT( (DGtal::concepts::CImage<TImage>) );
 
@@ -230,7 +284,8 @@ write ( std::string const& fieldname, TImage const& field )
       // Export
       for ( auto const& pt : m_domain.subRange(dim) )
         {
-          m_fstream << VTKType<T>::format(field(pt)) << "\n";
+          VTKType<T>::write( m_dataStream, field(pt) );
+          m_dataStream.separator();
         }
 
       m_fstream << "\n";
@@ -246,14 +301,50 @@ write ( std::string const& fieldname, TImage const& field )
 /*
  * Close the file
  */
-template <typename TSpace>
+template <typename TSpace, bool Binary>
 void
-DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 close()
 {
   m_fstream.close();
 }
 
+/**
+ * Internale data stream
+ */
+template <typename TSpace, bool Binary>
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+DataStream( std::ofstream & fstream )
+  : m_fstream(fstream)
+{
+  m_fstream.imbue(std::locale()); // Dot separator for decimal numbers
+}
+
+template <typename TSpace, bool Binary>
+template <typename TValue>
+typename DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream &
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+operator<< ( TValue const& value )
+{
+  VTKDataWriter<Binary>::write( m_fstream, value );
+  return *this;
+}
+
+template <typename TSpace, bool Binary>
+std::string
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+data_format()
+{
+  return VTKDataWriter<Binary>::data_format();
+}
+
+template <typename TSpace, bool Binary>
+void
+DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+separator()
+{
+  m_fstream << VTKDataWriter<Binary>::separator();
+}
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////

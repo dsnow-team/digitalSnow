@@ -54,16 +54,21 @@ namespace DGtal
   /////////////////////////////////////////////////////////////////////////////
   // template class VTKWriter
   /**
-   * Description of template class 'VTKWriter' <p>
-   * @brief Aim:
+   * VTK writer for DGtal Images
+   *
+   * @tparam TDomain Type of the domain used for export
+   * @tparam Binary 'true' for BINARY format, 'false' for ASCII format
    *
    * @see http://www.vtk.org/VTK/img/file-formats.pdf
    */
-  template <typename TDomain>
+  template <
+    typename TDomain,
+    bool Binary = true
+  >
   class VTKWriter;
 
-  template <typename TSpace>
-  class VTKWriter< HyperRectDomain<TSpace> >
+  template <typename TSpace, bool Binary>
+  class VTKWriter< HyperRectDomain<TSpace>, Binary >
   {
     // ----------------------- Standard services ------------------------------
   public:
@@ -95,7 +100,7 @@ namespace DGtal
      * It is automatically done at the first data export
      * @return a reference to the writer instance
      */
-    VTKWriter<Domain> & init() throw(DGtal::IOException);
+    VTKWriter<Domain,Binary> & init();
 
 
     /**
@@ -104,8 +109,8 @@ namespace DGtal
      * @param fieldname the name of the next field.
      * @return a reference to the writer instance.
      */
-    VTKWriter<Domain> & operator<< ( std::string const& fieldname );
-    VTKWriter<Domain> & operator<< ( const char* fieldname );
+    VTKWriter<Domain,Binary> & operator<< ( std::string const& fieldname );
+    VTKWriter<Domain,Binary> & operator<< ( const char* fieldname );
 
     /**
      * Write a field
@@ -118,11 +123,16 @@ namespace DGtal
      */
     template <typename TImage>
     BOOST_CONCEPT_REQUIRES( (( concepts::CImage<TImage> )),
-    ( VTKWriter<HyperRectDomain<TSpace> > & ))
-    operator<< ( TImage const& field ) throw(DGtal::IOException);
+    ( VTKWriter<HyperRectDomain<TSpace>,Binary> & ))
+    operator<< ( TImage const& field );
 
     /**
-     * Write a field, given his name and optionally specifying export type
+     * Write a field, given his name and optionally specifying export type.
+     *
+     * By specifying T template, it is possible to cast values to a specified
+     * type before export. For example, it can export double values as float,
+     * to save disk space.
+     *
      * @tparam TImage type of the image.
      * @tparam T      type of values.
      * @return a reference to the write instance.
@@ -131,7 +141,7 @@ namespace DGtal
       typename TImage,
       typename T = typename TImage::Value
     >
-    VTKWriter<Domain> & write( std::string const& fieldname, TImage const& field ) throw(DGtal::IOException);
+    VTKWriter<Domain,Binary> & write( std::string const& fieldname, TImage const& field );
     
 
     /**
@@ -176,6 +186,25 @@ namespace DGtal
 
     // ------------------------- Internals ------------------------------------
   private:
+
+    /**
+     * Internal data stream
+     */
+    struct DataStream
+      {
+        DataStream( std::ofstream & fstream );
+
+        std::string data_format();
+
+        template <typename TValue>
+        DataStream& operator<< (TValue const& value);
+
+        void separator();
+        
+        std::ofstream & m_fstream;
+      };
+
+    DataStream m_dataStream;
 
   }; // end of class VTKWriter
 
