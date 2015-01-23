@@ -1,0 +1,263 @@
+/**
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
+/**
+ * @file VTKWriter.ih
+ * @author Roland Denis (\c roland.denis@univ-savoie.fr )
+ * LAboratory of MAthematics - LAMA (CNRS, UMR 5127), University of Savoie, France
+ *
+ * @date 2015/01/22
+ *
+ * Implementation of inline methods defined in VTKWriter.h
+ *
+ * This file is part of the DGtal library.
+ */
+
+
+//////////////////////////////////////////////////////////////////////////////
+#include <cstdlib>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <locale>
+
+#include <boost/concept/assert.hpp>
+
+#include <DGtal/base/Exceptions.h>
+#include <DGtal/kernel/domains/HyperRectDomain.h>
+#include <DGtal/images/CImage.h>
+
+//////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+// -------------------------- Some Tools --------------------------
+
+
+//! Type info for VTK (name and dimension)
+template <typename T>
+struct VTKType;
+
+template <>
+struct VTKType<double>
+{
+  static inline
+  std::string name() 
+    {
+      return "double";
+    }
+
+  static inline constexpr
+  size_t dim()
+    {
+      return 1;
+    }
+
+  template <typename TValue>
+  static inline
+  std::string format(TValue const& value)
+    {
+      std::stringstream ss;
+      ss.imbue(std::locale());
+      ss <<  static_cast<double>(value);
+      return ss.str();
+    }
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// ----------------------- Standard services ------------------------------
+
+/**
+ * Constructor.
+ */
+template <typename TSpace>
+inline
+DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+VTKWriter( std::string const& filename, HyperRectDomain<TSpace> domain )
+    : m_domain(domain), m_fieldname(""),
+      m_fstream( filename+".vtk", std::ofstream::out ), m_header(false)
+{}
+  
+/**
+ * Destructor.
+ */
+template <typename TSpace>
+inline
+DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+~VTKWriter()
+{
+  close();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Interface - public :
+
+/**
+ * Checks the validity/consistency of the object.
+ * @return 'true' if the object is valid, 'false' otherwise.
+ */
+template <typename TSpace>
+inline
+bool
+DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+isValid() const
+{
+    return m_fstream.good();
+}
+
+/**
+ * Write the VTK header
+ */
+template <typename TSpace>
+DGtal::VTKWriter< HyperRectDomain<TSpace> > &
+DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+init()
+  throw(DGtal::IOException)
+{
+  if ( !m_header )
+    {
+      const typename Domain::Vector dimensions = 
+         m_domain.upperBound() - m_domain.lowerBound() + Domain::Point::diagonal(1);
+
+      try
+        {
+          m_fstream << "# vtk DataFile Version 2.0\n";
+          m_fstream << "Exported with DGtal\n";
+          m_fstream << "ASCII\n";
+          m_fstream << "DATASET STRUCTURED_POINTS\n";
+          m_fstream << "DIMENSIONS "
+                    <<    ( (Domain::dimension >= 1) ? dimensions(0) : 1 ) << " "
+                    <<    ( (Domain::dimension >= 2) ? dimensions(1) : 1 ) << " "
+                    <<    ( (Domain::dimension >= 3) ? dimensions(2) : 1 )
+                    << "\n";
+          m_fstream << "ORIGIN 0 0 0\n";
+          m_fstream << "SPACING 1 1 1\n";
+          m_fstream << "POINT_DATA " << m_domain.size() << "\n";
+        }
+      catch( ... )
+        {
+          throw DGtal::IOException();
+        }
+
+      m_header = true;
+    }
+
+  return *this;
+}
+
+/**
+ * Set the name of the next field
+ */
+template <typename TSpace>
+inline
+DGtal::VTKWriter< HyperRectDomain<TSpace> > &
+DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+operator<< ( std::string const& fieldname )
+{
+  m_fieldname = fieldname;
+  return *this;
+}
+
+template <typename TSpace>
+inline
+DGtal::VTKWriter< HyperRectDomain<TSpace> > &
+DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+operator<< ( const char* fieldname )
+{
+  m_fieldname = fieldname;
+  return *this;
+}
+
+/**
+ * Write a field
+ */
+template <typename TSpace>
+template <typename TImage>
+DGtal::VTKWriter< HyperRectDomain<TSpace> > &
+DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+operator<< ( TImage const& field )
+  throw(DGtal::IOException)
+{
+  return write( m_fieldname, field );
+}
+
+/**
+ * Write a field, given his name
+ */
+template <typename TSpace>
+template <
+  typename TImage,
+  typename T
+>
+DGtal::VTKWriter< HyperRectDomain<TSpace> > &
+DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+write ( std::string const& fieldname, TImage const& field )
+  throw(DGtal::IOException)
+{
+  BOOST_CONCEPT_ASSERT( (DGtal::concepts::CImage<TImage>) );
+
+  // Write header is not already done 
+  init();
+
+  // Dimension permutation
+  const std::vector<typename Domain::Dimension> dim = { 0, 1, 2};
+
+  try
+    {
+      // Field header
+      m_fstream << "SCALARS " << fieldname << " " << VTKType<T>::name() << " " << VTKType<T>::dim() << "\n";
+      m_fstream << "LOOKUP_TABLE default\n";
+
+      // Export
+      //for ( auto it = m_domain.range(dim).begin(); it != m_domain.range(dim).end(); ++it )
+      for ( auto const& pt : m_domain.subRange(dim) )
+        {
+          m_fstream << VTKType<T>::format(field(pt)) << "\n";
+        }
+
+      m_fstream << "\n";
+    }
+  catch( ... )
+    {
+        throw DGtal::IOException();
+    }
+
+  return *this;
+}
+
+/*
+ * Close the file
+ */
+template <typename TSpace>
+void
+DGtal::VTKWriter< HyperRectDomain<TSpace> >::
+close()
+{
+  m_fstream.close();
+}
+
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+/* GNU coding style */
+/* vim: set ts=2 sw=2 expandtab cindent cinoptions=>4,n-2,{2,^-2,:2,=2,g0,h2,p5,t0,+2,(0,u0,w1,m1 : */
+

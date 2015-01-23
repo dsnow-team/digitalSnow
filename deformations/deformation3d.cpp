@@ -38,6 +38,7 @@ using namespace std;
 #include "deformationFunctions.h"
 #include "deformationDisplay3d.h"
 #include "DGtal/io/readers/VolReader.h"
+#include "VTKWriter.h"
 
 // Qt
 #include <QApplication>
@@ -278,6 +279,8 @@ int main(int argc, char** argv)
               s << outputFiles << setfill('0') << std::setw(4) << (i/disp_step); 
               updateLabelImage( *labelImage, implicitFunction, 0.5 ); 
               writePartition( *labelImage, s.str(), outputFormat );
+              //VTKWriter<Domain> vtk(s.str(), implicitFunction.domain());
+              //vtk << "phi" << implicitFunction;
             }
 
           sumt += tstep; 
