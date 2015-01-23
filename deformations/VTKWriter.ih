@@ -191,7 +191,8 @@ operator<< ( const char* fieldname )
  */
 template <typename TSpace>
 template <typename TImage>
-DGtal::VTKWriter< HyperRectDomain<TSpace> > &
+BOOST_CONCEPT_REQUIRES( (( concepts::CImage<TImage> )),
+( DGtal::VTKWriter< HyperRectDomain<TSpace> > & ))
 DGtal::VTKWriter< HyperRectDomain<TSpace> >::
 operator<< ( TImage const& field )
   throw(DGtal::IOException)
@@ -214,7 +215,7 @@ write ( std::string const& fieldname, TImage const& field )
 {
   BOOST_CONCEPT_ASSERT( (DGtal::concepts::CImage<TImage>) );
 
-  // Write header is not already done 
+  // Write header if not already done 
   init();
 
   // Dimension permutation
@@ -227,7 +228,6 @@ write ( std::string const& fieldname, TImage const& field )
       m_fstream << "LOOKUP_TABLE default\n";
 
       // Export
-      //for ( auto it = m_domain.range(dim).begin(); it != m_domain.range(dim).end(); ++it )
       for ( auto const& pt : m_domain.subRange(dim) )
         {
           m_fstream << VTKType<T>::format(field(pt)) << "\n";

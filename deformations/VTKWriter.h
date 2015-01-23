@@ -42,6 +42,8 @@
 #include <string>
 #include <fstream>
 
+#include <boost/concept/assert.hpp>
+
 #include <DGtal/base/Exceptions.h>
 #include <DGtal/kernel/domains/HyperRectDomain.h>
 //////////////////////////////////////////////////////////////////////////////
@@ -115,7 +117,9 @@ namespace DGtal
      * @todo enable only if TImage is a model a concepts::CImage !!
      */
     template <typename TImage>
-    VTKWriter<Domain> & operator<< ( TImage const& field ) throw(DGtal::IOException);
+    BOOST_CONCEPT_REQUIRES( (( concepts::CImage<TImage> )),
+    ( VTKWriter<HyperRectDomain<TSpace> > & ))
+    operator<< ( TImage const& field ) throw(DGtal::IOException);
 
     /**
      * Write a field, given his name and optionally specifying export type
