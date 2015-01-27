@@ -8,6 +8,7 @@
 /** Prevents repeated inclusion of headers. */
 #define deformationFunctions_h
 
+#include <numeric> // Algorithms
 
 //images
 #include <DGtal/images/ImageContainerBySTLVector.h>
@@ -67,6 +68,20 @@ void calcHistogram( TImage const& img, TMap & map )
     }
 }
 
+/** Calculate area/volume of a phase from his implicit function
+ *
+ * It simply integrates the function over the full domain.
+ *
+ * @tparam T      type of the result.
+ * @tparam TField type of the implicit function (must be iterable).
+ * @param field the implicit function.
+ */
+template < typename T, typename TField >
+inline
+T getVolume( TField const& field )
+{
+  return std::accumulate( std::begin(field), std::end(field), T(0) );
+}
 
 
 template< typename TLabelImage, typename TDistanceImage >

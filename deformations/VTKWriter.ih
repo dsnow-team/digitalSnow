@@ -273,9 +273,11 @@ write ( std::string const& fieldname, TImage const& field )
   init();
 
   // Dimension permutation
-  const std::vector<typename Domain::Dimension> dim = { 0, 1, 2};
+  std::vector<typename Domain::Dimension> dim;
+  for (size_t i = 0; i < Domain::dimension; ++i)
+    dim.push_back(i);
 
-  try
+  //try
     {
       // Field header
       m_fstream << "SCALARS " << fieldname << " " << VTKType<T>::name() << " " << VTKType<T>::dim() << "\n";
@@ -290,10 +292,10 @@ write ( std::string const& fieldname, TImage const& field )
 
       m_fstream << "\n";
     }
-  catch( ... )
-    {
-        throw DGtal::IOException();
-    }
+  //catch( ... )
+  //  {
+  //      throw DGtal::IOException();
+  //  }
 
   return *this;
 }
