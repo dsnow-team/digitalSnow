@@ -41,6 +41,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Inclusions
 #include <iostream>
+#include <cstddef>
 
 #include "DGtal/base/Common.h"
 #include "DGtal/images/CImage.h"
@@ -176,8 +177,15 @@ namespace DGtal
      */
     void selfDisplay ( std::ostream & out ) const;
 
+    /**
+     * Return the number of phases.
+     */
+    size_t getNumPhase() const; 
 
-
+    /**
+     * Return one of the phase fields
+     */
+    FieldImage const& getPhase( size_t i ) const;
 
     // ------------------------- Hidden services ------------------------------
   protected:
@@ -242,3 +250,7 @@ namespace DGtal
 
 #undef MultiPhaseField_RECURSES
 #endif // else defined(MultiPhaseField_RECURSES)
+
+/* GNU coding style */
+/* vim: set ts=2 sw=2 expandtab cindent cinoptions=>4,n-2,{2,^-2,:2,=2,g0,h2,p5,t0,+2,(0,u0,w1,m1 : */
+

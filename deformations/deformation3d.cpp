@@ -250,7 +250,7 @@ int main(int argc, char** argv)
           ImageContainerBySTLVector<Domain,double> 
         > Reaction; 
       ImageContainerBySTLVector<Domain,double> a( Domain( implicitFunction.domain() ) ); 
-      std::fill(a.begin(), a.end(), 1.0 );  
+      std::fill(a.begin(), a.end(), 0.0 );  
       Reaction reaction( epsilon, a, balloon, flagWithCstVol );
 
       // Lie splitting
@@ -262,6 +262,13 @@ int main(int argc, char** argv)
       std::stringstream s; 
       s << outputFiles << setfill('0') << std::setw(4) << 0; 
       writePartition( *labelImage, s.str(), outputFormat );
+      
+      // VTK export
+        {
+          VTKWriter<Domain> vtk(s.str(), implicitFunction.domain());
+          vtk << "phi" << implicitFunction;
+        }
+      
       
       // Time integration
       double sumt = 0; 
@@ -278,9 +285,12 @@ int main(int argc, char** argv)
               std::stringstream s; 
               s << outputFiles << setfill('0') << std::setw(4) << (i/disp_step); 
               updateLabelImage( *labelImage, implicitFunction, 0.5 ); 
+         
               writePartition( *labelImage, s.str(), outputFormat );
-              //VTKWriter<Domain> vtk(s.str(), implicitFunction.domain());
-              //vtk << "phi" << implicitFunction;
+              
+              // VTK export
+              VTKWriter<Domain> vtk(s.str(), implicitFunction.domain());
+              vtk << "phi" << implicitFunction;
             }
 
           sumt += tstep; 
@@ -330,7 +340,7 @@ int main(int argc, char** argv)
           ImageContainerBySTLVector<Domain,double> 
         > Reaction; 
       ImageContainerBySTLVector<Domain,double> a( d ); 
-      std::fill(a.begin(), a.end(), 1.0 );  
+      std::fill(a.begin(), a.end(), 0.0 );  
       Reaction reaction( epsilon, a, balloon, flagWithCstVol );
 
       // Lie splitting
@@ -345,6 +355,16 @@ int main(int argc, char** argv)
       std::stringstream s; 
       s << outputFiles << setfill('0') << std::setw(4) << 0; 
       writePartition( *labelImage, s.str(), outputFormat );
+      // VTK export
+        {
+          VTKWriter<Domain> vtk(s.str(), labelImage->domain());
+          for (size_t j = 0; j < evolver.getNumPhase(); ++j)
+            {
+              stringstream s_phase;
+              s_phase << "phi" << setfill('0') << std::setw(2) << j;
+              vtk << s_phase.str() << evolver.getPhase(j);
+            }
+        }
       
       // Time integration
       double sumt = 0; 
@@ -360,7 +380,17 @@ int main(int argc, char** argv)
             {
               std::stringstream s; 
               s << outputFiles << setfill('0') << std::setw(4) << (i/disp_step); 
+              
               writePartition( *labelImage, s.str(), outputFormat );
+              
+              // VTK export
+              VTKWriter<Domain> vtk(s.str(), labelImage->domain());
+              for (size_t j = 0; j < evolver.getNumPhase(); ++j)
+                {
+                  stringstream s_phase;
+                  s_phase << "phi" << setfill('0') << std::setw(2) << j;
+                  vtk << s_phase.str() << evolver.getPhase(j);
+                }
 
             }
 

@@ -270,6 +270,30 @@ DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
 }
 
 
+/**
+ * Return the number of phases
+ */
+template <typename TLabelImage, typename TFieldImage, typename TEvolver>
+inline
+size_t
+DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
+::getNumPhase() const
+{
+  return myFields.size();
+}
+
+/**
+ * Return one of the phase fields
+ */
+template <typename TLabelImage, typename TFieldImage, typename TEvolver>
+inline
+typename DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>::FieldImage const&
+DGtal::MultiPhaseField<TLabelImage, TFieldImage, TEvolver>
+::getPhase( size_t i ) const
+{
+  return *(myFields[i]);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation of inline functions                                        //
