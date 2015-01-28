@@ -302,8 +302,7 @@ public:
   Profile (const double& anEpsilon) : myEpsilon( anEpsilon ) {}
   double operator()( const double& v )
   {
-   //return 0.5 - 0.5*std::tanh(-v/(2*myEpsilon)); 
-   return 0.5 - 0.5*std::tanh(-v/myEpsilon); 
+   return 0.5 - 0.5*std::tanh(-v/(2*myEpsilon)); 
   }
 }; 
 
