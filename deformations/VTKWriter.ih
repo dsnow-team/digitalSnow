@@ -247,7 +247,7 @@ operator<< ( const char* fieldname )
  */
 template <typename TSpace, bool Binary>
 template <typename TImage>
-BOOST_CONCEPT_REQUIRES( (( concepts::CImage<TImage> )),
+BOOST_CONCEPT_REQUIRES( (( concepts::CConstImage<TImage> )),
 ( DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > & ))
 DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 operator<< ( TImage const& field )
@@ -267,7 +267,7 @@ DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > &
 DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 write ( std::string const& fieldname, TImage const& field )
 {
-  BOOST_CONCEPT_ASSERT( (DGtal::concepts::CImage<TImage>) );
+  BOOST_CONCEPT_ASSERT( (DGtal::concepts::CConstImage<TImage>) );
 
   // Write header if not already done 
   init();

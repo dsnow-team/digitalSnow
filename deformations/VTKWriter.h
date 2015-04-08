@@ -46,6 +46,7 @@
 
 #include <DGtal/base/Exceptions.h>
 #include <DGtal/kernel/domains/HyperRectDomain.h>
+#include <DGtal/images/CConstImage.h>
 //////////////////////////////////////////////////////////////////////////////
 
 namespace DGtal
@@ -122,7 +123,7 @@ namespace DGtal
      * @todo enable only if TImage is a model a concepts::CImage !!
      */
     template <typename TImage>
-    BOOST_CONCEPT_REQUIRES( (( concepts::CImage<TImage> )),
+    BOOST_CONCEPT_REQUIRES( (( concepts::CConstImage<TImage> )),
     ( VTKWriter<HyperRectDomain<TSpace>,Binary> & ))
     operator<< ( TImage const& field );
 
