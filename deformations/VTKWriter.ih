@@ -39,7 +39,7 @@
 
 #include <DGtal/base/Exceptions.h>
 #include <DGtal/kernel/domains/HyperRectDomain.h>
-#include <DGtal/images/CImage.h>
+#include <DGtal/images/CConstImage.h>
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -137,6 +137,9 @@ struct VTKDataWriter<true>
 // IMPLEMENTATION of inline methods.
 ///////////////////////////////////////////////////////////////////////////////
 
+namespace DGtal
+{
+
 ///////////////////////////////////////////////////////////////////////////////
 // ----------------------- Standard services ------------------------------
 
@@ -145,7 +148,7 @@ struct VTKDataWriter<true>
  */
 template <typename TSpace, bool Binary>
 inline
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
 VTKWriter( std::string const& filename, HyperRectDomain<TSpace> domain )
     : m_domain(domain), m_fieldname(""),
       m_fstream( filename+".vtk", std::ofstream::out | std::ofstream::binary ), 
@@ -158,7 +161,7 @@ VTKWriter( std::string const& filename, HyperRectDomain<TSpace> domain )
  */
 template <typename TSpace, bool Binary>
 inline
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
 ~VTKWriter()
 {
   close();
@@ -174,7 +177,7 @@ DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
 template <typename TSpace, bool Binary>
 inline
 bool
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
 isValid() const
 {
     return m_fstream.good();
@@ -184,8 +187,8 @@ isValid() const
  * Write the VTK header
  */
 template <typename TSpace, bool Binary>
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > &
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
+VTKWriter< HyperRectDomain<TSpace>, Binary > &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
 init()
 {
   if ( !m_header )
@@ -210,7 +213,7 @@ init()
         }
       catch( ... )
         {
-          throw DGtal::IOException();
+          throw IOException();
         }
 
       m_header = true;
@@ -224,8 +227,8 @@ init()
  */
 template <typename TSpace, bool Binary>
 inline
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > &
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
+VTKWriter< HyperRectDomain<TSpace>, Binary > &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
 operator<< ( std::string const& fieldname )
 {
   m_fieldname = fieldname;
@@ -234,8 +237,8 @@ operator<< ( std::string const& fieldname )
 
 template <typename TSpace, bool Binary>
 inline
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > &
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
+VTKWriter< HyperRectDomain<TSpace>, Binary > &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
 operator<< ( const char* fieldname )
 {
   m_fieldname = fieldname;
@@ -248,8 +251,8 @@ operator<< ( const char* fieldname )
 template <typename TSpace, bool Binary>
 template <typename TImage>
 BOOST_CONCEPT_REQUIRES( (( concepts::CConstImage<TImage> )),
-( DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > & ))
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
+( VTKWriter< HyperRectDomain<TSpace>, Binary > & ))
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
 operator<< ( TImage const& field )
 {
   return write( m_fieldname, field );
@@ -263,11 +266,11 @@ template <
   typename TImage,
   typename T
 >
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary > &
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
+VTKWriter< HyperRectDomain<TSpace>, Binary > &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
 write ( std::string const& fieldname, TImage const& field )
 {
-  BOOST_CONCEPT_ASSERT( (DGtal::concepts::CConstImage<TImage>) );
+  BOOST_CONCEPT_ASSERT( (concepts::CConstImage<TImage>) );
 
   // Write header if not already done 
   init();
@@ -294,7 +297,7 @@ write ( std::string const& fieldname, TImage const& field )
     }
   catch( ... )
     {
-        throw DGtal::IOException();
+        throw IOException();
     }
 
   return *this;
@@ -305,7 +308,7 @@ write ( std::string const& fieldname, TImage const& field )
  */
 template <typename TSpace, bool Binary>
 void
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
 close()
 {
   m_fstream.close();
@@ -315,7 +318,7 @@ close()
  * Internale data stream
  */
 template <typename TSpace, bool Binary>
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
 DataStream( std::ofstream & fstream )
   : m_fstream(fstream)
 {
@@ -324,8 +327,8 @@ DataStream( std::ofstream & fstream )
 
 template <typename TSpace, bool Binary>
 template <typename TValue>
-typename DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream &
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+typename VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
 operator<< ( TValue const& value )
 {
   VTKDataWriter<Binary>::write( m_fstream, value );
@@ -334,7 +337,7 @@ operator<< ( TValue const& value )
 
 template <typename TSpace, bool Binary>
 std::string
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
 data_format()
 {
   return VTKDataWriter<Binary>::data_format();
@@ -342,11 +345,13 @@ data_format()
 
 template <typename TSpace, bool Binary>
 void
-DGtal::VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
 separator()
 {
   m_fstream << VTKDataWriter<Binary>::separator();
 }
+
+} // namespace DGtal
 
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
