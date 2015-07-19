@@ -1,0 +1,361 @@
+/**
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
+/**
+ * @file VTKWriter.ih
+ * @author Roland Denis (\c roland.denis@univ-savoie.fr )
+ * LAboratory of MAthematics - LAMA (CNRS, UMR 5127), University of Savoie, France
+ *
+ * @date 2015/01/22
+ *
+ * Implementation of inline methods defined in VTKWriter.h
+ *
+ * This file is part of the DGtal library.
+ */
+
+
+//////////////////////////////////////////////////////////////////////////////
+#include <cstdlib>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <locale>
+
+#include <boost/concept/assert.hpp>
+
+#include <DGtal/base/Exceptions.h>
+#include <DGtal/kernel/domains/HyperRectDomain.h>
+#include <DGtal/images/CConstImage.h>
+
+//////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+// -------------------------- Some Tools --------------------------
+
+// Local namespace
+namespace {
+
+//! Type info for VTK (name and dimension)
+template <typename T>
+struct VTKType;
+
+template <>
+struct VTKType<double>
+{
+  static inline
+  std::string name() { return "double"; }
+
+  static inline constexpr
+  size_t dim() { return 1; }
+
+  template < typename TStream, typename TValue >
+  static inline
+  void write( TStream & stream, TValue const& value )
+    {
+      stream << static_cast<double>(value);
+    }
+};
+
+template <>
+struct VTKType<float>
+{
+  static inline
+  std::string name() { return "float"; }
+
+  static inline constexpr
+  size_t dim() { return 1; }
+
+  template < typename TStream, typename TValue >
+  static inline
+  void write( TStream & stream, TValue const& value )
+    {
+      stream << static_cast<float>(value);
+    }
+};
+
+//! VTK Stream writer
+template <bool Binary>
+struct VTKDataWriter;
+
+//! VTK Stream writer for ASCII format
+template <>
+struct VTKDataWriter<false>
+{
+  static inline
+  std::string separator() { return "\n"; }
+
+  template < typename TStream, typename TValue >
+  static inline
+  void write( TStream & stream, TValue const& value )
+    {
+      stream << value << " ";
+    }
+
+  static inline
+  std::string data_format() { return "ASCII"; }
+};
+
+//! VTK Stream writer for BINARY format
+template <>
+struct VTKDataWriter<true>
+{
+  static inline
+  std::string separator() { return ""; }
+
+  template < typename TStream, typename TValue >
+  static inline
+  void write( TStream & stream, TValue const& value )
+    {
+      //stream.write( reinterpret_cast<const char *>(&value), sizeof value );
+      // *@#! endianness
+      const char* raw = reinterpret_cast<const char *>(&value);
+      for (size_t i = sizeof(TValue); i > 0; --i)
+        stream.put(raw[i-1]);
+    }
+  
+  static inline
+  std::string data_format() { return "BINARY"; }
+};
+
+} // namespace 
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+namespace DGtal
+{
+
+///////////////////////////////////////////////////////////////////////////////
+// ----------------------- Standard services ------------------------------
+
+/**
+ * Constructor.
+ */
+template <typename TSpace, bool Binary>
+inline
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
+VTKWriter( std::string const& filename, HyperRectDomain<TSpace> domain )
+    : m_domain(domain), m_fieldname(""),
+      m_fstream( filename+".vtk", std::ofstream::out | std::ofstream::binary ), 
+      m_header(false),
+      m_dataStream(m_fstream)
+{}
+  
+/**
+ * Destructor.
+ */
+template <typename TSpace, bool Binary>
+inline
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
+~VTKWriter()
+{
+  close();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Interface - public :
+
+/**
+ * Checks the validity/consistency of the object.
+ * @return 'true' if the object is valid, 'false' otherwise.
+ */
+template <typename TSpace, bool Binary>
+inline
+bool
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
+isValid() const
+{
+    return m_fstream.good();
+}
+
+/**
+ * Write the VTK header
+ */
+template <typename TSpace, bool Binary>
+VTKWriter< HyperRectDomain<TSpace>, Binary > &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
+init()
+{
+  if ( !m_header )
+    {
+      const typename Domain::Vector dimensions = 
+         m_domain.upperBound() - m_domain.lowerBound() + Domain::Point::diagonal(1);
+
+      try
+        {
+          m_fstream << "# vtk DataFile Version 2.0\n";
+          m_fstream << "Exported with DGtal\n";
+          m_fstream << m_dataStream.data_format() << "\n";
+          m_fstream << "DATASET STRUCTURED_POINTS\n";
+          m_fstream << "DIMENSIONS "
+                    <<    ( (Domain::dimension >= 1) ? dimensions(0) : 1 ) << " "
+                    <<    ( (Domain::dimension >= 2) ? dimensions(1) : 1 ) << " "
+                    <<    ( (Domain::dimension >= 3) ? dimensions(2) : 1 )
+                    << "\n";
+          m_fstream << "ORIGIN 0 0 0\n";
+          m_fstream << "SPACING 1 1 1\n";
+          m_fstream << "POINT_DATA " << m_domain.size() << "\n";
+        }
+      catch( ... )
+        {
+          throw IOException();
+        }
+
+      m_header = true;
+    }
+
+  return *this;
+}
+
+/**
+ * Set the name of the next field
+ */
+template <typename TSpace, bool Binary>
+inline
+VTKWriter< HyperRectDomain<TSpace>, Binary > &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
+operator<< ( std::string const& fieldname )
+{
+  m_fieldname = fieldname;
+  return *this;
+}
+
+template <typename TSpace, bool Binary>
+inline
+VTKWriter< HyperRectDomain<TSpace>, Binary > &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
+operator<< ( const char* fieldname )
+{
+  m_fieldname = fieldname;
+  return *this;
+}
+
+/**
+ * Write a field
+ */
+template <typename TSpace, bool Binary>
+template <typename TImage>
+BOOST_CONCEPT_REQUIRES( (( concepts::CConstImage<TImage> )),
+( VTKWriter< HyperRectDomain<TSpace>, Binary > & ))
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
+operator<< ( TImage const& field )
+{
+  return write( m_fieldname, field );
+}
+
+/**
+ * Write a field, given his name
+ */
+template <typename TSpace, bool Binary>
+template <
+  typename TImage,
+  typename T
+>
+VTKWriter< HyperRectDomain<TSpace>, Binary > &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
+write ( std::string const& fieldname, TImage const& field )
+{
+  BOOST_CONCEPT_ASSERT( (concepts::CConstImage<TImage>) );
+
+  // Write header if not already done 
+  init();
+
+  // Dimension permutation
+  std::vector<typename Domain::Dimension> dim;
+  for (size_t i = 0; i < Domain::dimension; ++i)
+    dim.push_back(i);
+
+  try
+    {
+      // Field header
+      m_fstream << "SCALARS " << fieldname << " " << VTKType<T>::name() << " " << VTKType<T>::dim() << "\n";
+      m_fstream << "LOOKUP_TABLE default\n";
+
+      // Export
+      for ( auto const& pt : m_domain.subRange(dim) )
+        {
+          VTKType<T>::write( m_dataStream, field(pt) );
+          m_dataStream.separator();
+        }
+
+      m_fstream << "\n";
+    }
+  catch( ... )
+    {
+        throw IOException();
+    }
+
+  return *this;
+}
+
+/*
+ * Close the file
+ */
+template <typename TSpace, bool Binary>
+void
+VTKWriter< HyperRectDomain<TSpace>, Binary >::
+close()
+{
+  m_fstream.close();
+}
+
+/**
+ * Internale data stream
+ */
+template <typename TSpace, bool Binary>
+VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+DataStream( std::ofstream & fstream )
+  : m_fstream(fstream)
+{
+  m_fstream.imbue(std::locale()); // Dot separator for decimal numbers
+}
+
+template <typename TSpace, bool Binary>
+template <typename TValue>
+typename VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream &
+VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+operator<< ( TValue const& value )
+{
+  VTKDataWriter<Binary>::write( m_fstream, value );
+  return *this;
+}
+
+template <typename TSpace, bool Binary>
+std::string
+VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+data_format()
+{
+  return VTKDataWriter<Binary>::data_format();
+}
+
+template <typename TSpace, bool Binary>
+void
+VTKWriter< HyperRectDomain<TSpace>, Binary >::DataStream::
+separator()
+{
+  m_fstream << VTKDataWriter<Binary>::separator();
+}
+
+} // namespace DGtal
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+/* GNU coding style */
+/* vim: set ts=2 sw=2 expandtab cindent cinoptions=>4,n-2,{2,^-2,:2,=2,g0,h2,p5,t0,+2,(0,u0,w1,m1 : */
+

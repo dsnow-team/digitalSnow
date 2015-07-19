@@ -81,7 +81,7 @@ DGtal::ExactDiffusionEvolver<TImage>::update(Image& aF, const double& aT)
       for (unsigned int k = 0; k < Point::dimension; ++k)
         { 
           //normalization and centering (to be in [-0.5,0.5[^d)
-	  double coord = (double) p.at(k)/v.at(k); 
+	  double coord = (double) p[k]/v[k]; 
           if (coord >= 0.5) coord -= 1.0; 
           norm2 += coord*coord;  
         }

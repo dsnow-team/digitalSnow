@@ -1,0 +1,297 @@
+/**
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
+/**
+ * @file SimplePointHelper.ih
+ * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
+ * Laboratoire d'InfoRmatique en LabelsImage et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
+ *
+ * @date 2012/04/05
+ *
+ * @brief Implementation of inline methods defined in SimplePointHelper.h
+ *
+ * This file is part of the DGtal library.
+ */
+
+
+//////////////////////////////////////////////////////////////////////////////
+#include <cstdlib>
+//////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// ----------------------- Standard services ------------------------------
+
+
+template <typename TImage>
+inline
+DGtal::SimplePointHelper<TImage>::SimplePointHelper(LabelsImage& aImg, 
+						    const Label& aInftyRegionLabel )
+  : myImgPtr( &aImg ), 
+    myInftyRegionLabel( aInftyRegionLabel )
+{
+}
+
+template <typename TImage>
+inline
+DGtal::SimplePointHelper<TImage>::SimplePointHelper( const SimplePointHelper & other )
+  : myImgPtr( other.myImgPtr ), 
+    myInftyRegionLabel( other.myInftyRegionLabel )
+{
+}
+
+template <typename TImage>
+inline
+DGtal::SimplePointHelper<TImage>& 
+DGtal::SimplePointHelper<TImage>::operator=( const SimplePointHelper & other )
+{
+  if (this != &other)
+    {
+      myImgPtr = other.myImgPtr; 
+      myInftyRegionLabel = myInftyRegionLabel; 
+    }
+  return this; 
+}
+
+template <typename TImage>
+inline
+DGtal::SimplePointHelper<TImage>::~SimplePointHelper()
+{
+}
+
+
+
+template <typename TImage>
+inline
+bool
+DGtal::SimplePointHelper<TImage>::operator()(const Point& aPoint, const Label& aLabel) const
+{
+  return isMLSimple(aPoint,aLabel); 
+}
+
+template <typename TImage>
+inline
+bool
+DGtal::SimplePointHelper<TImage>::isMLSimple(const Point& aPoint, const Label& aLabel) const
+{
+  
+
+  // std::cerr << "ML-simple test of " << aPoint; 
+  // std::cerr << " of label " << (*myImg)( aPoint ) << std::endl; 
+  // std::cerr << " with respect to label " << aLabel << std::endl; 
+
+  if ( aLabel == (*myImgPtr)( aPoint ) )
+    return true; 
+  else 
+    { //if there is a flip
+      Domain globalDomain = myImgPtr->domain(); 
+      Domain localDomain = getLocalDomain( aPoint ); 
+      if ( (globalDomain.isInside(localDomain.lowerBound())) && 
+	   (globalDomain.isInside(localDomain.upperBound())) )
+	{ //if outside and not adjacent to the infinite region
+	  return isMLSimple(*myImgPtr, aPoint, aLabel); 
+	}
+      else 
+	{ //if inside or adjacent to the infinite region
+	  //build a local image
+	  LabelsImage localImage( localDomain ); 
+	  typename Domain::ConstIterator it = localDomain.begin(); 
+	  typename Domain::ConstIterator itEnd = localDomain.end(); 
+	  for ( ; it != itEnd; ++it )
+	    {
+	      if ( globalDomain.isInside( *it ) )
+		localImage.setValue( *it, (*myImgPtr)(*it) ); 
+	      else //label of the infinite region
+		localImage.setValue( *it, myInftyRegionLabel ); 
+	    }
+	  //test on a local image
+	  return isMLSimple(localImage, aPoint, aLabel); 
+	}
+    }
+}
+
+template <typename TImage>
+inline
+bool
+DGtal::SimplePointHelper<TImage>::isMLSimple(LabelsImage& aImg, 
+					     const Point& aPoint, const Label& aLabel) const
+{
+
+  Label centerLabel = aImg(aPoint); 
+    
+  //extract distinct regions that are adjacent to aPoint
+  std::set<Label> sMainRegions; 
+  std::set<Label> sExtraRegions; 
+
+  std::vector<Point> neighbors; 
+  SimplePointHelperDetails::RestrictedNeighborhoodUp<Point> n(aPoint); 
+  n(aPoint, neighbors); 
+  for (unsigned int i = 0; i < neighbors.size(); ++i)
+    {
+      Point p( neighbors.at(i) ); 
+      Label l = aImg( p ); 
+      if ( (l == aLabel)||(l == centerLabel) )
+	sMainRegions.insert(l); 
+      else
+	sExtraRegions.insert(l); 
+    }
+    
+  //main regions
+  if ( sMainRegions.size() == 2 ) 
+    {
+
+      //condition 1
+      //predicate from the label of the first main region
+      SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
+	predV( aImg, centerLabel ); 
+      if (!isSimple( aPoint, predV ) ) return false;
+
+      //condition 2
+      //predicate from the label of the second main region
+      SimplePointHelperDetails::OneLabelPredicate<LabelsImage,std::equal_to<Label> > 
+	predR( aImg, aLabel ); 
+      if (!isSimple( aPoint, predR ) ) return false;
+      
+      //extra regions
+      //conditions 3 and 4
+      typename std::set<Label>::iterator it = sExtraRegions.begin(); 
+      for ( ; it != sExtraRegions.end(); ++it)
+	{
+
+	  typename std::set<Label>::iterator it2 = sExtraRegions.begin(); 
+	  for ( ; it2 != sExtraRegions.end(); ++it2)
+	    {
+	      //condition a
+	      SimplePointHelperDetails::ThreeLabelsPredicate<LabelsImage,std::equal_to<Label> > 
+		predOV( aImg, centerLabel, *it, *it2 ); 
+	      if (!isSimple( aPoint, predOV ) ) return false;    
+
+	      //condition b
+	      SimplePointHelperDetails::ThreeLabelsPredicate<LabelsImage,std::equal_to<Label> > 
+		predOR( aImg, aLabel, *it, *it2 );
+	      if (!isSimple( aPoint, predOR ) ) return false;
+
+	    }
+
+	} 
+
+    } else return false; 
+  
+  return true; 
+}
+
+
+
+template <typename TImage>
+template <typename TPredicate>
+inline
+bool
+DGtal::SimplePointHelper<TImage>::isSimple(const Point& aPoint, 
+					   const TPredicate& aPredicate) const
+{
+  //region
+  // std::cerr << "simple test of " << aPoint; 
+  // std::cerr << " for region of label "; 
+  // aPredicate.selfDisplay(std::cerr); 
+  // std::cerr << std::endl; 
+
+  //set/object stuff
+  typedef MetricAdjacency<Space, 1> Adj1; 
+  typedef MetricAdjacency<Space, 2> Adj2; 
+  typedef DigitalTopology<Adj1, Adj2> Topo;
+  typedef DigitalSetBySTLSet<Domain> DigitalSet;
+  typedef Object<Topo, DigitalSet > Object;
+  Adj1 adj1;
+  Adj2 adj2;
+  Topo topo( adj1, adj2, JORDAN_DT );
+  Domain d = getLocalDomain(aPoint); 
+  DigitalSet set( d );
+
+  //set construction
+  typename Domain::ConstIterator it = d.begin(); 
+  typename Domain::ConstIterator itEnd = d.end(); 
+  for ( ; it != itEnd; ++it)
+    {
+      Point p( *it ); 
+      if ( aPredicate( p ) )
+	set.insertNew( p ); 
+    }
+
+  //object construction
+  Object obj( topo, set );
+
+  //test
+  return obj.isSimple( aPoint ); 
+}
+
+
+
+template <typename TImage>
+inline
+typename DGtal::SimplePointHelper<TImage>::Domain
+DGtal::SimplePointHelper<TImage>::getLocalDomain(const Point& aPoint)
+{
+  Point p1( aPoint );
+  for ( typename Point::Iterator it = p1.begin(); it != p1.end(); ++it )
+    --(*it);
+  Point p2( aPoint );
+  for ( typename Point::Iterator it = p2.begin(); it != p2.end(); ++it )
+    ++(*it);
+
+  return Domain( p1, p2 ); 
+}
+
+
+template <typename TImage>
+inline
+bool
+DGtal::SimplePointHelper<TImage>::isValid() const
+{
+  return true; 
+}
+
+
+template <typename TImage>
+inline
+void
+DGtal::SimplePointHelper<TImage>::selfDisplay ( std::ostream & out ) const
+{
+  out << "[SimplePointHelper] d=" << TImage::dimension << std::endl;
+  out << (*myImgPtr) << std::endl; 
+  out << "[end SimplePointHelper]" << std::endl;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Implementation of inline functions                                        //
+
+template <typename TImage>
+inline
+std::ostream&
+DGtal::operator<< ( std::ostream & out, 
+		    const SimplePointHelper<TImage> & object )
+{
+  object.selfDisplay( out );
+  return out;
+}
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+

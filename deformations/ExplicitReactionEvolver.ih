@@ -63,6 +63,9 @@ DGtal::ExplicitReactionEvolver<TImage, TFunctor>::update(Image& aF, const double
 {
   ASSERT(aT >= 0); 
 
+  // Result of the update
+  Image next_aF(aF.domain());
+
   double k = 0; 
   if (myWithVolumeConservation)
     k = force(aF); 
@@ -80,12 +83,13 @@ DGtal::ExplicitReactionEvolver<TImage, TFunctor>::update(Image& aF, const double
       GodunovGradient<Image> gradient( aF, (myG >= 0) );
       GradientModulus<GodunovGradient<Image> > m( gradient );
       //new value
-      double tmp = derivative (v) 
-	- myEpsilon * ( myG + f*m(*it) + k) * std::sqrt( 2*function(v) ); 
+      double tmp = derivative (v) - myEpsilon * ( myG + f*m(*it) + k) * std::sqrt( 2*function(v) ); 
       Value newValue = v - ( aT / (myEpsilon * myEpsilon ) ) * tmp;  
-      aF.setValue( *it, static_cast<Value>(newValue) ); 
+      next_aF.setValue( *it, static_cast<Value>(newValue) ); 
     }
 
+  // Update
+  aF = next_aF;
 }
 
 
@@ -167,4 +171,6 @@ DGtal::operator<< ( std::ostream & out,
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
+/* GNU coding style */
+/* vim: set ts=2 sw=2 expandtab cindent cinoptions=>4,n-2,{2,^-2,:2,=2,g0,h2,p5,t0,+2,(0,u0,w1,m1 : */
 

@@ -1,0 +1,234 @@
+/**
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ **/
+
+/**
+ * @file PartitionEvolver.ih
+ * @author Tristan Roussillon (\c tristan.roussillon@liris.cnrs.fr )
+ * Laboratoire d'InfoRmatique en Image et Systèmes d'information - LIRIS (CNRS, UMR 5205), CNRS, France
+ *
+ * @date 2012/04/06
+ *
+ * @brief Implementation of inline methods defined in PartitionEvolver.h
+ *
+ * This file is part of the DGtal library.
+ */
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION of inline methods.
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// ----------------------- Standard services ------------------------------
+
+// frontier
+#include "DGtal/topology/SurfelAdjacency.h"
+#include "DGtal/topology/helpers/FrontierPredicate.h"
+#include "DGtal/topology/LightExplicitDigitalSurface.h"
+#include "DGtal/topology/SCellsFunctors.h"
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TExternImage, typename TTopoPredicate>
+inline
+DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
+::PartitionEvolver(const KSpace& aK, LabelImage& aI, const ExternImage& aF, const TopoPredicate& aP)
+  : myKSpace( aK ), myLabelImage( aI ), myExternImage( aF ), myTopoPred( aP )
+{ 
+  //maximal number of frontiers expected
+  const unsigned int nb = 100; 
+  myImages.reserve(nb); 
+  myFunctors.reserve(nb); 
+  myEvolvers.reserve(nb);
+ 
+  //domain
+  Domain d = Domain( myLabelImage.domain().lowerBound(), myLabelImage.domain().upperBound() ); 
+  //ASSERT( d == myExternImage.domain() ); operator == does not exist in HyperRectDomain
+
+  /// retrieve bels
+  std::set<Cell> bels;
+  getBels( bels, myKSpace, myLabelImage, myKSpace.lowerBound(), myKSpace.upperBound() );
+
+  /// retrieve frontiers
+  while(!bels.empty()){
+
+    //unsigned bel
+    Cell ubel = *(bels.begin());
+    //signed version (arbitrary choice) 
+    SCell sbel = myKSpace.signs( ubel, true ); 
+    //incident points
+    SCellToIncidentPoints<KSpace> func( myKSpace ); 
+    typename SCellToIncidentPoints<KSpace>::Output points = func( sbel ); 
+    Label iLabel( myLabelImage( points.first ) ); 
+    Label oLabel( myLabelImage( points.second ) ); 
+
+    /// frontier from sbel
+    typedef FrontierPredicate<KSpace, LabelImage> SurfelPredicate;
+    /// !!!!!! be careful oLabel and iLabel are swaped because func is wrong
+    ///     => Seems to have been corrected since ...
+    SurfelPredicate surfelPred( myKSpace, myLabelImage, iLabel, oLabel ); 
+    typedef LightExplicitDigitalSurface<KSpace, SurfelPredicate> Frontier;
+    Frontier frontier( myKSpace, 
+		       surfelPred, 
+		       SurfelAdjacency<KSpace::dimension>( true ), 
+		       sbel ); 
+
+    // tracking (and removing bels belonging to this frontier)
+    typedef typename Frontier::SurfelConstIterator SurfelIterator;
+    for ( SurfelIterator it = frontier.begin(), 
+	    itEnd = frontier.end();
+	  it != itEnd; ++it )
+      bels.erase( myKSpace.unsigns( *it ) );
+    
+    /// new frontier evolver (with its image and differential estimators)
+    myImages.push_back( DistanceImagePtr( new DistanceImage( d ) ) );
+    myFunctors.push_back( FunctorPtr( new Functor( *(*myImages.rbegin()), 
+						   myExternImage, 
+						   myExternImage ) ) ); 
+    myEvolvers.push_back( EvolverPtr( new Evolver(myKSpace, 
+						  myLabelImage, 
+						  *(*myImages.rbegin()), 
+						  sbel, 
+						  *(*myFunctors.rbegin()), 
+						  myTopoPred, this) ) );  
+  }
+
+  ASSERT( myImages.size() == myFunctors.size() ); 
+  ASSERT( myImages.size() == myEvolvers.size() ); 
+
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TExternImage, typename TTopoPredicate>
+inline
+DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
+::~PartitionEvolver()
+{ 
+}
+
+
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TExternImage, typename TTopoPredicate>
+inline
+double
+DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
+::update(const double& aT)
+{
+
+  /// update all frontiers (in arbitrary order)
+  for (typename std::vector<EvolverPtr>::const_iterator 
+	 it = myEvolvers.begin(), 
+	 itEnd = myEvolvers.end(); it != itEnd; ++it)
+    {
+      (*it)->update( aT );   
+    }
+
+  return aT; 
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TExternImage, typename TTopoPredicate>
+inline
+void
+DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
+::checkFrontiers(const Evolver* aPtrToCaller, const Point& aPoint)
+{
+  for (typename std::vector<EvolverPtr>::const_iterator 
+  	 it = myEvolvers.begin(), 
+  	 itEnd = myEvolvers.end(); it != itEnd; ++it)
+    { /// for each frontier (except aPtrToCaller) 
+      if ( it->get() != aPtrToCaller )
+	{
+	  (*it)->updateFrontier( aPoint ); 
+	}
+    }
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TExternImage, typename TTopoPredicate>
+inline
+void
+DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
+::selfDisplay ( std::ostream & out ) const
+{
+  out << "[PartitionEvolver] ";
+  out << myEvolvers.size() << " frontier(s) "; 
+}
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TExternImage, typename TTopoPredicate>
+inline
+bool
+DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
+::isValid() const
+{
+  return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Internals                                                                //
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TExternImage, typename TTopoPredicate>
+inline
+void
+DGtal::PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, TExternImage, TTopoPredicate>
+::getBels( std::set<Cell>& aSet, 
+	   const KSpace & aKSpace,
+	   const LabelImage & aImg,
+	   const Point & aLowerBound, 
+	   const Point & aUpperBound  )
+{
+  for (DGtal::Dimension k = 0; k < KSpace::dimension; ++k )
+    {
+      Cell dir_low_uid = aKSpace.uSpel( aLowerBound );
+      Cell dir_up_uid = aKSpace.uGetDecr( aKSpace.uSpel( aUpperBound ), k);
+      Cell p = dir_low_uid;
+      do 
+        {
+          Label here = aImg( aKSpace.uCoords(p) );
+          Label next = aImg( aKSpace.uCoords(aKSpace.uGetIncr( p, k )) );
+          if ( here != next ) 
+            { // add new bel to the set.
+              aSet.insert( aKSpace.uIncident( p, k, true ));
+            }
+        }
+      while ( aKSpace.uNext( p, dir_low_uid, dir_up_uid ) );
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Implementation of inline functions                                        //
+
+template <typename TKSpace, typename TLabelImage, typename TDistanceImage, 
+	  typename TExternImage, typename TTopoPredicate>
+inline
+std::ostream&
+DGtal::operator<< ( std::ostream & out, 
+		    const PartitionEvolver<TKSpace, TLabelImage, TDistanceImage, 
+		    TExternImage, TTopoPredicate> & object )
+{
+  object.selfDisplay( out );
+  return out;
+}
+
+//                                                                           //
+///////////////////////////////////////////////////////////////////////////////
+
+

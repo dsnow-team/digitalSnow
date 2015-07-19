@@ -45,7 +45,7 @@
 #include "DGtal/base/Common.h"
 #include "DGtal/images/CImage.h"
 
-#include "DGtal/images/DifferentialOperators.h"
+#include "DifferentialOperators.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -68,7 +68,7 @@ namespace DGtal
   {
 
     //ASSERT
-    BOOST_CONCEPT_ASSERT(( CImage<TImage> )); 
+    BOOST_CONCEPT_ASSERT(( concepts::CImage<TImage> )); 
 
     // ----------------------- Types ------------------------------
   public:

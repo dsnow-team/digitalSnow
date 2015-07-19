@@ -71,8 +71,8 @@ namespace DGtal
 
     //concepts to write
     //ASSERT
-    //BOOST_CONCEPT_ASSERT(( CImplicitEvolver<TEvolver1> )); 
-    //BOOST_CONCEPT_ASSERT(( CImplicitEvolver<TEvolver2> )); 
+    //BOOST_CONCEPT_ASSERT(( concepts::CImplicitEvolver<TEvolver1> )); 
+    //BOOST_CONCEPT_ASSERT(( concepts::CImplicitEvolver<TEvolver2> )); 
 
     // ----------------------- Types ------------------------------
   public:

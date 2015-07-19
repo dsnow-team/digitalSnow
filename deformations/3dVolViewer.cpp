@@ -31,6 +31,7 @@
 #include <QtGui/qapplication.h>
 
 #include "DGtal/base/Common.h"
+#include "DGtal/helpers/StdDefs.h"
 #include "DGtal/io/readers/VolReader.h"
 #include "DGtal/io/viewers/Viewer3D.h"
 #include "DGtal/io/DrawWithDisplay3DModifier.h"
@@ -53,6 +54,9 @@ namespace po = boost::program_options;
 
 int main( int argc, char** argv )
 {
+  // Qt init with command-line parameters
+  QApplication application(argc, argv);
+  
   // parse command line ----------------------------------------------
   po::options_description general_opt("Allowed options are: ");
   general_opt.add_options()
@@ -82,8 +86,7 @@ int main( int argc, char** argv )
   int thresholdMax = vm["thresholdMax"].as<int>();
   unsigned char transp = vm["transparency"].as<uint>();
  
-  QApplication application(argc,argv);
-  Viewer3D viewer;
+  Viewer3D<> viewer;
   viewer.setWindowTitle("simple Volume Viewer");
   viewer.show();
  
@@ -108,6 +111,6 @@ int main( int argc, char** argv )
       viewer << *it;     
     }     
   }
-  viewer << Viewer3D::updateDisplay;
+  viewer << Viewer3D<>::updateDisplay;
   return application.exec();
 }
